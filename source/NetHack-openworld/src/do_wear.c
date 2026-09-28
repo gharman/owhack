@@ -230,7 +230,7 @@ Boots_on(void)
     case ELVEN_BOOTS:
         if (u_giant() && !gi.initial_don) {
             /* nothing silences a giant's tread (EvilHack) */
-            pline("These %s will not silence someone %s.", xname(uarmf),
+            pline("This %s will not silence someone %s.", xname(uarmf),
                   rn2(2) ? "as large as you" : "of your stature");
             EStealth &= ~W_ARMF;
         } else if (u_giant()) {

@@ -2212,10 +2212,21 @@ mbodypart(struct monst *mon, int part)
         return humanoid_parts[part]; /* yeti/sasquatch, monkey/ape */
     }
     if ((part == HAND || part == HANDED)
-        && (humanoid(mptr) && attacktype(mptr, AT_CLAW)
-            && !strchr(not_claws, mptr->mlet) && mptr != &mons[PM_STONE_GOLEM]
-            && mptr != &mons[PM_AMOROUS_DEMON]))
+        && ((humanoid(mptr) && attacktype(mptr, AT_CLAW)
+             && !strchr(not_claws, mptr->mlet)
+             && mptr != &mons[PM_STONE_GOLEM]
+             && mptr != &mons[PM_AMOROUS_DEMON])
+            /* several of the hero's races have claws (EvilHack) */
+            || (mon == &gy.youmonst && !Upolyd
+                && (Race_if(PM_ILLITHID) || Race_if(PM_TORTLE)
+                    || Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)))))
         return (part == HAND) ? "claw" : "clawed";
+    /* a centaur hero has a human torso on a horse's body */
+    if (mon == &gy.youmonst && !Upolyd && Race_if(PM_CENTAUR)
+        && part != ARM && part != FINGER && part != FINGERTIP
+        && part != HAND && part != HANDED && part != HEAD && part != FACE
+        && part != EYE && part != NOSE && part != HAIR && part != NECK)
+        return horse_parts[part];
     if ((mptr == &mons[PM_MUMAK] || mptr == &mons[PM_MASTODON])
         && part == NOSE)
         return "trunk";

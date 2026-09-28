@@ -991,9 +991,9 @@ welcome(boolean new_game) /* false => restoring an old game */
             pline("Use #monster to change form, once you are experienced "
                   "enough.");
         else if (Race_if(PM_DOPPELGANGER))
-            pline("Use #monster to change into a form you have eaten.");
+            pline("Use #youpoly (or #monster) to change your shape.");
         else if (Race_if(PM_HUMAN_WEREWOLF))
-            pline("Use #monster to change form, once you are experienced "
+            pline("Use #youpoly to change form, once you are experienced "
                   "enough.");
         else if (Race_if(PM_GHOST))
             pline("You can drift through solid matter, at the cost of "

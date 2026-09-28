@@ -3260,7 +3260,8 @@ switch_terrain(void)
     }
     /* the same terrain that blocks levitation also blocks flight */
     if (blocklev) {
-        if (Flying)
+        /* (a ghost drifting through solid matter has been told so) */
+        if (Flying && !u_ghost())
             You_cant("fly in here.");
         BFlying |= FROMOUTSIDE;
     } else if (BFlying) {
@@ -3269,7 +3270,7 @@ switch_terrain(void)
         /* [minor bug: we don't know whether this is beginning flight or
            resuming it; that could be tracked so that this message could
            be adjusted to "resume flying", but isn't worth the effort...] */
-        if (Flying)
+        if (Flying && !u_ghost())
             You("start flying.");
     }
     if ((!!Levitation ^ was_levitating) || (!!Flying ^ was_flying))

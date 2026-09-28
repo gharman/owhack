@@ -574,7 +574,7 @@ doengrave_ctx_init(struct _doengrave_ctx *de)
 
     if (de->oep)
         de->oetype = de->oep->engr_type;
-    if (is_demon(gy.youmonst.data) || is_vampire(gy.youmonst.data))
+    if (is_demon(gy.youmonst.data) || u_vampire())
         de->type = ENGR_BLOOD;
 
     de->jello = (u.uswallow && !(is_animal(u.ustuck->data)
