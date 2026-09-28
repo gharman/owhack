@@ -2369,7 +2369,10 @@ can_pray(boolean praying) /* false means no messages should be given */
             gp.p_type = 3;
     }
 
-    if (u_undead() && !Inhell
+    /* the walking dead are an abomination to the gods of law (and often
+       to those of balance); a ghost is only a restless spirit, and ghosts
+       may follow any god, so prayer is open to them */
+    if (u_undead() && !u_ghost() && !Inhell
         && (gp.p_aligntyp == A_LAWFUL
             || (gp.p_aligntyp == A_NEUTRAL && !rn2(10))))
         gp.p_type = -1;
