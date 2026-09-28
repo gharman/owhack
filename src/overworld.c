@@ -1249,7 +1249,7 @@ ow_gen_chunk(int cx, int cy)
             }
     }
     /* wall fixups may have turned rock under an engraving into wall */
-    if (!getenv("OWHACK_NOSWEEP")) {
+    {
         struct engr *ep, *nep;
 
         for (ep = head_engr; ep; ep = nep) {
@@ -2859,6 +2859,13 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
                 fprintf(fp, "stairs %d,%d up=%d to %d.%d\n", st->sx, st->sy,
                         st->up, st->tolev.dnum, st->tolev.dlevel);
         }
+        {
+            struct monst *mtmp;
+
+            for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+                if (!DEADMONSTER(mtmp) && mtmp->data->msound == MS_LEADER)
+                    fprintf(fp, "leader %d,%d\n", mtmp->mx, mtmp->my);
+        }
         fclose(fp);
         return;
     }
@@ -2916,6 +2923,16 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
             && r->ly <= cy + ry)
             fprintf(fp, "room %d %d %d %d %d\n", r->lx, r->ly, r->hx, r->hy,
                     r->rtype);
+    }
+    {
+        struct trap *tt;
+
+        for (tt = gf.ftrap; tt; tt = tt->ntrap)
+            if (tt->ttyp == MAGIC_PORTAL && tt->tx >= cx - rx
+                && tt->tx <= cx + rx && tt->ty >= cy - ry
+                && tt->ty <= cy + ry)
+                fprintf(fp, "owportal %d,%d %d\n", tt->tx, tt->ty,
+                        tt->dst.dnum);
     }
     {
         struct engr *ep;

@@ -1535,7 +1535,10 @@ really_done(int how)
             if (Is_astralevel(&u.uz))
                 where = "The Astral Plane";
             Sprintf(pbuf, "You %s in %s", ends[how], where);
-            if (!In_endgame(&u.uz) && !single_level_branch(&u.uz))
+            if (In_overworld)
+                Sprintf(pbuf, "You %s in the Overworld at depth %d",
+                        ends[how], depth(&u.uz));
+            else if (!In_endgame(&u.uz) && !single_level_branch(&u.uz))
                 Sprintf(eos(pbuf), " on dungeon level %d",
                         In_quest(&u.uz) ? dunlev(&u.uz) : depth(&u.uz));
         }

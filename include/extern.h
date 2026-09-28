@@ -913,6 +913,7 @@ extern boolean Can_fall_thru(d_level *) NONNULLARG1;
 extern boolean Can_dig_down(d_level *) NONNULLARG1;
 extern boolean Can_rise_up(coordxy, coordxy, d_level *) NONNULLARG3;
 extern boolean has_ceiling(d_level *) NONNULLARG1;
+extern boolean has_ceiling_at(d_level *, coordxy, coordxy) NONNULLARG1;
 extern boolean avoid_ceiling(d_level *) NONNULLARG1;
 extern const char *surface(coordxy, coordxy);
 extern const char *ceiling(coordxy, coordxy);

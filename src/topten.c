@@ -976,7 +976,8 @@ outentry(int rank, struct toptenentry *t1, boolean so)
                 t1->maxlvl);
         /* fixup for closing paren in "escaped... with...Amulet)[max..." */
         if ((bp = strchr(linebuf, ')')) != 0)
-            *bp = (t1->deathdnum == astral_level.dnum) ? '\0' : ' ';
+            *bp = (Lassigned(&astral_level)
+                   && t1->deathdnum == astral_level.dnum) ? '\0' : ' ';
         second_line = FALSE;
     } else if (!strncmp("ascended", t1->death, 8)) {
         Sprintf(eos(linebuf), "ascended to demigod%s-hood",
@@ -1001,7 +1002,9 @@ outentry(int rank, struct toptenentry *t1, boolean so)
         } else
             Strcat(linebuf, "died");
 
-        if (t1->deathdnum == astral_level.dnum) {
+        /* (open world: there are no Elemental Planes, and an unassigned
+           astral_level would otherwise match the overworld, dungeon #0) */
+        if (Lassigned(&astral_level) && t1->deathdnum == astral_level.dnum) {
             const char *arg, *fmt = " on the Plane of %s";
 
             switch (t1->deathlev) {
@@ -1026,6 +1029,11 @@ outentry(int rank, struct toptenentry *t1, boolean so)
                 break;
             }
             Sprintf(eos(linebuf), fmt, arg);
+        } else if (t1->deathdnum == 0) {
+            Sprintf(eos(linebuf), " in the Overworld at depth %d",
+                    t1->deathlev);
+            if (t1->deathlev != t1->maxlvl)
+                Sprintf(eos(linebuf), " [max %d]", t1->maxlvl);
         } else {
             Sprintf(eos(linebuf), " in %s", svd.dungeons[t1->deathdnum].dname);
             if (t1->deathdnum != knox_level.dnum)

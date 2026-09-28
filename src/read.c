@@ -3339,7 +3339,9 @@ create_particular_creation(
             put_saddle_on_mon((struct obj *) 0, mtmp);
         }
         if (d->hidden
-           && ((is_hider(mtmp->data) && mtmp->data->mlet != S_MIMIC)
+           && ((is_hider(mtmp->data) && mtmp->data->mlet != S_MIMIC
+                && (!ceiling_hider(mtmp->data)
+                    || has_ceiling_at(&u.uz, mx, my)))
                || (hides_under(mtmp->data) && OBJ_AT(mx, my))
                || (mtmp->data->mlet == S_EEL && is_pool(mx, my))))
             mtmp->mundetected = 1;

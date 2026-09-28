@@ -183,7 +183,7 @@ sanity_check_single_mon(
         if (ceiling_hider(mptr)
             /* normally !accessible would be overridable with passes_walls,
                but not for hiding on the ceiling */
-            && (!has_ceiling(&u.uz)
+            && (!has_ceiling_at(&u.uz, mx, my)
                 || !(levl[mx][my].typ == POOL
                      || levl[mx][my].typ == MOAT
                      || levl[mx][my].typ == WATER
@@ -191,7 +191,7 @@ sanity_check_single_mon(
                      || levl[mx][my].typ == LAVAWALL
                      || accessible(mx, my))))
             impossible("ceiling hider hiding %s (%s)",
-                       !has_ceiling(&u.uz) ? "without ceiling"
+                       !has_ceiling_at(&u.uz, mx, my) ? "without ceiling"
                                            : "in solid stone",
                        msg);
         if (mtmp->mtrapped && (t = t_at(mx, my)) != 0 && !is_pit(t->ttyp))
@@ -2147,7 +2147,8 @@ m_in_air(struct monst *mtmp)
     return (is_flyer(mtmp->data)
             || is_floater(mtmp->data)
             || (is_clinger(mtmp->data)
-                && has_ceiling(&u.uz) && mtmp->mundetected));
+                && has_ceiling_at(&u.uz, mtmp->mx, mtmp->my)
+                && mtmp->mundetected));
 }
 
 /* return number of acceptable neighbour positions */
@@ -4688,7 +4689,8 @@ restrap(struct monst *mtmp)
         || (mtmp->mtrapped && (t = t_at(mtmp->mx, mtmp->my)) != 0
             && !is_pit(t->ttyp))
         /* can't hide on ceiling if there isn't one */
-        || (ceiling_hider(mtmp->data) && !has_ceiling(&u.uz))
+        || (ceiling_hider(mtmp->data)
+            && !has_ceiling_at(&u.uz, mtmp->mx, mtmp->my))
         /* won't hide when adjacent to hero */
         || (sensemon(mtmp) && m_next2u(mtmp)))
         return FALSE;

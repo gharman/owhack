@@ -2060,6 +2060,17 @@ Invocation_lev(d_level *lev)
                       && lev->dlevel == sanctum_level.dlevel - 1);
 }
 
+/* does map location <x,y> of level 'lev' have a ceiling above it?
+   (open world: outdoors in the overworld, only buildings and caves do;
+   has_ceiling() answers for the hero's own location) */
+boolean
+has_ceiling_at(d_level *lev, coordxy x, coordxy y)
+{
+    if (Is_overworld(lev) && on_level(lev, &u.uz))
+        return (boolean) (isok(x, y) && ow_under_roof(x, y));
+    return has_ceiling(lev);
+}
+
 /* use instead of depth() wherever a degree of difficulty is made
  * dependent on the location in the dungeon (eg. monster creation).
  */

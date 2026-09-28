@@ -2823,7 +2823,9 @@ immune_to_trap(struct monst *mon, unsigned ttype)
         if (In_sokoban(&u.uz) && ttype == ROLLING_BOULDER_TRAP)
             return TRAP_CLEARLY_IMMUNE; /* not dangerous in Sokoban */
         if (is_floater(pm) || is_flyer(pm)
-            || (is_clinger(pm) && has_ceiling(&u.uz)))
+            || (is_clinger(pm)
+                && (is_you ? has_ceiling(&u.uz)
+                           : has_ceiling_at(&u.uz, mon->mx, mon->my))))
             return TRAP_CLEARLY_IMMUNE;
         else if (is_you && (Levitation || Flying))
             return TRAP_CLEARLY_IMMUNE;
