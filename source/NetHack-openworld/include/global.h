@@ -427,7 +427,7 @@ extern int nh_colno, nh_rowno; /* decl.c */
 /* room for "name-role-race-gend-algn" plus 1 character playmode code */
 #define PL_NSIZ_PLUS (PL_NSIZ + 4 * (1 + 3) + 1) /* 49 */
 
-#define MAXDUNGEON 24 /* current maximum number of dungeons */
+#define MAXDUNGEON 64 /* current maximum number of dungeons */
 #define MAXLEVEL 32   /* max number of levels in one dungeon */
 #define MAXSTAIRS 1   /* max # of special stairways in a dungeon */
 #define ALIGNWEIGHT 4 /* generation weight of alignment */

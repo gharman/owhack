@@ -74,7 +74,7 @@ struct ow_ringinfo {
     xint16 phase;    /* angular offset of the first portal, 0..359 */
 };
 
-#define OW_MAXRINGS 24
+#define OW_MAXRINGS 64  /* rings of branch portals */
 
 /* game-state for the overworld; saved with the game */
 struct ow_state {

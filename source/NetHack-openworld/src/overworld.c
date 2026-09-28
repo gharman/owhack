@@ -707,6 +707,8 @@ ow_add_ring(xint16 dnum, int ring, int nportals)
 
 /* set a branch dungeon's depth so that its entry level has 'entrydepth' */
 staticfn void ow_set_dgn_depth(int, int);
+staticfn int ow_slash_ring(int, int, int);
+staticfn int ow_slash_hell_ring(int, int, int, int);
 
 staticfn void
 ow_set_dgn_depth(int dnum, int entrydepth)
@@ -715,6 +717,41 @@ ow_set_dgn_depth(int dnum, int entrydepth)
         return;
     svd.dungeons[dnum].depth_start
         = entrydepth - (svd.dungeons[dnum].entry_lev - 1);
+}
+
+/*
+ * Slash'EM places many special levels between its Quest (15-19) and a
+ * Medusa at about level 40.  Here everything past Medusa+2 is Gehennom,
+ * so those levels are squeezed, in the same order, into the rings between
+ * depth 14 and the one just outside Medusa's.  Pick a Slash'EM level in
+ * base..base+range-1 as dungeon.def does and map it into that band.
+ */
+staticfn int
+ow_slash_ring(int base, int range, int medusa)
+{
+    int lvl = base + rn2(range),
+        ring = 14 + ((lvl - 19) * (medusa - 15) + 8) / 16;
+
+    if (ring < 14)
+        ring = 14;
+    if (ring > medusa - 1)
+        ring = medusa - 1;
+    return ring;
+}
+
+/* likewise for Slash'EM's 17-level Gehennom (the Valley is its level 1)
+   mapped onto our Gehennom rings between the Valley and the Sanctum */
+staticfn int
+ow_slash_hell_ring(int base, int range, int valley, int gehlen)
+{
+    int lvl = base + rn2(range),
+        ring = valley + ((lvl - 1) * (gehlen - 1) + 8) / 16;
+
+    if (ring < valley + 1)
+        ring = valley + 1;
+    if (ring > valley + gehlen - 3)
+        ring = valley + gehlen - 3;
+    return ring;
 }
 
 /*
@@ -745,6 +782,39 @@ ow_init(void)
         dn_fake2 = ow_dnum_named("The Hollow Tower"),
         dn_vlad = ow_dnum_named("Vlad's Tower"),
         dn_gates = ow_dnum_named("The Gates of Moloch");
+    /* the extra special levels of Slash'EM, Hack'EM and EvilHack; those
+       that only exist in some games have no dungeon (dnum -1) otherwise */
+    static const struct extra_branch {
+        const char *dname;
+        short base, range; /* as in the source's dungeon.def */
+        char how;          /* d: straight depth, s: Slash'EM's middle
+                              dungeon, squeezed; h: Slash'EM's Gehennom */
+        char levels;       /* the branch's levels start one ring deeper */
+    } extras[] = {
+        { "Goblin Town", 2, 2, 'd', 1 },          /* EvilHack */
+        { "The Mall", 5, 2, 'd', 0 },             /* Slash'EM, 75% */
+        { "The Rat King's Lair", 10, 2, 'd', 0 }, /* 50% */
+        { "The Kobold King's Lair", 11, 2, 'd', 0 }, /* 50% */
+        { "Grund's Stronghold", 12, 2, 'd', 0 },
+        { "Aphrodite's Garden", 8, 17, 'd', 0 },  /* Hack'EM, 45% */
+        { "The Nightmare's Lair", 15, 5, 'd', 0 }, /* key quests */
+        { "The Beholder's Lair", 15, 5, 'd', 0 },
+        { "Vecna's Lair", 15, 5, 'd', 0 },
+        { "The Storerooms", 19, 8, 's', 0 },      /* 66% */
+        { "The Wyrm Caves", 20, 2, 's', 1 },
+        { "The Lost Tomb", 21, 4, 's', 0 },
+        { "One-eyed Sam's Market", 22, 2, 's', 0 },
+        { "The Spider Caves", 26, 4, 's', 0 },
+        { "The Adventurers' Guild", 26, 6, 's', 0 }, /* 50% */
+        { "The Sunless Sea", 28, 4, 's', 0 },
+        { "The Temple of Moloch", 32, 4, 's', 0 },
+        { "The Giant Caverns", 32, 4, 's', 0 },
+        { "Frankenstein's Lab", 3, 10, 'h', 0 },
+        { "Yeenoghu's Lair", 2, 5, 'h', 0 },
+        { "Demogorgon's Lair", 2, 5, 'h', 0 },
+        { "Geryon's Lair", 10, 6, 'h', 0 },
+        { "Dispater's Lair", 10, 6, 'h', 0 },
+    };
 
     (void) memset((genericptr_t) &svow, 0, sizeof svow);
     svow.seed = ((unsigned long) rn2(0x7fff) << 15) ^ (unsigned long) rn2(0x7fff)
@@ -799,6 +869,27 @@ ow_init(void)
     ow_add_ring(dn_fake2, fake2, 0);
     ow_add_ring(dn_gates, bottom - 1, 0);
 
+    /* the extra special levels; the ones in the Dungeons of Doom are all
+       outside Medusa's ring, the others inside Gehennom */
+    for (i = 0; i < SIZE(extras); i++) {
+        int dn = ow_dnum_named(extras[i].dname), ring;
+
+        if (dn < 0)
+            continue; /* not in this game */
+        if (extras[i].how == 's') {
+            ring = ow_slash_ring(extras[i].base, extras[i].range, medusa);
+        } else if (extras[i].how == 'h') {
+            ring = ow_slash_hell_ring(extras[i].base, extras[i].range,
+                                      valley, gehlen);
+        } else {
+            ring = extras[i].base + rn2(extras[i].range);
+            if (ring > medusa - 1)
+                ring = medusa - 1;
+        }
+        ow_add_ring(dn, ring, 0);
+        ow_set_dgn_depth(dn, ring + extras[i].levels);
+    }
+
     /* depths of the branch dungeons; stairway branches go one level
        beyond the portal ring, like the classic branch stairs, while the
        single special levels are at the depth of their ring */
@@ -820,15 +911,28 @@ ow_init(void)
     ow_set_dgn_depth(dn_vlad, vlad - 1);  /* entry is the tower's bottom */
     ow_set_dgn_depth(dn_gates, bottom - 1);
 
-    /* spread out rings that share a depth so their portals interleave */
-    for (i = 1; i < svow.nrings; i++) {
-        int j;
+    /* spread out rings that share a depth so their portals interleave
+       evenly: the m rings at one depth all have n portals, so offset the
+       k-th of them by k/m of the angle between two portals */
+    for (i = 0; i < svow.nrings; i++) {
+        int j, m = 0, k = 0;
 
-        for (j = 0; j < i; j++)
-            if (svow.rings[j].ring == svow.rings[i].ring)
-                svow.rings[i].phase = (xint16) ((svow.rings[j].phase
-                                                 + 360 / svow.rings[j].nportals
-                                                       / 2 + 7 * i) % 360);
+        for (j = 0; j < svow.nrings; j++)
+            if (svow.rings[j].ring == svow.rings[i].ring) {
+                if (j < i)
+                    k++;
+                m++;
+            }
+        if (k) {
+            int first;
+
+            for (first = 0; svow.rings[first].ring != svow.rings[i].ring;
+                 first++)
+                continue;
+            svow.rings[i].phase = (xint16) ((svow.rings[first].phase
+                                    + (k * 360) / (svow.rings[i].nportals * m))
+                                   % 360);
+        }
     }
 
     svow.deepest_ring = 1;
@@ -857,6 +961,29 @@ ow_portal_pos(const struct ow_ringinfo *ri, int k, int *px, int *py)
     if (y > cy0 + OW_CHUNK - 5)
         y = cy0 + OW_CHUNK - 5;
     *px = x, *py = y;
+}
+
+/* is one of the portals to the named dungeon near the hero (within the
+   area that counts as "the level" for level-wide effects)? */
+boolean
+ow_portal_nearby(const char *dname)
+{
+    int r, k, px, py, dnum;
+
+    if (!In_overworld || !svow.inited || (dnum = ow_dnum_named(dname)) < 0)
+        return FALSE;
+    for (r = 0; r < svow.nrings; r++) {
+        struct ow_ringinfo *ri = &svow.rings[r];
+
+        if (ri->dnum != dnum)
+            continue;
+        for (k = 0; k < ri->nportals; k++) {
+            ow_portal_pos(ri, k, &px, &py);
+            if (abs(px - u.ux) <= OW_LOCAL_RX && abs(py - u.uy) <= OW_LOCAL_RY)
+                return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 /* for #overview and similar: the dungeon reached by the portal at <x,y> */
@@ -2864,9 +2991,15 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
         {
             struct monst *mtmp;
 
-            for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
-                if (!DEADMONSTER(mtmp) && mtmp->data->msound == MS_LEADER)
+            for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+                if (DEADMONSTER(mtmp))
+                    continue;
+                if (mtmp->data->msound == MS_LEADER)
                     fprintf(fp, "leader %d,%d\n", mtmp->mx, mtmp->my);
+                fprintf(fp, "mon %d,%d %d %d %d %s\n", mtmp->mx, mtmp->my,
+                        (int) mtmp->mpeaceful, (int) mtmp->isshk,
+                        (int) mtmp->m_lev, pmname(mtmp->data, Mgender(mtmp)));
+            }
         }
         fclose(fp);
         return;
@@ -3110,6 +3243,13 @@ ow_world_dump(void)
                 svow.rings[r].nportals);
     fprintf(fp, "barrier ring %d, max ring %d\n", svow.barrier_ring,
             svow.max_ring);
+    for (r = 0; r < svow.nrings; r++)
+        for (k = 0; k < svow.rings[r].nportals; k++) {
+            ow_portal_pos(&svow.rings[r], k, &px, &py);
+            fprintf(fp, "ringportal %d %d %d %d %s\n", svow.rings[r].dnum,
+                    svow.rings[r].ring, px, py,
+                    ow_portal_dest_name(svow.rings[r].dnum));
+        }
     for (y = 0; y < OW_SIZE / 8; y += 2) { /* half vertical resolution */
         for (x = 0; x < OW_SIZE / 8; x++)
             fputc(grid[y][x], fp);

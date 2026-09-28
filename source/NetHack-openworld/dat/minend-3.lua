@@ -45,6 +45,8 @@ des.door("closed",73,5)
 des.door("closed",2,15)
 des.mazewalk({ x=36, y=8, dir="west", stocked=false })
 des.stair("up", 42,8)
+-- Open world (as in Hack'EM): down to the Gnome King's level
+des.stair("down", place[3])
 des.wallify()
 
 -- Objects
