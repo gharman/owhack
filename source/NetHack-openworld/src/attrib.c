@@ -34,6 +34,14 @@ static const struct innate {
                  { 15, &(HStealth), "stealthy", "" },
                  { 0, 0, 0, 0 } },
 
+  /* Cartographers also have the "surveyor's eye" from level 1 (terrain
+     near them is mapped as they move; see survey_surroundings()) */
+  car_abil[] = { { 3, &(HSearching), "perceptive", "" },
+                 { 7, &(HFast), "quick", "slow" },
+                 { 11, &(HClairvoyant), "clairvoyant", "" },
+                 { 15, &(HWarning), "sensitive", "" },
+                 { 0, 0, 0, 0 } },
+
   cav_abil[] = { { 7, &(HFast), "quick", "slow" },
                  { 15, &(HWarning), "sensitive", "" },
                  { 0, 0, 0, 0 } },
@@ -794,6 +802,7 @@ role_abil(int r)
     } roleabils[] = {
         { PM_ARCHEOLOGIST, arc_abil },
         { PM_BARBARIAN, bar_abil },
+        { PM_CARTOGRAPHER, car_abil },
         { PM_CAVE_DWELLER, cav_abil },
         { PM_HEALER, hea_abil },
         { PM_KNIGHT, kni_abil },

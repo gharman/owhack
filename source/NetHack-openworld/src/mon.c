@@ -477,6 +477,9 @@ genus(int mndx, int mode)
     case PM_CHIEFTAIN:
         mndx = mode ? PM_BARBARIAN : PM_HUMAN;
         break;
+    case PM_SURVEYOR:
+        mndx = mode ? PM_CARTOGRAPHER : PM_HUMAN;
+        break;
     case PM_NEANDERTHAL:
         mndx = mode ? PM_CAVE_DWELLER : PM_HUMAN;
         break;
@@ -868,21 +871,25 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_LIZARD: case PM_CHAMELEON: case PM_CROCODILE:
     case PM_SALAMANDER: case PM_LONG_WORM_TAIL:
 
-    case PM_ARCHEOLOGIST: case PM_BARBARIAN: case PM_CAVE_DWELLER:
+    case PM_ARCHEOLOGIST: case PM_BARBARIAN: case PM_CARTOGRAPHER:
+    case PM_CAVE_DWELLER:
     case PM_HEALER: case PM_KNIGHT: case PM_MONK: case PM_CLERIC:
     case PM_RANGER: case PM_ROGUE: case PM_SAMURAI: case PM_TOURIST:
     case PM_VALKYRIE: case PM_WIZARD:
 
-    case PM_LORD_CARNARVON: case PM_PELIAS: case PM_SHAMAN_KARNOV:
+    case PM_LORD_CARNARVON: case PM_PELIAS: case PM_ANAXIMANDER:
+    case PM_SHAMAN_KARNOV:
     case PM_HIPPOCRATES: case PM_KING_ARTHUR: case PM_GRAND_MASTER:
     case PM_ARCH_PRIEST: case PM_ORION: case PM_MASTER_OF_THIEVES:
     case PM_LORD_SATO: case PM_TWOFLOWER: case PM_NORN:
     case PM_NEFERET_THE_GREEN: case PM_MINION_OF_HUHETOTL:
-    case PM_THOTH_AMON: case PM_CHROMATIC_DRAGON: case PM_CYCLOPS:
+    case PM_THOTH_AMON: case PM_ASTERION: case PM_CHROMATIC_DRAGON:
+    case PM_CYCLOPS:
     case PM_IXOTH: case PM_MASTER_KAEN: case PM_NALZOK:
     case PM_SCORPIUS: case PM_MASTER_ASSASSIN: case PM_ASHIKAGA_TAKAUJI:
     case PM_LORD_SURTUR: case PM_DARK_ONE: case PM_STUDENT:
-    case PM_CHIEFTAIN: case PM_NEANDERTHAL: case PM_ATTENDANT:
+    case PM_CHIEFTAIN: case PM_SURVEYOR: case PM_NEANDERTHAL:
+    case PM_ATTENDANT:
     case PM_PAGE: case PM_ABBOT: case PM_ACOLYTE: case PM_HUNTER:
     case PM_THUG: case PM_NINJA: case PM_ROSHI: case PM_GUIDE:
     case PM_WARRIOR: case PM_APPRENTICE:
@@ -2131,7 +2138,8 @@ mon_allowflags(struct monst *mtmp)
     /* unicorn may not be able to avoid hero on a noteleport level */
     if (is_unicorn(mtmp->data) && !noteleport_level(mtmp))
         allowflags |= NOTONL;
-    if (is_human(mtmp->data) || mtmp->data == &mons[PM_MINOTAUR])
+    if (is_human(mtmp->data) || mtmp->data == &mons[PM_MINOTAUR]
+        || mtmp->data == &mons[PM_ASTERION])
         allowflags |= ALLOW_SSM;
     if ((is_undead(mtmp->data) && mtmp->data->mlet != S_GHOST)
         || is_vampshifter(mtmp))
@@ -5899,6 +5907,7 @@ usmellmon(struct permonst *mdat)
         switch (mndx) {
         case PM_ROTHE:
         case PM_MINOTAUR:
+        case PM_ASTERION:
             You("notice a bovine smell.");
             msg_given = TRUE;
             break;

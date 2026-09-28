@@ -110,6 +110,49 @@ const struct Role roles[NUM_ROLES+1] = {
       A_INT,
       SPE_HASTE_SELF,
       -4 },
+    { { "Cartographer", 0 },
+      { { "Scribbler", 0 },
+        { "Draughtsman", "Draughtswoman" },
+        { "Wayfinder", 0 },
+        { "Explorer", 0 },
+        { "Chartmaker", 0 },
+        { "Pathfinder", 0 },
+        { "Geographer", 0 },
+        { "Cosmographer", 0 },
+        { "Master Cartographer", 0 } },
+      "Janus", "Terminus", "_Trivia", /* Roman: doorways, boundaries,
+                                         crossroads */
+      "Car",
+      "the Hall of Charts",
+      "the Edge of the Map",
+      PM_CARTOGRAPHER,
+      PM_PONY,
+      PM_ANAXIMANDER,
+      PM_SURVEYOR,
+      PM_ASTERION,
+      PM_UMBER_HULK,
+      NON_PM,
+      S_UMBER,
+      S_QUADRUPED,
+      ART_CELESTIAL_SEXTANT,
+      MH_HUMAN | MH_ELF | MH_DWARF | MH_GNOME | MH_CENTAUR | MH_TORTLE
+          | MH_GHOST | ROLE_MALE | ROLE_FEMALE | ROLE_LAWFUL | ROLE_NEUTRAL
+          | ROLE_CHAOTIC,
+      /* Str Int Wis Dex Con Cha */
+      { 7, 10, 9, 9, 8, 7 },
+      { 10, 25, 20, 20, 20, 5 },
+      /* Init   Lower  Higher */
+      { 12, 0, 0, 8, 1, 0 }, /* Hit points */
+      { 2, 2, 0, 2, 0, 2 },
+      12, /* Energy */
+      10,
+      4,
+      0,
+      2,
+      10,
+      A_INT,
+      SPE_MAGIC_MAPPING,
+      -4 },
     { { "Caveman", "Cavewoman" },
       { { "Troglodyte", 0 },
         { "Aborigine", 0 },
@@ -2862,10 +2905,12 @@ setup_rolemenu(
     anything any;
     int i;
     boolean role_ok;
-    char thisch, lastch = '\0', rolenamebuf[50];
+    char thisch, rolenamebuf[50];
+    boolean used[128]; /* menu selectors already assigned */
     int clr = NO_COLOR;
 
     any = cg.zeroany; /* zero out all bits */
+    (void) memset((genericptr_t) used, 0, sizeof used);
     for (i = 0; roles[i].name.m; i++) {
         /* role can be constrained by any of race, gender, or alignment */
         role_ok = (ok_role(i, race, gend, algn)
@@ -2878,9 +2923,23 @@ setup_rolemenu(
             any.a_int = i + 1;
         else
             any.a_string = roles[i].name.m;
+        /* first letter of the role's name, capitalized if another role
+           already has it (Cartographer 'c', Caveman 'C'); if there are
+           more roles than that with the same initial, use the first
+           letter of the name that isn't taken yet */
         thisch = lowc(*roles[i].name.m);
-        if (thisch == lastch)
+        if (used[(uchar) thisch & 0x7f])
             thisch = highc(thisch);
+        if (used[(uchar) thisch & 0x7f]) {
+            const char *p;
+
+            thisch = '\0';
+            for (p = roles[i].name.m + 1; *p && !thisch; p++)
+                if (letter(*p) && !used[(uchar) lowc(*p) & 0x7f])
+                    thisch = lowc(*p);
+        }
+        if (thisch)
+            used[(uchar) thisch & 0x7f] = TRUE;
         Strcpy(rolenamebuf, roles[i].name.m);
         if (roles[i].name.f) {
             /* role has distinct name for female (C,P) */
@@ -2899,7 +2958,6 @@ setup_rolemenu(
                  ATR_NONE, clr, an(rolenamebuf),
                  (!filtering && !role_ok)
                     ? MENU_ITEMFLAGS_SELECTED : MENU_ITEMFLAGS_NONE);
-        lastch = thisch;
     }
 }
 

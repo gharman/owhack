@@ -116,6 +116,16 @@ static NEARDATA struct artifact artilist[] = {
       0, 8, 1500L, NO_COLOR, CLEAVER),
 
     /*
+     *      Pathfinder, the Cartographers' walking staff, quickens the step
+     *      of whoever wields it and can be invoked to cross the world in
+     *      a single stride (a controlled level teleport).
+     */
+    A("Pathfinder", QUARTERSTAFF, (SPFX_RESTR | SPFX_FAST), 0, 0,
+      PHYS(5, 6), NO_DFNS, NO_CARY, PATHFINDING, A_NEUTRAL, PM_CARTOGRAPHER,
+      NON_PM,
+      0, 7, 2500L, NO_COLOR, PATHFINDER),
+
+    /*
      *      Grimtooth glows in warning when elves are present, but its
      *      damage bonus applies to all targets rather than just elves
      *      (handled as special case in spec_dbon()).
@@ -228,6 +238,14 @@ static NEARDATA struct artifact artilist[] = {
       PHYS(5, 0), NO_DFNS, NO_CARY, LEVITATION, A_NEUTRAL, PM_BARBARIAN,
       NON_PM,
       0, 12, 2500L, NO_COLOR, HEART_OF_AHRIMAN),
+
+    /* the Celestial Sextant can be applied like an ordinary sextant, but
+       its sightings are always true, even underground */
+    A("The Celestial Sextant", SEXTANT,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), 0, 0,
+      NO_ATTK, NO_DFNS, CARY(AD_MAGM), CHARTING, A_NEUTRAL, PM_CARTOGRAPHER,
+      NON_PM,
+      0, 12, 3500L, NO_COLOR, CELESTIAL_SEXTANT),
 
     A("The Sceptre of Might", MACE,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_DALIGN), 0, 0, PHYS(5, 0),

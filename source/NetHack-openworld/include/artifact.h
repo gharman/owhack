@@ -41,6 +41,7 @@
 #define SPFX_XRAY   0x02000000L /* gives X-RAY vision to player */
 #define SPFX_REFLECT 0x04000000L /* Reflection */
 #define SPFX_PROTECT 0x08000000L /* Protection */
+#define SPFX_FAST   0x10000000L /* Speed (like speed boots) */
 
 struct artifact {
     short otyp;
@@ -74,7 +75,9 @@ enum invoke_prop_types {
     FLING_POISON,
     FIRESTORM,
     SNOWSTORM,
-    BLINDING_RAY
+    BLINDING_RAY,
+    CHARTING,     /* map the neighborhood and the nearby portal rings */
+    PATHFINDING   /* controlled level teleport */
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items
