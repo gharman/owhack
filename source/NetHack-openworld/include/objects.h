@@ -971,6 +971,9 @@ TOOL("figurine",            NoDes, 1, 0, 1, 0, 25, 50, 80, MINERAL, HI_MINERAL,
         /* monster type specified by obj->corpsenm */
 TOOL("magic marker",        NoDes, 1, 0, 1, 1, 15,  2, 50, PLASTIC, CLR_RED,
                                                                 MAGIC_MARKER),
+/* a navigator's instrument for taking sightings of the sky (see cartog.c) */
+TOOL("sextant",             NoDes, 1, 0, 0, 0,  5, 10,100, COPPER, HI_COPPER,
+                                                                SEXTANT),
 /* traps */
 TOOL("land mine",           NoDes, 1, 0, 0, 0, 0, 200,180, IRON, CLR_RED,
                                                                 LAND_MINE),

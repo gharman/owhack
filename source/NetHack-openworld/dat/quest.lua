@@ -650,6 +650,246 @@ magic portal which brought you here."]],
          text = "\"Tell us, %p, have you fared well on your great quest?\"",
       },
    },
+   Car = {
+      assignquest = {
+         synopsis = "[%nC has stolen %o and is folding the roads of the world into %nj Labyrinth.  Pass through %i, defeat %ni and bring %O back.]",
+         output = "text",
+         text = [["You have come not a moment too soon, %p.
+
+"Our greatest treasure, %o, has been stolen.  With it
+the first of our Society took the sightings that fixed every road of
+the world in its place, and with it we have kept them there ever since.
+Now it is in the hands of %n, the Minotaur of the Labyrinth.
+
+"%nC was never content with a maze of stone.  With %o
+to guide %ni, %nh is folding the roads of the world into %nj
+Labyrinth, one by one.  Already the land at %i is coming
+unmoored: paths that led somewhere now lead back upon themselves, and
+the coast that we charted last spring is no longer where we drew it.
+
+"Go to %i.  Beyond it you will find the way down into the
+Labyrinth, and at its heart, %n.  Defeat %ni, and bring
+%o back to me, before there is no world left to map.
+
+"May %d guide your steps."]],
+      },
+      badalign = {
+         synopsis = "[\"You have strayed from the %a path.  Set your bearings right and return.\"]",
+         output = "text",
+         text = [["%pC, a map is only as true as the hand that draws it, and
+yours has wandered from the %a path.  I cannot send you into the
+Labyrinth with a false compass in your heart.
+
+"Go, and come back when you have set your bearings right."]],
+      },
+      badlevel = {
+         synopsis = "[\"You are too inexperienced.  Return when you are %Ra.\"]",
+         output = "text",
+         text = [["%p, you are still only %ra.  %nC has lost better
+cartographers than you in the dark of %nj Labyrinth.
+
+"Go out into the world and fill in more of its blank places.  When you
+have become %Ra, come back to me."]],
+      },
+      discourage = {
+         "\"Every road leads here in the end, %p.  I have seen to that.\"",
+         "\"You wander my halls like a lost calf.  Shall I show you the way out?\"",
+         "\"%lC drew the world.  I shall fold it up and swallow it.\"",
+         "\"There is no map of the Labyrinth.  I have eaten every one that was ever drawn.\"",
+         "\"Turn left, %c.  Or was it right?  It makes no difference in here.\"",
+         "\"They shut me in the dark for a thousand years.  Now the world shall share it.\"",
+         "\"Your little sextant cannot find the stars from down here.\"",
+         "\"%d has lost your trail, %p.  No god can follow you through my Labyrinth.\"",
+         "\"The last of %ls surveyors made a fine supper.  You will make a finer one.\"",
+         "\"Bellow for help if you like.  My walls will carry it somewhere else.\"",
+      },
+      encourage = {
+         "\"%nC pays no heed to Elbereth, any more than other minotaurs do.  Do not trust to it.\"",
+         "\"Mark your way in the Labyrinth.  It is easy to go round in circles there.\"",
+         "\"The walls of the Labyrinth cannot be dug, but the land at %i may yet be.\"",
+         "\"Keep your sextant close.  It can tell you where you are even when your eyes cannot.\"",
+         "\"%nC has great horns and a greater axe.  Keep your distance if you can.\"",
+         "\"The umber hulks that serve %n can muddle your wits with a look.\"",
+         "\"You may be able to sense %o when you are near.\"",
+         "\"Call upon %d when you face %n.\"",
+         "\"I will have my %gp watch for your return.\"",
+         "\"A true map is drawn by a true hand.  Stay on the %a path.\"",
+      },
+      firsttime = {
+         synopsis = "[You arrive at %H, but its grounds are trampled and the gate stands open.]",
+         output = "text",
+         text = [[You step out of the magic portal into the garden of %H.
+Salt wind comes off the western sea, and the great dome of the
+observatory rises above the rooftops just as you remember it.
+
+But the lawns are trampled and torn, as if something has been digging
+beneath them, the gate of the Hall stands open, and there are no
+surveyors walking the shore.  Strange beasts roam the grounds.]],
+      },
+      goal_alt = {
+         text = "Once more you stand at the heart of the Labyrinth.",
+      },
+      goal_first = {
+         synopsis = "[You have come to the heart of the Labyrinth, and you can feel the pull of %o.]",
+         output = "text",
+         text = [[You have come to the heart of the Labyrinth.  The walls here wind in
+great rings, closer and closer, and the air is heavy with the smell
+of cattle and old blood.
+
+Somewhere ahead you can feel the steady, patient pull of %o,
+as true as a compass needle.]],
+      },
+      goal_next = {
+         text = "The pull of %o draws you on, towards the heart of the Labyrinth.",
+      },
+      gotit = {
+         synopsis = "[You can feel every road in the world, taut and true.  You must return %o to %l.]",
+         output = "text",
+         text = [[As you lift %o, the Labyrinth shudders around you.
+For a moment you can feel every road in the world, taut and true, like
+the lines of a well-drawn chart.
+
+You must take %o back to %l before the roads
+can slip again.]],
+      },
+      guardtalk_after = {
+         "\"Welcome back!  The coast has stayed where we drew it ever since you left.\"",
+         "\"Is it true that you found your way out of the Labyrinth without a thread?\"",
+         "\"%lC says that the next atlas of the world will have your name on its title page.\"",
+         "\"I walked the eastern road this morning.  It still goes east!\"",
+         "\"Now that %o is home, perhaps I can finish my chart of the shoreline.\"",
+      },
+      guardtalk_before = {
+         "\"I measured the same meadow three times yesterday, and got three different answers.\"",
+         "\"The eastern road left by the gate this morning and came back in by the pier.\"",
+         "\"Don't go down to the pier after dark.  Something big comes up out of the sea.\"",
+         "\"%lC has not slept since %o was taken.\"",
+         "\"They say that %n has eaten every map of the Labyrinth that was ever drawn.\"",
+      },
+      hasamulet = {
+         synopsis = "[\"Take the Amulet back to the centre of the world and offer it on the high altar of %d.\"]",
+         output = "text",
+         text = [["You have it!  %pC, you hold the Amulet of Yendor itself.
+
+"Then there is one last road for you to walk.  The centre of the world
+is the one place that no Labyrinth can ever move.  Go back to it, to
+the high altar of %d that stands there among the altars of the
+three gods, and offer the Amulet upon it.  That is where your journey
+ends.
+
+"You know the way.  A cartographer always knows the way home."]],
+      },
+      killed_nemesis = {
+         synopsis = "[%nC falls, and the Labyrinth grows still.]",
+         output = "text",
+         text = [[%nC crashes to the ground with a bellow that echoes down every
+passage of the Labyrinth, and then is still.  Somewhere far above, you
+fancy that you can hear the roads of the world settling back into their
+places.]],
+      },
+      leader_first = {
+         synopsis = "[\"%pC!  I have need of the best cartographer that the Society has trained.\"]",
+         output = "text",
+         text = [["%p!  I had hoped that it would be you who answered.  Come,
+stand in the light of the dome and let me look at you.
+
+"I have need of the best cartographer that the Society has ever trained,
+and there is very little time to find out whether you are ready."]],
+      },
+      leader_last = {
+         synopsis = "[\"%pC, you have failed us.  Begone!\"]",
+         output = "text",
+         text = [["%p, you have failed us.  You have lost your way, and I no
+longer know where it leads.
+
+"Begone from %H.  Your name shall be struck from the rolls of
+the Society, and from every chart that bears it."]],
+      },
+      leader_next = {
+         text = [["Once again you stand before me, %p.  Let me see whether
+your travels have taught you what you need to know."]],
+      },
+      leader_other = {
+         text = [["Back again, %p?  Let us see whether you are ready at last
+to face %n."]],
+      },
+      locate_first = {
+         synopsis = "[The land comes apart into rifts and mazes.  This must be %i.]",
+         output = "text",
+         text = [[The road ends.  Beyond this point the land is no longer sure of
+itself: the ground is split by rifts that open onto nothing, and the
+paths wind back upon themselves as though the country were being
+folded into a maze.
+
+This must be %i.  Somewhere beyond it lies the way
+down into the Labyrinth.]],
+      },
+      locate_next = {
+         text = "Once again you stand at %i, where the land comes apart.",
+      },
+      nemesis_first = {
+         synopsis = "[\"So %l sends another surveyor into my halls.  Your road ends here.\"]",
+         output = "text",
+         text = [["So %l sends another surveyor into my halls.  Welcome,
+little %c.  I have been expecting you ever since I took
+%o.
+
+"Did your master tell you that every road ends in the Labyrinth now?
+Yours ends here."]],
+      },
+      nemesis_next = {
+         synopsis = "[\"You found your way back, %p?  You will not find it out again.\"]",
+         output = "text",
+         text = [["You found your way back to me, %p?  Clever calf.
+
+"You will not find it out again."]],
+      },
+      nemesis_other = {
+         text = "\"Round and round you go, %p, and every turning brings you back to me.\"",
+      },
+      nemesis_wantsit = {
+         text = "\"Give me %o, thief!  The roads of the world are mine now!\"",
+      },
+      nexttime = {
+         text = "Once again, you are back at %H.",
+      },
+      offeredit = {
+         synopsis = "[%lC tells you to keep %o and guard it well.]",
+         output = "text",
+         text = [[%lC takes %o in both hands and raises it to
+the light of the dome.  All around you the charts on the walls seem to
+settle, as if a great breath had been let go at last.
+
+"You have done it, %p.  You have defeated %n and brought
+%o home, and the roads of the world are fixed again.
+
+"But I am old, and %n was not the only power in the world
+that would move its roads if it could.  Keep %o with you,
+and keep it true.  You will need it on the long journey that still lies
+before you.
+
+"May %d guide your every step."]],
+      },
+      offeredit2 = {
+         synopsis = "[\"Keep %o with you and continue your search for the Amulet.\"]",
+         output = "text",
+         text = [["Mind %o, %p!  It is not a trinket to be dropped in a
+ditch.  It is yours to keep now.
+
+"Go on with your search for the Amulet.  The open world is waiting for
+you beyond the portal that brought you here."]],
+      },
+      othertime = {
+         text = [[You are back at %H.
+You have the feeling that this may be the last time you ever come here.]],
+      },
+      posthanks = {
+         synopsis = "[\"Welcome back, %p.  How goes your search for the Amulet of Yendor?\"]",
+         output = "text",
+         text = [["Welcome back, %p.  How goes your search for the Amulet of
+Yendor?  Have you found out yet where in the world it lies?"]],
+      },
+   },
    Cav = {
       assignquest = {
          synopsis = "[Find and defeat %n, recover %o, and return with it.]",

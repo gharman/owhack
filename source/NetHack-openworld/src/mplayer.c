@@ -171,6 +171,18 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
+        case PM_CARTOGRAPHER:
+            if (rn2(4))
+                weapon = QUARTERSTAFF;
+            else if (rn2(2))
+                weapon = rn2(2) ? SHORT_SWORD : DAGGER;
+            if (rn2(4))
+                helm = HELM_OF_BRILLIANCE;
+            if (rn2(2))
+                (void) mongets(mtmp, SEXTANT);
+            if (rn2(3))
+                (void) mongets(mtmp, SCR_MAGIC_MAPPING);
+            break;
         case PM_CAVE_DWELLER:
             if (rn2(4))
                 weapon = MACE;

@@ -2998,6 +2998,8 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
                     continue;
                 if (mtmp->data->msound == MS_LEADER)
                     fprintf(fp, "leader %d,%d\n", mtmp->mx, mtmp->my);
+                else if (mtmp->data->msound == MS_NEMESIS)
+                    fprintf(fp, "nemesis %d,%d\n", mtmp->mx, mtmp->my);
                 fprintf(fp, "mon %d,%d %d %d %d %s\n", mtmp->mx, mtmp->my,
                         (int) mtmp->mpeaceful, (int) mtmp->isshk,
                         (int) mtmp->m_lev, pmname(mtmp->data, Mgender(mtmp)));
@@ -3011,6 +3013,19 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
                                 (int) otmp->spe, otmp->owornmask);
                 }
             }
+        }
+        {
+            struct obj *otmp;
+            struct monst *mtmp;
+
+            for (otmp = fobj; otmp; otmp = otmp->nobj)
+                if (otmp->oartifact && otmp->oartifact == gu.urole.questarti)
+                    fprintf(fp, "questarti %d,%d\n", otmp->ox, otmp->oy);
+            for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+                for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+                    if (!DEADMONSTER(mtmp) && otmp->oartifact
+                        && otmp->oartifact == gu.urole.questarti)
+                        fprintf(fp, "questarti %d,%d\n", mtmp->mx, mtmp->my);
         }
         fclose(fp);
         return;
@@ -3187,6 +3202,58 @@ ow_overview_lines(winid win)
                 ow_biome_name(ow_biome_at(u.ux, u.uy)));
         add_menu_str(win, buf);
     }
+}
+
+/* ------------------------------------------------------------------ */
+/* cartography (the sextant and the Celestial Sextant; see cartog.c)   */
+/* ------------------------------------------------------------------ */
+
+/* location of portal #k of ring #r (an index into svow.rings[]) */
+void
+ow_ring_portal_pos(int r, int k, int *px, int *py)
+{
+    ow_portal_pos(&svow.rings[r], k, px, py);
+}
+
+/* does the hero know about ring #r's portals?  (the same test as for
+   #overview: one of them is on the hero's map, or the hero has used one
+   or has been to the place that they lead to) */
+boolean
+ow_ring_known(int r)
+{
+    const struct ow_ringinfo *ri;
+    int k, px, py;
+
+    if (r < 0 || r >= svow.nrings)
+        return FALSE;
+    ri = &svow.rings[r];
+    if (ri->dnum < 0 || ri->dnum >= svn.n_dgns)
+        return FALSE;
+    if (ow_find_portrec(ri->dnum) || svd.dungeons[ri->dnum].dunlev_ureached)
+        return TRUE;
+    /* can only consult the map while it's loaded */
+    if (In_overworld)
+        for (k = 0; k < ri->nportals; k++) {
+            ow_portal_pos(ri, k, &px, &py);
+            if (isok(px, py) && glyph_is_trap(levl[px][py].glyph))
+                return TRUE;
+        }
+    return FALSE;
+}
+
+/* the overworld location of the portal that the hero will come back out
+   at when leaving the current branch, if known */
+boolean
+ow_branch_origin(coordxy *x, coordxy *y)
+{
+    struct ow_portalrec *pr;
+
+    if (In_overworld || !svow.inited)
+        return FALSE;
+    if ((pr = ow_find_portrec(ow_root_branch(u.uz.dnum))) == 0)
+        return FALSE;
+    *x = pr->x, *y = pr->y;
+    return TRUE;
 }
 
 /* test hook: keep the dump current even outside the overworld */

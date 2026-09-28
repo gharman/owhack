@@ -771,6 +771,7 @@ num_horns(struct permonst *ptr)
     switch (monsndx(ptr)) {
     case PM_HORNED_DEVIL: /* ? "more than one" */
     case PM_MINOTAUR:
+    case PM_ASTERION:
     case PM_ASMODEUS:
     case PM_BALROG:
         return 2;
@@ -1379,6 +1380,7 @@ static const short grownups[][2] = {
     { PM_WATCHMAN, PM_WATCH_CAPTAIN },
     { PM_ALIGNED_CLERIC, PM_HIGH_CLERIC },
     { PM_STUDENT, PM_ARCHEOLOGIST },
+    { PM_SURVEYOR, PM_CARTOGRAPHER },
     { PM_ATTENDANT, PM_HEALER },
     { PM_PAGE, PM_KNIGHT },
     { PM_ACOLYTE, PM_CLERIC },

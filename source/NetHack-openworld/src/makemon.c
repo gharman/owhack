@@ -183,6 +183,14 @@ m_initweap(struct monst *mtmp)
      */
     switch (ptr->mlet) {
     case S_GIANT:
+        if (mm == PM_ASTERION) {
+            /* the labrys, the double axe that gave the Labyrinth its name */
+            otmp = mksobj(BATTLE_AXE, FALSE, FALSE);
+            otmp->spe = rnd(3);
+            otmp->oerodeproof = 1;
+            (void) mpickobj(mtmp, otmp);
+            break;
+        }
         if (rn2(2))
             (void) mongets(mtmp, (mm != PM_ETTIN) ? BOULDER : CLUB);
         if ((mm != PM_ETTIN) && !rn2(5))
@@ -313,6 +321,20 @@ m_initweap(struct monst *mtmp)
                     (void) mongets(mtmp, BOW);
                     m_initthrow(mtmp, ARROW, 12);
                 }
+                break;
+            case PM_SURVEYOR:
+                (void) mongets(mtmp, rn2(3) ? QUARTERSTAFF : SHORT_SWORD);
+                if (rn2(3))
+                    (void) mongets(mtmp, rn2(2) ? LEATHER_ARMOR
+                                                : LEATHER_JACKET);
+                if (rn2(2))
+                    (void) mongets(mtmp, LOW_BOOTS);
+                if (!rn2(3)) {
+                    (void) mongets(mtmp, SLING);
+                    m_initthrow(mtmp, FLINT, 10);
+                }
+                if (!rn2(4))
+                    (void) mongets(mtmp, SEXTANT);
                 break;
             case PM_HUNTER:
                 (void) mongets(mtmp, rn2(3) ? SHORT_SWORD : DAGGER);

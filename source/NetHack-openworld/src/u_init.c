@@ -65,6 +65,21 @@ static const struct trobj Barbarian_1[] = {
     { FOOD_RATION, 0, FOOD_CLASS, 1, 1, 0 },
     { 0, 0, 0, 0, 0, 0 }
 };
+static const struct trobj Cartographer[] = {
+    { QUARTERSTAFF, 1, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
+    { SLING, 0, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
+    { FLINT, 0, GEM_CLASS, 10, 19, UNDEF_BLESS },
+    { LEATHER_ARMOR, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { LOW_BOOTS, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { OIL_LAMP, 1, TOOL_CLASS, 1, 1, 0 },
+    { MAGIC_MARKER, 19, TOOL_CLASS, 1, 1, 0 }, /* actually spe = 18 + d4 */
+    { SCR_BLANK_PAPER, 0, SCROLL_CLASS, 3, 3, 0 },
+    { SCR_MAGIC_MAPPING, 0, SCROLL_CLASS, 2, 2, UNDEF_BLESS },
+    { SPE_LIGHT, 0, SPBOOK_CLASS, 1, 1, 1 },
+    { FOOD_RATION, 0, FOOD_CLASS, 2, 2, 0 },
+    { SEXTANT, 0, TOOL_CLASS, 1, 1, 0 },
+    { 0, 0, 0, 0, 0, 0 }
+};
 static const struct trobj Cave_man[] = {
     { CLUB, 1, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
     { SLING, 2, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
@@ -299,6 +314,26 @@ static const struct def_skill Skill_B[] = {
     { P_RIDING, P_BASIC },
     { P_TWO_WEAPON_COMBAT, P_BASIC },
     { P_BARE_HANDED_COMBAT, P_MASTER },
+    { P_NONE, 0 }
+};
+static const struct def_skill Skill_Car[] = {
+    { P_DAGGER, P_SKILLED },
+    { P_KNIFE, P_BASIC },
+    { P_PICK_AXE, P_SKILLED },
+    { P_SHORT_SWORD, P_SKILLED },
+    { P_CLUB, P_BASIC },
+    { P_QUARTERSTAFF, P_EXPERT },
+    { P_SLING, P_EXPERT },
+    { P_CROSSBOW, P_SKILLED },
+    { P_DART, P_SKILLED },
+    { P_BOOMERANG, P_SKILLED },
+    { P_UNICORN_HORN, P_BASIC },
+    { P_DIVINATION_SPELL, P_EXPERT }, /* special spell is magic mapping */
+    { P_ENCHANTMENT_SPELL, P_BASIC },
+    { P_ESCAPE_SPELL, P_SKILLED },
+    { P_MATTER_SPELL, P_BASIC },
+    { P_RIDING, P_EXPERT },
+    { P_BARE_HANDED_COMBAT, P_BASIC },
     { P_NONE, 0 }
 };
 static const struct def_skill Skill_C[] = {
@@ -673,6 +708,23 @@ u_init_role(void)
         knows_class(WEAPON_CLASS); /* excluding polearms */
         knows_class(ARMOR_CLASS);
         break;
+    case PM_CARTOGRAPHER: {
+        struct obj *otmp;
+
+        ini_inv(Cartographer);
+        /* ini_inv() may have made some of the flint stones in pairs;
+           the kit has 10 to 19 of them */
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+            if (otmp->otyp == FLINT) {
+                otmp->quan = (long) rn1(10, 10);
+                otmp->owt = weight(otmp);
+            }
+        knows_object(SEXTANT, FALSE);
+        knows_object(MAGIC_MARKER, FALSE);
+        knows_object(SCR_MAGIC_MAPPING, FALSE); /* pauper_reinit() too */
+        knows_object(SPE_MAGIC_MAPPING, FALSE);
+        break;
+    }
     case PM_CAVE_DWELLER:
         ini_inv(Cave_man);
         break;
@@ -902,6 +954,9 @@ pauper_reinit(void)
     case PM_ARCHEOLOGIST:
         preknown = TOUCHSTONE;
         break;
+    case PM_CARTOGRAPHER:
+        preknown = SCR_MAGIC_MAPPING;
+        break;
     case PM_CAVE_DWELLER:
         preknown = FLINT;
         break;
@@ -1050,6 +1105,9 @@ skills_for_role(void)
         break;
     case PM_BARBARIAN:
         skills = Skill_B;
+        break;
+    case PM_CARTOGRAPHER:
+        skills = Skill_Car;
         break;
     case PM_CAVE_DWELLER:
         skills = Skill_C;

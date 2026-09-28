@@ -446,6 +446,8 @@ moveloop_core(void)
 
     /* open world: keep the overworld generated around the hero */
     ow_maintain();
+    /* Cartographer's surveyor's eye; Celestial Sextant's portal sense */
+    survey_surroundings();
 
     /* the Amulet of Yendor gives a wish when initially picked up */
     if (u.uhave.amulet && !u.uevent.amulet_wish) {

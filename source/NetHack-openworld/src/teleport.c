@@ -89,7 +89,8 @@ goodpos_onscary(
         return FALSE;
     /* creatures who don't (or can't) fear a written Elbereth and weren't
        caught by the minions check */
-    if (mptr == &mons[PM_MINOTAUR] || !haseyes(mptr))
+    if (mptr == &mons[PM_MINOTAUR] || mptr == &mons[PM_ASTERION]
+        || !haseyes(mptr))
         return FALSE;
     return sengr_at("Elbereth", x, y, TRUE) ? TRUE : FALSE;
 }
@@ -1229,10 +1230,24 @@ dotele(
     return 1;
 }
 
+/* set while level_tele() acts for Pathfinder's invocation, which lets the
+   hero choose the destination as if having teleport control */
+static boolean levtele_ctrl_forced = FALSE;
+
+/* a level teleport whose destination the hero chooses (Pathfinder) */
+void
+controlled_level_tele(void)
+{
+    levtele_ctrl_forced = TRUE;
+    level_tele();
+    levtele_ctrl_forced = FALSE;
+}
+
 void
 level_tele(void)
 {
     static const char get_there_from[] = "get there from %s.";
+    boolean tctrl = (Teleport_control || levtele_ctrl_forced);
     int newlev;
     d_level newlevel;
     const char *escape_by_flying = 0; /* when surviving dest of -N */
@@ -1255,7 +1270,7 @@ level_tele(void)
         You_feel("very disoriented for a moment.");
         return;
     }
-    if ((Teleport_control && !Stunned) || wizard) {
+    if ((tctrl && !Stunned) || wizard) {
         char qbuf[BUFSZ];
         int trycnt = 0;
 
@@ -1497,13 +1512,11 @@ level_tele(void)
                     You1(shudder_for_moment);
                     return;
                 }
-                ow_prepare_levtele(newlev, (boolean) (!Teleport_control
-                                                      || Stunned));
+                ow_prepare_levtele(newlev, (boolean) (!tctrl || Stunned));
                 ow_levtele_within(newlev);
                 return;
             }
-            ow_prepare_levtele(newlev, (boolean) (!Teleport_control
-                                                  || Stunned));
+            ow_prepare_levtele(newlev, (boolean) (!tctrl || Stunned));
         } else if (on_level(&newlevel, &u.uz) && newlev != depth(&u.uz)) {
             You_cant(get_there_from,
                      (newlev > deepest) ? "anywhere" : "here");

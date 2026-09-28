@@ -1512,6 +1512,7 @@ attributes_enlightenment(
         if_surroundings_permitted[] = " if surroundings permitted";
     int ltmp, armpro, warnspecies;
     char buf[BUFSZ];
+    struct obj *otmp;
 
     /*\
      *  Attributes
@@ -1638,6 +1639,15 @@ attributes_enlightenment(
         (void) strsubst(buf, " because of ", " if not for ");
         enl_msg(You_, "could be", "could have been", " clairvoyant", buf);
     }
+    if (Role_if(PM_CARTOGRAPHER))
+        you_have("a surveyor's eye",
+                 (Blind || Hallucination) ? ", but can't use it now" : "");
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (is_art(otmp, ART_CELESTIAL_SEXTANT)) {
+            you_are("sensing magic portals nearby",
+                    " because of the Celestial Sextant");
+            break;
+        }
     if (Infravision)
         you_have("infravision", from_what(INFRAVISION));
     if (Detect_monsters) {

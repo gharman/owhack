@@ -319,6 +319,12 @@ extern boolean friday_13th(void);
 extern int night(void);
 extern int midnight(void);
 
+/* ### cartog.c ### */
+
+extern int use_sextant(struct obj *) NONNULLARG1;
+extern void survey_surroundings(void);
+extern int invoke_charting(struct obj *) NONNULLARG1;
+
 /* ### cfgfiles.c ### */
 
 #ifndef __cplusplus
@@ -2452,6 +2458,9 @@ extern int ow_home_dir(void);
 extern char *ow_compass_str(char *);
 extern void ow_draw_compass(void);
 extern boolean ow_compass_covers(int, int);
+extern void ow_ring_portal_pos(int, int, int *, int *);
+extern boolean ow_ring_known(int);
+extern boolean ow_branch_origin(coordxy *, coordxy *);
 extern boolean ow_nearest_portal(coordxy, coordxy, coordxy *, coordxy *,
                                  xint16 *) NONNULLPTRS;
 extern boolean ow_nearest_town(coordxy, coordxy, coordxy *,
@@ -3366,6 +3375,7 @@ extern void scrolltele(struct obj *) NO_NNARGS;
 extern int dotelecmd(void);
 extern int dotele(boolean);
 extern void level_tele(void);
+extern void controlled_level_tele(void);
 extern void domagicportal(struct trap *) NONNULLARG1;
 extern void tele_trap(struct trap *) NONNULLARG1;
 extern void level_tele_trap(struct trap *, unsigned) NONNULLARG1;

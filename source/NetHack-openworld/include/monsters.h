@@ -3788,6 +3788,14 @@
         M1_HUMANOID | M1_OMNIVORE,
         M2_NOPOLY | M2_HUMAN | M2_STRONG | M2_COLLECT, M3_INFRAVISIBLE,
         12, HI_DOMESTIC, BARBARIAN),
+    MON(NAM("cartographer"), S_HUMAN,
+        LVL(10, 12, 10, 1, 0), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 6), ATTK(AT_WEAP, AD_PHYS, 1, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_STRONG | M2_COLLECT, M3_INFRAVISIBLE,
+        12, HI_DOMESTIC, CARTOGRAPHER),
     MON(NAMS("caveman", "cavewoman", "cave dweller"), S_HUMAN,
         LVL(10, 12, 10, 0, 1), G_NOGEN,
         A(ATTK(AT_WEAP, AD_PHYS, 2, 4),
@@ -3909,6 +3917,17 @@
         M2_NOPOLY | M2_HUMAN | M2_PNAME | M2_PEACEFUL | M2_STRONG | M2_MALE
             | M2_COLLECT | M2_MAGIC, M3_CLOSE | M3_INFRAVISIBLE,
         24, HI_LORD, PELIAS),
+    /* the cartographers' leader is named for the Greek philosopher who
+       drew the first map of the whole known world */
+    MON(NAM("Anaximander"), S_HUMAN,
+        LVL(20, 15, 0, 90, 3), (G_NOGEN | G_UNIQ),
+        A(ATTK(AT_WEAP, AD_PHYS, 4, 10), ATTK(AT_MAGC, AD_SPEL, 2, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_LEADER, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_PNAME | M2_PEACEFUL | M2_STRONG | M2_MALE
+            | M2_COLLECT | M2_MAGIC, M3_CLOSE | M3_INFRAVISIBLE,
+        24, HI_LORD, ANAXIMANDER),
     MON(NAM("Shaman Karnov"), S_HUMAN,
         LVL(20, 15, 0, 90, 20), (G_NOGEN | G_UNIQ),
         A(ATTK(AT_WEAP, AD_PHYS, 4, 10), ATTK(AT_MAGC, AD_CLRC, 2, 8),
@@ -4065,6 +4084,18 @@
             | M2_HOSTILE | M2_NASTY | M2_COLLECT | M2_MAGIC,
         M3_WANTSARTI | M3_WAITFORU | M3_INFRAVISIBLE,
         22, HI_LORD, THOTH_AMON),
+    /* Asterion, the Minotaur of the Labyrinth; like any minotaur he pays
+       no heed to Elbereth */
+    MON(NAM("Asterion"), S_GIANT,
+        LVL(18, 15, 0, 50, -10), (G_NOGEN | G_UNIQ),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6), ATTK(AT_BUTT, AD_PHYS, 3, 6),
+          ATTK(AT_CLAW, AD_SAMU, 1, 4), NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1500, 700, MS_NEMESIS, MZ_LARGE), MR_POISON | MR_STONE, 0,
+        M1_HUMANOID | M1_CARNIVORE,
+        M2_NOPOLY | M2_PNAME | M2_MALE | M2_STALK | M2_HOSTILE | M2_STRONG
+            | M2_NASTY | M2_COLLECT,
+        M3_WANTSARTI | M3_WAITFORU | M3_INFRAVISION | M3_INFRAVISIBLE,
+        21, HI_LORD, ASTERION),
     /* Multi-headed, possessing the breath attacks of all the other dragons
      * (selected at random when attacking).  Despite being a superset of
      * gold dragon, does not emit light.  Also does not fly.
@@ -4218,6 +4249,15 @@
         M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_STRONG | M2_COLLECT,
         M3_INFRAVISIBLE,
         7, HI_DOMESTIC, CHIEFTAIN),
+    MON(NAM("surveyor"), S_HUMAN,
+        LVL(5, 12, 10, 10, 0), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_GUARDIAN, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_STRONG | M2_COLLECT,
+        M3_INFRAVISIBLE,
+        7, HI_DOMESTIC, SURVEYOR),
     MON(NAM("neanderthal"), S_HUMAN,
         LVL(5, 12, 10, 10, 1), G_NOGEN,
         A(ATTK(AT_WEAP, AD_PHYS, 2, 4),
