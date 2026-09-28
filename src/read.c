@@ -2120,10 +2120,12 @@ seffect_magic_mapping(struct obj **sobjp)
             return;
         }
         if (sblessed) {
-            coordxy x, y;
+            coordxy x, y, lx, ly, hx, hy;
 
-            for (x = 1; x < COLNO; x++)
-                for (y = 0; y < ROWNO; y++)
+            /* (in the open world's overworld: the neighborhood) */
+            lvl_effect_bounds(&lx, &ly, &hx, &hy);
+            for (x = lx; x <= hx; x++)
+                for (y = ly; y <= hy; y++)
                     if (levl[x][y].typ == SDOOR) {
                         cvt_sdoor_to_door(&levl[x][y]);
                         if (Is_rogue_level(&u.uz))

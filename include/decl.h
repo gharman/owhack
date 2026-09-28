@@ -398,9 +398,12 @@ struct instance_globals_f {
 struct instance_globals_g {
 
     /* display.c */
-    gbuf_entry gbuf[ROWNO][COLNO];
-    coordxy gbuf_start[ROWNO];
-    coordxy gbuf_stop[ROWNO];
+    /* the glyph buffer covers only the viewport (the part of the map
+       that fits in the map window), indexed by viewport row and column;
+       see vp_* in display.c */
+    gbuf_entry gbuf[VP_MAXROWS][VP_MAXCOLS];
+    coordxy gbuf_start[VP_MAXROWS];
+    coordxy gbuf_stop[VP_MAXROWS];
 
     /* do_name.c */
     coordxy getposx, getposy; /* cursor position in case of async resize */
@@ -848,6 +851,7 @@ struct instance_globals_r {
 };
 
 struct instance_globals_s {
+    boolean sounds_local; /* sounds.c: overworld neighborhood sounds */
 
     /* artifact.c */
     int spec_dbon_applies; /* coordinate effects from spec_dbon() with
@@ -1165,7 +1169,7 @@ struct instance_globals_saved_k {
 
 struct instance_globals_saved_l {
     /* decl.c */
-    schar lastseentyp[COLNO][ROWNO]; /* last seen/touched dungeon typ */
+    schar lastseentyp[MAXCOLNO][MAXROWNO]; /* last seen/touched dungeon typ */
     dlevel_t level; /* level map */
     struct linfo level_info[MAXLINFO];
 };

@@ -6,6 +6,7 @@
 
 extern const char what_is_a_location[]; /* from pager.c */
 
+staticfn void getpos_curs(coordxy, coordxy);
 staticfn void getpos_toggle_hilite_state(void);
 staticfn void getpos_getvalids_selection(struct selectionvar *,
                                        boolean (*)(coordxy, coordxy));
@@ -533,6 +534,10 @@ gather_locs(coord **arr_p, int *cnt_p, int gloc)
     for (pass = 0; pass < 2; pass++) {
         for (x = 1; x < COLNO; x++)
             for (y = 0; y < ROWNO; y++) {
+                /* open world: only this part of the overworld */
+                if (In_overworld && !in_lvl_effect_bounds(x, y)
+                    && !vp_shows(x, y))
+                    continue;
                 if (u_at(x, y) || gather_locs_interesting(x, y, gloc)) {
                     if (!pass) {
                         ++*cnt_p;
@@ -656,8 +661,7 @@ auto_describe(coordxy cx, coordxy cy)
                       ? " (invalid target)" : "",
                     (iflags.getloc_travelmode && !is_valid_travelpt(cx, cy))
                       ? " (no travel path)" : "");
-        curs(WIN_MAP, cx, cy);
-        flush_screen(0);
+        getpos_curs(cx, cy);
     }
 }
 
@@ -847,11 +851,7 @@ getpos(coord *ccp, boolean force, const char *goal)
     }
     cx = gg.getposx = ccp->x;
     cy = gg.getposy = ccp->y;
-#ifdef CLIPPING
-    cliparound(cx, cy);
-#endif
-    curs(WIN_MAP, cx, cy);
-    flush_screen(0);
+    getpos_curs(cx, cy);
 #ifdef MAC68K
     lock_mouse_cursor(TRUE);
 #endif
@@ -859,8 +859,7 @@ getpos(coord *ccp, boolean force, const char *goal)
     for (;;) {
         if (show_goal_msg) {
             pline("Move cursor to %s:", goal);
-            curs(WIN_MAP, cx, cy);
-            flush_screen(0);
+            getpos_curs(cx, cy);
             show_goal_msg = FALSE;
         } else if (iflags.autodescribe && !msg_given) {
             auto_describe(cx, cy);
@@ -949,13 +948,13 @@ getpos(coord *ccp, boolean force, const char *goal)
                 getpos_help(force, goal);
             /* ^R: docrt(), hilite_state = default */
             getpos_refresh();
-            curs(WIN_MAP, cx, cy);
+            getpos_curs(cx, cy);
             /* update message window to reflect that we're still targeting */
             show_goal_msg = TRUE;
         } else if (c == gc.Cmd.spkeys[NHKF_GETPOS_SHOWVALID]) {
             if (getpos_hilitefunc) {
                 getpos_toggle_hilite_state();
-                curs(WIN_MAP, cx, cy);
+                getpos_curs(cx, cy);
             }
             show_goal_msg = TRUE; /* we're still targeting */
             goto nxtc;
@@ -1142,11 +1141,7 @@ getpos(coord *ccp, boolean force, const char *goal)
         }
  nxtc:
         gg.getposx = cx, gg.getposy = cy;
-#ifdef CLIPPING
-        cliparound(cx, cy);
-#endif
-        curs(WIN_MAP, cx, cy);
-        flush_screen(0);
+        getpos_curs(cx, cy);
     }
  exitgetpos:
 #ifdef MAC68K
@@ -1158,12 +1153,25 @@ getpos(coord *ccp, boolean force, const char *goal)
     ccp->x = cx;
     ccp->y = cy;
     gg.getposx = gg.getposy = 0;
+    /* stop following the cursor; the map re-centers on the hero */
+    vp_set_focus(0, 0);
     for (i = 0; i < NUM_GLOCS; i++)
         if (garr[i])
             free((genericptr_t) garr[i]);
     getpos_sethilite(NULL, NULL);
     u.dx = udx, u.dy = udy, u.dz = udz;
     return result;
+}
+
+/* position the map cursor for getpos(); if the spot isn't visible, scroll
+   the map so that it is (the map follows the cursor until getpos ends) */
+staticfn void
+getpos_curs(coordxy cx, coordxy cy)
+{
+    if (isok(cx, cy) && !vp_shows(cx, cy))
+        vp_set_focus(cx, cy);
+    flush_screen(0);
+    map_curs(cx, cy);
 }
 
 /*getpos.c*/

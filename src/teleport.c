@@ -8,7 +8,6 @@
 
 staticfn boolean goodpos_onscary(coordxy, coordxy, struct permonst *);
 staticfn boolean tele_jump_ok(coordxy, coordxy, coordxy, coordxy);
-staticfn boolean teleok(coordxy, coordxy, boolean);
 staticfn void vault_tele(void);
 staticfn boolean rloc_pos_ok(coordxy, coordxy, struct monst *);
 staticfn void rloc_to_core(struct monst *, coordxy, coordxy, unsigned);
@@ -23,6 +22,26 @@ m_blocks_teleporting(struct monst *mtmp)
     if (is_dlord(mtmp->data) || is_dprince(mtmp->data))
         return TRUE;
     return FALSE;
+}
+
+/* open world: capacity needed for a list of candidate locations; on the
+   overworld, searches are confined to the neighborhood (see
+   collect_coords()) rather than covering the whole enormous map */
+staticfn int candy_cap(void);
+staticfn coord *candy_alloc(void);
+
+staticfn int
+candy_cap(void)
+{
+    if (In_overworld)
+        return (2 * OW_LOCAL_RX + 3) * (2 * OW_LOCAL_RX + 3);
+    return ROWNO * (COLNO - 1);
+}
+
+staticfn coord *
+candy_alloc(void)
+{
+    return (coord *) alloc((unsigned) candy_cap() * sizeof (coord));
 }
 
 /* teleporting is prevented on this level for this monster? */
@@ -223,7 +242,7 @@ enexto_core(
                              * lava or boulder spots will be considered */
     mmflags_nht entflags)   /* flags for goodpos() */
 {
-    coord candy[ROWNO * (COLNO - 1)]; /* enough room for every location */
+    coord *candy = candy_alloc(); /* enough room for every location */
     int i, nearcandyct, allcandyct;
     struct monst fakemon; /* dummy monster */
     boolean allow_xx_yy = (boolean) ((entflags & GP_ALLOW_XY) != 0);
@@ -246,8 +265,10 @@ enexto_core(
                                  (boolean (*)(coordxy, coordxy)) 0);
     for (i = 0; i < nearcandyct; ++i) {
         *cc = candy[i];
-        if (goodpos(cc->x, cc->y, &fakemon, entflags))
+        if (goodpos(cc->x, cc->y, &fakemon, entflags)) {
+            free((genericptr_t) candy);
             return TRUE;
+        }
     }
 
     /* didn't find a spot; gather coordinates for the whole map except
@@ -259,9 +280,12 @@ enexto_core(
        they will occur in different random order but same overall total */
     for (i = nearcandyct; i < allcandyct; ++i) {
         *cc = candy[i];
-        if (goodpos(cc->x, cc->y, &fakemon, entflags))
+        if (goodpos(cc->x, cc->y, &fakemon, entflags)) {
+            free((genericptr_t) candy);
             return TRUE;
+        }
     }
+    free((genericptr_t) candy);
 
     /* still didn't find a spot; maybe try <xx,yy> itself */
     cc->x = xx, cc->y = yy; /* final value for 'cc' in case we return False */
@@ -387,6 +411,18 @@ tele_jump_ok(coordxy x1, coordxy y1, coordxy x2, coordxy y2)
 {
     if (!isok(x2, y2))
         return FALSE;
+    if (In_overworld) {
+        int dx = x2 - x1, dy = y2 - y1;
+
+        /* only as far as the neighborhood, only onto land that exists,
+           and never through the barrier walling off Gehennom */
+        if (!ow_generated(x2, y2)
+            || ow_past_barrier(x1, y1) != ow_past_barrier(x2, y2))
+            return FALSE;
+        if (x1 && (dx > OW_LOCAL_RX || -dx > OW_LOCAL_RX
+                   || dy > OW_LOCAL_RY || -dy > OW_LOCAL_RY))
+            return FALSE;
+    }
     if (svd.dndest.nlx > 0) {
         /* if inside a restricted region, can't teleport outside */
         if (within_bounded_area(x1, y1, svd.dndest.nlx, svd.dndest.nly,
@@ -416,7 +452,7 @@ tele_jump_ok(coordxy x1, coordxy y1, coordxy x2, coordxy y2)
     return TRUE;
 }
 
-staticfn boolean
+boolean
 teleok(coordxy x, coordxy y, boolean trapok)
 {
     if (!trapok) {
@@ -608,6 +644,9 @@ collect_coords(
     rowrange = (cy < ROWNO / 2) ? (ROWNO - 1 - cy) : cy;
     colrange = (cx < COLNO / 2) ? (COLNO - 1 - cx) : cx;
     k = max(rowrange, colrange);
+    /* open world: in the overworld, "the whole map" is the neighborhood */
+    if (In_overworld)
+        k = min(k, OW_LOCAL_RX);
     /* if no radius limit has been specified, cover the whole map */
     if (!maxradius)
         maxradius = k;
@@ -718,8 +757,18 @@ safe_teleds(int teleds_flags)
 {
     coordxy nux, nuy;
     unsigned cc_flags;
-    coord candy[ROWNO * (COLNO - 1)], backupspot;
+    coord *candy, backupspot;
     int tcnt, candycount;
+
+    if (In_overworld) {
+        coord cc;
+
+        /* open world: somewhere else in this part of the wilds */
+        if (ow_rnd_teleport_spot(u.ux, u.uy, &cc, (struct monst *) 0)) {
+            teleds(cc.x, cc.y, teleds_flags);
+            return TRUE;
+        }
+    }
 
     /*
      * This used to try random locations up to 400 times, with first 200
@@ -733,7 +782,7 @@ safe_teleds(int teleds_flags)
      * first then expanding out from there.  If no non-trap spot is found,
      * first trap spot is used.
      */
-    for (tcnt = 0; tcnt < 40; ++tcnt) {
+    for (tcnt = 0; tcnt < 40 && !In_overworld; ++tcnt) {
         nux = rnd(COLNO - 1);
         nuy = rn2(ROWNO);
         if (teleok(nux, nuy, FALSE)) {
@@ -741,6 +790,7 @@ safe_teleds(int teleds_flags)
             return TRUE;
         }
     }
+    candy = candy_alloc();
 
     /* get a shuffled list of candidate locations, starting with spots
        1 or 2 steps from hero, then 3 or 4 steps, then 5 or 6, on up */
@@ -755,12 +805,14 @@ safe_teleds(int teleds_flags)
     for (tcnt = 0; tcnt < candycount; ++tcnt) {
         nux = candy[tcnt].x, nuy = candy[tcnt].y;
         if (teleok(nux, nuy, FALSE)) {
+            free((genericptr_t) candy);
             teleds(nux, nuy, teleds_flags);
             return TRUE;
         }
         if (!backupspot.x && t_at(nux, nuy) && teleok(nux, nuy, TRUE))
             backupspot.x = nux, backupspot.y = nuy;
     }
+    free((genericptr_t) candy);
     /* no non-trap spot found; if we skipped a viable trap spot, use it */
     if (backupspot.x) {
         teleds(backupspot.x, backupspot.y, teleds_flags);
@@ -774,6 +826,22 @@ vault_tele(void)
 {
     struct mkroom *croom = search_special(VAULT);
     coord c;
+
+    if (In_overworld) {
+        /* many vaults: use the nearest one */
+        struct mkroom *r;
+        long best = -1L, d;
+
+        for (r = svr.rooms; r->hx > 0; r++) {
+            if (r->rtype != VAULT)
+                continue;
+            d = dist2(u.ux, u.uy, r->lx, r->ly);
+            if (best < 0 || d < best)
+                best = d, croom = r;
+        }
+        if (best > (long) (OW_LOCAL_RX * OW_LOCAL_RX))
+            croom = (struct mkroom *) 0;
+    }
 
     if (croom && somexyspace(croom, &c) && teleok(c.x, c.y, FALSE)) {
         teleds(c.x, c.y, TELEDS_TELEPORT);
@@ -1416,7 +1484,27 @@ level_tele(void)
          */
         get_level(&newlevel, newlev);
 
-        if (on_level(&newlevel, &u.uz) && newlev != depth(&u.uz)) {
+        if (Is_overworld(&newlevel)) {
+            /* open world: depth in the overworld is distance from its
+               center; teleport to the corresponding ring */
+            if (newlev > ow_max_teleport_ring()) {
+                if (!wizard || !u.uevent.gehennom_entered)
+                    pline("Sorry...");
+                newlev = ow_max_teleport_ring();
+            }
+            if (In_overworld) {
+                if (newlev == depth(&u.uz)) {
+                    You1(shudder_for_moment);
+                    return;
+                }
+                ow_prepare_levtele(newlev, (boolean) (!Teleport_control
+                                                      || Stunned));
+                ow_levtele_within(newlev);
+                return;
+            }
+            ow_prepare_levtele(newlev, (boolean) (!Teleport_control
+                                                  || Stunned));
+        } else if (on_level(&newlevel, &u.uz) && newlev != depth(&u.uz)) {
             You_cant(get_there_from,
                      (newlev > deepest) ? "anywhere" : "here");
             return;
@@ -1472,6 +1560,18 @@ domagicportal(struct trap *ttmp)
     }
 
     target_level = ttmp->dst;
+
+    if (In_overworld) {
+        /* the quest's portals are all dead once the hero has been
+           cast out for good */
+        if (target_level.dnum == quest_dnum && u.uevent.qexpelled) {
+            You_feel("a wrenching sensation, but the portal is dead.");
+            return;
+        }
+        /* remember which of the ring's portals was used, so that leaving
+           the branch brings the hero back here */
+        ow_note_portal(target_level.dnum, ttmp->tx, ttmp->ty);
+    }
 
     /* coming back from tutorial doesn't trigger stunning */
     if (In_tutorial(&u.uz) && !In_tutorial(&target_level)) {
@@ -1800,9 +1900,9 @@ rloc(
     struct monst *mtmp, /* mtmp->mx==0 implies migrating monster arrival */
     unsigned rlocflags)
 {
-    coord cc, backupcc, candy[ROWNO * (COLNO - 1)]; /* room for entire map */
+    coord cc, backupcc, *candy; /* room for entire map */
     unsigned cc_flags;
-    coordxy x, y;
+    coordxy x, y, lcx = COLNO / 2, lcy = ROWNO / 2;
     int trycount, i, j, candycount;
 
     if (mtmp == u.usteed) {
@@ -1846,9 +1946,23 @@ rloc(
        randomized order, reduce the number of random attempts to 50;
        on levels with lots of available space, random can find a spot more
        quickly but might fail to find one no matter how many tries it makes */
+    if (In_overworld) {
+        /* open world: somewhere in the monster's (or the arriving
+           monster's destination's) part of the world */
+        lcx = mtmp->mx ? mtmp->mx : u.ux;
+        lcy = mtmp->mx ? mtmp->my : u.uy;
+    }
     for (trycount = 0; trycount < 50; ++trycount) {
-        x = rnd(COLNO - 1); /* 1..COLNO-1 */
-        y = rn2(ROWNO); /* 0..ROWNO-1 */
+        if (In_overworld) {
+            x = lcx + rn2(2 * OW_LOCAL_RX + 1) - OW_LOCAL_RX;
+            y = lcy + rn2(2 * OW_LOCAL_RY + 1) - OW_LOCAL_RY;
+            if (!isok(x, y) || !ow_generated(x, y)
+                || ow_past_barrier(x, y) != ow_past_barrier(lcx, lcy))
+                continue;
+        } else {
+            x = rnd(COLNO - 1); /* 1..COLNO-1 */
+            y = rn2(ROWNO); /* 0..ROWNO-1 */
+        }
         if (rloc_pos_ok(x, y, mtmp)) /* rejects 'onscary' */
             goto found_xy;
     }
@@ -1861,7 +1975,8 @@ rloc(
     cc_flags = CC_INCL_CENTER | CC_UNSHUFFLED | CC_SKIP_MONS;
     if (!passes_walls(mtmp->data))
         cc_flags |= CC_SKIP_INACCS;
-    candycount = collect_coords(candy, COLNO / 2, ROWNO / 2, 0, cc_flags,
+    candy = candy_alloc();
+    candycount = collect_coords(candy, lcx, lcy, 0, cc_flags,
                                 (boolean (*)(coordxy, coordxy)) 0);
     backupcc.x = backupcc.y = 0;
     for (i = 0; i < candycount; ++i) {
@@ -1871,11 +1986,16 @@ rloc(
             candy[i + j] = cc;
         }
         x = candy[i].x, y = candy[i].y;
-        if (rloc_pos_ok(x, y, mtmp))
+        if (In_overworld && ow_past_barrier(x, y) != ow_past_barrier(lcx, lcy))
+            continue;
+        if (rloc_pos_ok(x, y, mtmp)) {
+            free((genericptr_t) candy);
             goto found_xy;
+        }
         if (!backupcc.x && goodpos(x, y, mtmp, NO_MM_FLAGS))
             backupcc.x = x, backupcc.y = y;
     }
+    free((genericptr_t) candy);
 
     /* we didn't find any spot acceptable to rloc_pos_ok() which avoids
        'onscary' and honors teleport regions, but if we did find a spot
@@ -1936,7 +2056,9 @@ control_mon_tele(
 staticfn void
 mvault_tele(struct monst *mtmp)
 {
-    struct mkroom *croom = search_special(VAULT);
+    struct mkroom *croom = In_overworld
+                               ? search_special_near(VAULT, mtmp->mx, mtmp->my)
+                               : search_special(VAULT);
     coord c;
 
     if (croom && somexyspace(croom, &c) && goodpos(c.x, c.y, mtmp, 0)) {
@@ -2225,6 +2347,10 @@ random_teleport_level(void)
             bottom = qlocate_depth;
         min_depth = svd.dungeons[u.uz.dnum].depth_start;
         max_depth = bottom + (svd.dungeons[u.uz.dnum].depth_start - 1);
+    } else if (In_overworld) {
+        /* open world: any ring the hero may reach */
+        min_depth = 1;
+        max_depth = ow_max_teleport_ring();
     } else {
         min_depth = 1;
         max_depth = dunlevs_in_dungeon(&u.uz)

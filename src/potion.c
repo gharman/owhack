@@ -928,7 +928,13 @@ peffect_monster_detection(struct obj *otmp)
             i = rn2(100) + 100;
         incr_itimeout(&HDetect_monsters, i);
         for (x = 1; x < COLNO; x++) {
+            if (In_overworld && (x < u.ux - OW_LOCAL_RX
+                                 || x > u.ux + OW_LOCAL_RX))
+                continue;
             for (y = 0; y < ROWNO; y++) {
+                if (In_overworld && (y < u.uy - OW_LOCAL_RY
+                                     || y > u.uy + OW_LOCAL_RY))
+                    continue;
                 if (levl[x][y].glyph == GLYPH_INVISIBLE) {
                     unmap_object(x, y);
                     newsym(x, y);
@@ -1086,6 +1092,20 @@ peffect_gain_level(struct obj *otmp)
         boolean on_lvl_1 = (ledger_no(&u.uz) == 1);
 
         gp.potion_unkn++;
+        if (In_overworld) {
+            /* open world: "up" is toward the center of the world */
+            int ring = depth(&u.uz);
+
+            if (ring > 1 && !u.uhave.amulet) {
+                You("rise up into the %s and are borne away on the winds!",
+                    ceiling(u.ux, u.uy));
+                ow_prepare_levtele(ring - 1, FALSE);
+                ow_levtele_within(ring - 1);
+            } else {
+                You("have an uneasy feeling.");
+            }
+            return;
+        }
         /* they went up a level */
         if (on_lvl_1 ? u.uhave.amulet : Can_rise_up(u.ux, u.uy, &u.uz)) {
             int newlev;

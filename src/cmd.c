@@ -826,7 +826,7 @@ extcmd_via_menu(void)
                     && (strlen(prompt) + 4 + strlen(choices[i]->ef_txt)
                         /* -6: enough room for 1 space left margin
                          *   + "%c - " menu selector + 1 space right margin */
-                        >= min(sizeof prompt, COLNO - 6)))) {
+                        >= min(sizeof prompt, DEFCOLNO - 6)))) {
                 if (acount) {
                     /* flush extended cmds for that letter already in buf */
                     Sprintf(buf, fmtstr, prompt);
@@ -1345,6 +1345,8 @@ dolookaround(void)
     iflags.getloc_filter = GFILTER_VIEW;
     for (y = 0; y < ROWNO; y++)
         for (x = 1; x < COLNO; x++) {
+            if (!in_lvl_effect_bounds(x, y))
+                continue;
             int glyph, mapsym;
             boolean iscorr = (corr_next2u
                               && (glyph = glyph_at(x, y)) >= 0

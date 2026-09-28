@@ -191,7 +191,7 @@ int lspo_wallify(lua_State *);
      */
 static boolean splev_init_present, icedpools;
 /* positions touched by level elements explicitly defined in the level */
-static char SpLev_Map[COLNO][ROWNO];
+static char SpLev_Map[MAXCOLNO][MAXROWNO];
 #define MAX_CONTAINMENT 10
 static int container_idx = 0; /* next slot in container_obj[] to use */
 static struct obj *container_obj[MAX_CONTAINMENT];
@@ -2446,7 +2446,7 @@ create_object(object *o, struct mkroom *croom)
 staticfn void
 create_altar(altar *a, struct mkroom *croom)
 {
-    schar sproom;
+    int sproom;
     coordxy x = -1, y = -1;
     unsigned int amask;
     boolean croom_is_temple = TRUE;
@@ -2457,7 +2457,7 @@ create_altar(altar *a, struct mkroom *croom)
             croom_is_temple = FALSE;
     } else {
         get_location_coord(&x, &y, DRY, croom, a->coord);
-        if ((sproom = (schar) *in_rooms(x, y, TEMPLE)) != 0)
+        if ((sproom = (int) (uchar) *in_rooms(x, y, TEMPLE)) != 0)
             croom = &svr.rooms[sproom - ROOMOFFSET];
         else
             croom_is_temple = FALSE;

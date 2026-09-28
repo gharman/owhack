@@ -26,11 +26,7 @@ Astral Plane \GXXXXNNNN:123456 HP:1234(1234) Pw:1234(1234) AC:-127
  * truncation is necessary, it will chop off the least significant
  * information.
  */
-#if COLNO <= 160
 #define MAXCO 200
-#else
-#define MAXCO (COLNO + 40)
-#endif
 
 /* limit of the player's name in the status window */
 #define BOTL_NSIZ 16

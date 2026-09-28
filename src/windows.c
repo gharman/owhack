@@ -1098,7 +1098,7 @@ genl_status_update(
             } /* status_activefields[idx2] */
 
             if (idx2 == BL_CONDITION && pass < 4
-                && strlen(newbot2) - lndelta > COLNO)
+                && strlen(newbot2) - lndelta > DEFCOLNO)
                 break; /* switch to next order */
         } /* i */
 

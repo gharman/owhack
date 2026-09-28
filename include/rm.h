@@ -165,10 +165,30 @@ struct rm {
     Bitfield(lit, 1);        /* speed hack for lit rooms */
     Bitfield(waslit, 1);     /* remember if a location was lit */
 
-    Bitfield(roomno, 6); /* room # for special rooms */
     Bitfield(edge, 1);   /* marks boundaries for special rooms*/
     Bitfield(candig, 1); /* Exception to Can_dig_down; was a trapdoor */
+    Bitfield(flavor, 4); /* open world: appearance variant of the terrain
+                          * (grass, sand, snow, ...); see OWF_xxx */
+    Bitfield(ow_spare, 2);
+    uchar roomno;        /* room # for special rooms; the open world's
+                          * overworld can have many more rooms than an
+                          * ordinary level, so this is a full byte */
 };
+
+/* rm.flavor values: how open-world terrain looks and is described */
+#define OWF_NONE     0
+#define OWF_GRASS    1  /* meadow, lawn */
+#define OWF_SAND     2  /* desert, beach */
+#define OWF_SNOW     3  /* tundra */
+#define OWF_ASH      4  /* scorched Gehennom ground */
+#define OWF_PAVED    5  /* town streets and plazas */
+#define OWF_MOUNTAIN 6  /* mountain rock and cliffs */
+#define OWF_HELLROCK 7  /* obsidian of Gehennom */
+#define OWF_MARBLE   8  /* the sacred plaza of the high altars */
+#define OWF_FOREST   9  /* forest floor, moss */
+#define OWF_MUD      10 /* swamp mud */
+#define OWF_DIRT     11 /* dirt tracks, fields */
+#define OWF_BARRIER  12 /* the undiggable wall around Gehennom */
 
 /*
  * rm flags field overloads:
@@ -471,9 +491,9 @@ struct levelflags {
 };
 
 typedef struct {
-    struct rm locations[COLNO][ROWNO];
-    struct obj *objects[COLNO][ROWNO];
-    struct monst *monsters[COLNO][ROWNO];
+    struct rm locations[MAXCOLNO][MAXROWNO];
+    struct obj *objects[MAXCOLNO][MAXROWNO];
+    struct monst *monsters[MAXCOLNO][MAXROWNO];
     struct obj *objlist;
     struct obj *buriedobjlist;
     struct monst *monlist;

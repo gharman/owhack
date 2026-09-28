@@ -443,6 +443,9 @@ moveloop_core(void)
 
     clear_splitobjs();
 
+    /* open world: keep the overworld generated around the hero */
+    ow_maintain();
+
     /* the Amulet of Yendor gives a wish when initially picked up */
     if (u.uhave.amulet && !u.uevent.amulet_wish) {
         u.uevent.amulet_wish = 1;
@@ -538,6 +541,7 @@ moveloop_core(void)
     }
     if (u.utotype)       /* change dungeon level */
         deferred_goto(); /* after rhack() */
+    ow_maintain();
 
     if (gv.vision_full_recalc)
         vision_recalc(0); /* vision! */
@@ -810,6 +814,7 @@ newgame(void)
     init_artifacts(); /* before u_init() in case $WIZKIT specifies
                        * any artifacts */
     u_init_misc();
+    ow_init();        /* open world: lay out the overworld's rings */
 
     l_nhcore_init();  /* create a Lua state that lasts until end of game */
     reset_glyphmap(gm_newgame);
@@ -823,7 +828,10 @@ newgame(void)
     /* quest_init();  --  Now part of role_init() */
 
     mklev();
-    u_on_upstairs();
+    if (In_overworld)
+        ow_arrive(OWARR_NEWGAME); /* on the high altar of hero's god */
+    else
+        u_on_upstairs();
     vision_reset();          /* set up internals for level (after mklev) */
     check_special_room(FALSE);
 

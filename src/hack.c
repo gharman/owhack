@@ -1287,14 +1287,41 @@ findtravelpath(int mode)
             svc.context.run = 8;
     }
     if (u.tx != u.ux || u.ty != u.uy) {
-        coordxy travel[COLNO][ROWNO];
-        coordxy travelstepx[2][COLNO * ROWNO];
-        coordxy travelstepy[2][COLNO * ROWNO];
+        /*
+         * Open world: the search is confined to a box around the hero
+         * and the target (on the enormous overworld a whole-map search
+         * every step would be far too slow, and the arrays far too big
+         * for the stack); a target outside the box is approached by
+         * guessing, one box at a time.
+         */
+        coordxy *travel, *travelstepx[2], *travelstepy[2];
         coordxy tx, ty, ux, uy;
+        coordxy bx0, by0, bx1, by1;
+        int bw, bh;
         int n = 1;      /* max offset in travelsteps */
         int set = 0;    /* two sets current and previous */
         int radius = 1; /* search radius */
         int i;
+        boolean result = FALSE;
+
+        bx0 = max(1, min(u.ux, u.tx) - 24);
+        bx1 = min(COLNO - 1, max(u.ux, u.tx) + 24);
+        by0 = max(0, min(u.uy, u.ty) - 12);
+        by1 = min(ROWNO - 1, max(u.uy, u.ty) + 12);
+        bx0 = max(bx0, u.ux - 240), bx1 = min(bx1, u.ux + 240);
+        by0 = max(by0, u.uy - 120), by1 = min(by1, u.uy + 120);
+        bw = bx1 - bx0 + 1, bh = by1 - by0 + 1;
+        travel = (coordxy *) alloc((unsigned) (bw * bh) * sizeof (coordxy));
+        travelstepx[0] = (coordxy *) alloc((unsigned) (bw * bh * 4)
+                                           * sizeof (coordxy));
+        travelstepx[1] = travelstepx[0] + bw * bh;
+        travelstepy[0] = travelstepx[1] + bw * bh;
+        travelstepy[1] = travelstepy[0] + bw * bh;
+#define TRAV_IN(x, y) ((x) >= bx0 && (x) <= bx1 && (y) >= by0 && (y) <= by1)
+#define TRAVEL(x, y) travel[((x) - bx0) * bh + ((y) - by0)]
+        /* a target beyond the search box can only be guessed at */
+        if (!TRAV_IN(u.tx, u.ty) && mode == TRAVP_TRAVEL)
+            mode = TRAVP_GUESS;
 
         /* If guessing, first find an "obvious" goal location.  The obvious
          * goal is the position the player knows of, or might figure out
@@ -1311,9 +1338,16 @@ findtravelpath(int mode)
             ux = u.ux;
             uy = u.uy;
         }
+        if (!TRAV_IN(tx, ty)) {
+            /* guessing from an out-of-box target: search out from the
+               hero's side of the box instead */
+            tx = max(bx0, min(bx1, tx));
+            ty = max(by0, min(by1, ty));
+        }
 
  noguess:
-        (void) memset((genericptr_t) travel, 0, sizeof travel);
+        (void) memset((genericptr_t) travel, 0,
+                      (size_t) (bw * bh) * sizeof (coordxy));
         travelstepx[0][0] = tx;
         travelstepy[0][0] = ty;
 
@@ -1369,7 +1403,7 @@ findtravelpath(int mode)
                      * example above is never included in it, preventing
                      * the cycle.
                      */
-                    if (!isok(nx, ny)
+                    if (!isok(nx, ny) || !TRAV_IN(nx, ny)
                         || ((mode == TRAVP_GUESS) && !couldsee(nx, ny)))
                         continue;
                     if ((!Passes_walls && !can_ooze(&gy.youmonst)
@@ -1381,7 +1415,7 @@ findtravelpath(int mode)
                            so prefer another path; however, giants and tiny
                            creatures can use m<dir> to move onto a boulder's
                            spot without pushing, so allow boulders for them */
-                        if (travel[x][y] > radius - 3) {
+                        if (TRAVEL(x, y) > radius - 3) {
                             if (!alreadyrepeated) {
                                 travelstepx[1 - set][nn] = x;
                                 travelstepy[1 - set][nn] = y;
@@ -1415,12 +1449,13 @@ findtravelpath(int mode)
                                 }
                                 selection_setpoint(u.ux, u.uy,
                                                    gt.travelmap, 1);
-                                return TRUE;
+                                result = TRUE;
+                                goto travel_done;
                             }
-                        } else if (!travel[nx][ny]) {
+                        } else if (!TRAVEL(nx, ny)) {
                             travelstepx[1 - set][nn] = nx;
                             travelstepy[1 - set][nn] = ny;
-                            travel[nx][ny] = radius;
+                            TRAVEL(nx, ny) = radius;
                             nn++;
                         }
                     }
@@ -1452,13 +1487,13 @@ findtravelpath(int mode)
         if (mode == TRAVP_GUESS) {
             int px = tx, py = ty; /* pick location */
             int dist, nxtdist, d2, nd2;
-            int ctrav, ptrav = COLNO*ROWNO;
+            int ctrav, ptrav = bw * bh;
 
             dist = distmin(ux, uy, tx, ty);
             d2 = dist2(ux, uy, tx, ty);
-            for (tx = 1; tx < COLNO; ++tx)
-                for (ty = 0; ty < ROWNO; ++ty)
-                    if (couldsee(tx, ty) && (ctrav = travel[tx][ty]) > 0) {
+            for (tx = bx0; tx <= bx1; ++tx)
+                for (ty = by0; ty <= by1; ++ty)
+                    if (couldsee(tx, ty) && (ctrav = TRAVEL(tx, ty)) > 0) {
                         nxtdist = distmin(ux, uy, tx, ty);
                         if (nxtdist == dist && ctrav < ptrav) {
                             nd2 = dist2(ux, uy, tx, ty);
@@ -1484,8 +1519,11 @@ findtravelpath(int mode)
                 u.dy = sgn(u.ty - u.uy);
                 if (test_move(u.ux, u.uy, u.dx, u.dy, TEST_MOVE)) {
                     selection_setpoint(u.ux, u.uy, gt.travelmap, 1);
-                    return TRUE;
+                    result = TRUE;
+                    goto travel_done;
                 }
+                free((genericptr_t) travel);
+                free((genericptr_t) travelstepx[0]);
                 goto found;
             }
 #ifdef DEBUG
@@ -1512,7 +1550,12 @@ findtravelpath(int mode)
             mode = TRAVP_TRAVEL;
             goto noguess;
         }
-        return FALSE;
+ travel_done:
+        free((genericptr_t) travel);
+        free((genericptr_t) travelstepx[0]);
+#undef TRAVEL
+#undef TRAV_IN
+        return result;
     }
 
  found:
@@ -3568,6 +3611,15 @@ in_town(coordxy x, coordxy y)
 
     if (!svl.level.flags.has_town)
         return FALSE;
+
+    /* open world: the overworld's towns are the ordinary (wall-less)
+       rooms that enclose them; the rest of the world isn't town */
+    if (In_overworld) {
+        for (sroom = &svr.rooms[0]; sroom->hx > 0; sroom++)
+            if (sroom->rtype == OROOM && inside_room(sroom, x, y))
+                return TRUE;
+        return FALSE;
+    }
 
     /*
      * See if (x,y) is in a room with subrooms, if so, assume it's the

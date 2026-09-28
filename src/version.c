@@ -191,7 +191,7 @@ doextversion(void)
     (void) getversionstring(buf, sizeof buf);
     /* if extra text (git info) is present, put it on separate line
        but don't wrap on (x86) */
-    if (strlen(buf) >= COLNO)
+    if (strlen(buf) >= DEFCOLNO)
         p = strrchr(buf, '(');
     if (p && p > buf && p[-1] == ' ' && p[1] != 'x')
         p[-1] = '\0';

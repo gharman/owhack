@@ -472,6 +472,12 @@ teleport_sink(void)
         cx = 1 + rnd((COLNO - 1) - 2); /* 2..COLNO-2 */
         cy = 1 + rn2(ROWNO - 2);       /* 1..ROWNO-2 */
 #endif
+        if (In_overworld) { /* somewhere in this part of the wilds */
+            cx = u.ux + rn2(2 * OW_LOCAL_RX + 1) - OW_LOCAL_RX;
+            cy = u.uy + rn2(2 * OW_LOCAL_RY + 1) - OW_LOCAL_RY;
+            if (!isok(cx, cy))
+                continue;
+        }
         if (levl[cx][cy].typ == ROOM
             && !t_at(cx, cy) && !engr_at(cx, cy)
             && (!cansee(cx, cy) || distu(cx, cy) > 3 * 3)) {
@@ -1726,7 +1732,26 @@ goto_level(
     gv.vision_full_recalc = 0; /* don't let that reenable vision yet */
     flush_screen(-1);       /* ensure all map flushes are postponed */
 
-    if (portal && !In_endgame(&u.uz)) {
+    if (In_overworld) {
+        /* open world: back to the portal used to leave, to the ring
+           chosen by a level teleport, or to the start */
+        ow_arrive(leaving_tutorial ? OWARR_NEWGAME
+                  : portal ? OWARR_PORTAL
+                  : at_stairs ? OWARR_STAIRS : OWARR_LEVTELE);
+        if (at_stairs && !portal) {
+            great_effort = (Punished && !Levitation);
+            pline("%s %s %s the %s, and emerge through the portal.",
+                  great_effort ? "With great effort, you" : "You",
+                  u_locomotion("climb"), up ? "up" : "down",
+                  ga.at_ladder ? "ladder" : "stairs");
+        }
+        if (falling) {
+            if (Punished && !welded(uball))
+                ballfall();
+            selftouch("Falling, you");
+            do_fall_dmg = TRUE;
+        }
+    } else if (portal && !In_endgame(&u.uz)) {
         /* find the portal on the new level */
         struct trap *ttrap;
 
@@ -1734,7 +1759,21 @@ goto_level(
             if (ttrap->ttyp == MAGIC_PORTAL)
                 break;
 
-        if (!ttrap) {
+        if (!ttrap && Is_overworld(&u.uz0)) {
+            /* open world: arrived through an overworld portal into a
+               branch whose own connection is a staircase; appear there */
+            stairway *stway;
+
+            for (stway = gs.stairs; stway; stway = stway->next)
+                if (stway->tolev.dnum != u.uz.dnum)
+                    break;
+            if (stway) {
+                u_on_newpos(stway->sx, stway->sy);
+                stway->u_traversed = TRUE;
+            } else {
+                u_on_rndspot(0);
+            }
+        } else if (!ttrap) {
             if (u.uevent.qexpelled
                 && (Is_qstart(&u.uz0) || Is_qstart(&u.uz))) {
                 /* we're coming back from or going into the quest home level,
@@ -1923,6 +1962,7 @@ goto_level(
         }
         /* main dungeon message from your quest leader */
         if (!In_quest(&u.uz0) && at_dgn_entrance("The Quest")
+            && !In_overworld /* see ow_maintain() */
             && !(u.uevent.qcompleted || u.uevent.qexpelled
                  || svq.quest_status.leader_is_dead)) {
             /* [TODO: copy of same TODO below; if an achievement for

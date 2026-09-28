@@ -789,6 +789,33 @@ search_special(schar type)
     return (struct mkroom *) 0;
 }
 
+/* open world: the nearest room of the given type within the neighborhood
+   of <x,y> (see search_special() for the type conventions) */
+struct mkroom *
+search_special_near(schar type, coordxy x, coordxy y)
+{
+    struct mkroom *croom, *best = (struct mkroom *) 0;
+    long d, bestd = -1L;
+    int pass;
+
+    for (pass = 0; pass < 2; pass++)
+        for (croom = pass ? &gs.subrooms[0] : &svr.rooms[0]; croom->hx >= 0;
+             croom++) {
+            if (!((type == ANY_TYPE && croom->rtype != OROOM)
+                  || (type == ANY_SHOP && croom->rtype >= SHOPBASE)
+                  || croom->rtype == type))
+                continue;
+            if (abs((croom->lx + croom->hx) / 2 - x) > OW_LOCAL_RX
+                || abs((croom->ly + croom->hy) / 2 - y) > OW_LOCAL_RY)
+                continue;
+            d = dist2(x, y, (croom->lx + croom->hx) / 2,
+                      (croom->ly + croom->hy) / 2);
+            if (bestd < 0 || d < bestd)
+                bestd = d, best = croom;
+        }
+    return best;
+}
+
 struct permonst *
 courtmon(void)
 {

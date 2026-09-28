@@ -658,6 +658,7 @@ xputs(const char *s)
 void
 cl_end(void)
 {
+    tty_shadow_clear_eol();
     if (CE) {
         xputs(CE);
     } else { /* no-CE fix - free after Harold Rynes */
@@ -681,6 +682,7 @@ term_clear_screen(void)
      * so don't attempt screen-oriented I/O during final cleanup.
      */
     if (CL) {
+        tty_shadow_clear_all();
         xputs(CL);
         home();
         /* set remembered data to all spaces */
@@ -849,6 +851,7 @@ tty_delay_output(void)
 void
 cl_eos(void) /* free after Robert Viduya */
 {
+    tty_shadow_clear_eos();
     if (nh_CD) {
         xputs(nh_CD);
     } else {

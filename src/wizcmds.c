@@ -826,8 +826,8 @@ wiz_map_levltyp(void)
             Sprintf(eos(dsc), " %s", brname);
         }
         /* limit the line length to map width */
-        if (strlen(dsc) >= COLNO)
-            dsc[COLNO - 1] = '\0'; /* truncate */
+        if (strlen(dsc) >= DEFCOLNO)
+            dsc[DEFCOLNO - 1] = '\0'; /* truncate */
         putstr(win, 0, dsc);
     }
 

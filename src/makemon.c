@@ -1082,6 +1082,11 @@ makemon_rnd_goodpos(
     coordxy nx, ny;
     boolean good;
 
+    /* open world: random monsters show up in the hero's neighborhood,
+       never in some unexplored corner of the world */
+    if (In_overworld && !gi.in_mklev)
+        return ow_rnd_monpos(mon, gpflags | GP_AVOID_MONPOS, cc);
+
     gpflags |= GP_AVOID_MONPOS;
     do {
         nx = rn1(COLNO - 3, 2);
@@ -1289,7 +1294,7 @@ makemon(
         mon_learns_traps(mtmp, ALL_TRAPS);
     /* locations where monsters are already experienced with wands */
     if (Is_stronghold(&u.uz) || Is_knox(&u.uz) || In_endgame(&u.uz) ||
-        In_hell(&u.uz) || In_V_tower(&u.uz) || In_quest(&u.uz))
+        xy_in_gehennom(x, y) || In_V_tower(&u.uz) || In_quest(&u.uz))
         mtmp->mwandexp = TRUE;
 
     place_monster(mtmp, x, y);

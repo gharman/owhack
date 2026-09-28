@@ -643,7 +643,7 @@ outoracle(boolean special, boolean delphi)
     winid tmpwin;
     dlb *oracles;
     int oracle_idx;
-    char *endp, line[COLNO], xbuf[BUFSZ];
+    char *endp, line[DEFCOLNO], xbuf[BUFSZ];
 
     /* early return if we couldn't open ORACLEFILE on previous attempt,
        or if all the oracularities are already exhausted */
@@ -678,7 +678,7 @@ outoracle(boolean special, boolean delphi)
             putstr(tmpwin, 0, "The message reads:");
         putstr(tmpwin, 0, "");
 
-        while (dlb_fgets(line, COLNO, oracles) && strcmp(line, "---\n")) {
+        while (dlb_fgets(line, DEFCOLNO, oracles) && strcmp(line, "---\n")) {
             if ((endp = strchr(line, '\n')) != 0)
                 *endp = 0;
             putstr(tmpwin, 0, xcrypt(line, xbuf));

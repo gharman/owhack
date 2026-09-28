@@ -137,8 +137,12 @@ typedef struct branch {
 #define Is_sokoend_level(x) (Lcheck(x, &sokoend_level))
 
 #define In_sokoban(x) ((x)->dnum == sokoban_dnum)
-#define Inhell In_hell(&u.uz) /* now gehennom */
-#define In_endgame(x) ((x)->dnum == astral_level.dnum)
+/* open world: the outer rings of the overworld are part of Gehennom too */
+#define Inhell u_in_gehennom() /* now gehennom */
+/* the open world variant has no Elemental Planes; guard against the
+   unassigned astral_level (dnum 0) matching the overworld */
+#define In_endgame(x) \
+    (Lassigned(&astral_level) && (x)->dnum == astral_level.dnum)
 #define In_tutorial(x) ((x)->dnum == tutorial_dnum)
 
 #define within_bounded_area(X, Y, LX, LY, HX, HY) \

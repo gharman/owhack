@@ -910,7 +910,7 @@ init_dungeon_branches(
             tmpb->chain = -1;
             if (br_chain) {
                 debugpline1("CHAINBRANCH:%s", br_chain);
-                for (bi = 0; bi < pd->n_levs + f - 1; bi++)
+                for (bi = 0; bi < pd->n_levs; bi++)
                     if (!strcmp(pd->tmplevel[bi].name, br_chain)) {
                         tmpb->chain = bi;
                         break;
@@ -1441,6 +1441,11 @@ ledger_to_dlev(xint16 ledgerno)
 schar
 depth(d_level *lev)
 {
+#ifndef SFCTOOL
+    /* open world: the overworld's depth depends on where one is in it */
+    if (Is_overworld(lev) && svow.inited)
+        return (schar) ow_level_depth();
+#endif
     return (schar) (svd.dungeons[lev->dnum].depth_start + lev->dlevel - 1);
 }
 #endif /* !SFCTOOL */
@@ -1491,6 +1496,9 @@ builds_up(d_level *lev)
     branch *br;
     if (dptr->num_dunlevs > 1)
         return (boolean) (dptr->entry_lev == dptr->num_dunlevs);
+    /* open world: the overworld is the root; it has no parent */
+    if (lev->dnum == 0)
+        return FALSE;
     /* else, single-level branch; find branch connection that connects this
      * dungeon from a parent dungeon and determine whether it builds up from
      * that */
@@ -1705,6 +1713,10 @@ has_ceiling(d_level *lev)
        but we don't presently check for that */
     if (In_endgame(lev) && !Is_earthlevel(lev))
         return FALSE;
+    /* open world: the overworld is out under the sky, except inside
+       buildings and caverns */
+    if (Is_overworld(lev))
+        return (boolean) (In_overworld && u.ux && ow_under_roof(u.ux, u.uy));
     return TRUE;
 }
 
@@ -1736,6 +1748,8 @@ ceiling(coordxy x, coordxy y)
         what = "temple's ceiling";
     else if (*in_rooms(x, y, SHOPBASE))
         what = "shop's ceiling";
+    else if (In_overworld && !ow_under_roof(x, y))
+        what = Underwater ? "water's surface" : "sky";
     else if (Is_waterlevel(&u.uz))
         /* water plane has no surface; its air bubbles aren't below sky */
         what = "water above";
@@ -1850,6 +1864,9 @@ get_level(d_level *newlevel, int levnum)
         /* We're within the same dungeon; calculate the level. */
         levnum = levnum - svd.dungeons[dgn].depth_start + 1;
     }
+    /* open world: the overworld is a single level at every depth */
+    if (dgn == 0)
+        levnum = 1;
 
     newlevel->dnum = dgn;
     newlevel->dlevel = levnum;

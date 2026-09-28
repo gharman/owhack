@@ -640,6 +640,13 @@ extern void clear_glyph_buffer(void);
 extern void row_refresh(coordxy, coordxy, coordxy);
 extern void cls(void);
 extern void flush_screen(int);
+extern void vp_set_origin(void);
+extern void vp_check_recenter(void);
+extern void vp_invalidate(void);
+extern void vp_set_focus(coordxy, coordxy);
+extern boolean vp_shows(coordxy, coordxy);
+extern void map_curs(coordxy, coordxy);
+extern void vp_win_to_map(coordxy, coordxy, coordxy *, coordxy *);
 extern int back_to_glyph(coordxy, coordxy);
 extern int zapdir_to_glyph(int, int, int);
 extern int glyph_at(coordxy, coordxy);
@@ -1596,6 +1603,8 @@ extern void gain_guardian_angel(void);
 
 /* ### mklev.c ### */
 
+extern void mk_knox_portal(coordxy, coordxy);
+
 extern void sort_rooms(void);
 extern void add_room(coordxy, coordxy, coordxy, coordxy,
                      boolean, schar, boolean);
@@ -1607,6 +1616,7 @@ extern void makecorridors(void);
 extern void add_door(coordxy, coordxy, struct mkroom *) NONNULLARG3;
 extern void count_level_features(void);
 extern void clear_level_structures(void);
+extern void set_level_dims(int, int);
 extern void level_finalize_topology(void);
 extern void mklev(void);
 #ifdef SPECIALIZATION
@@ -1766,6 +1776,7 @@ extern struct permonst *courtmon(void);
 extern void save_rooms(NHFILE *) NONNULLARG1;
 extern void rest_rooms(NHFILE *) NONNULLARG1;
 extern struct mkroom *search_special(schar);
+extern struct mkroom *search_special_near(schar, coordxy, coordxy);
 extern int cmap_to_type(int);
 
 /* ### mon.c ### */
@@ -2367,6 +2378,51 @@ extern void clear_ignore_errors_on_unmatched(void);
 #ifdef TTY_PERM_INVENT
 extern void check_perm_invent_again(void);
 #endif
+
+/* ### overworld.c ### */
+
+extern int ow_isqrt(long);
+extern int ow_dist(int, int);
+extern int ow_ring_at(int, int);
+extern int ow_bearing(int, int);
+extern void ow_polar(int, int, int *, int *);
+extern boolean ow_in_gehennom(int, int);
+extern boolean ow_past_barrier(int, int);
+extern boolean u_in_gehennom(void);
+extern void ow_levtele_within(int);
+extern boolean ow_under_roof(coordxy, coordxy);
+extern int ow_flavor_color(coordxy, coordxy, int);
+extern const char *ow_flavor_desc(coordxy, coordxy, int);
+extern void ow_debug_dump(int, int, int, int);
+extern void ow_local_levelflags(struct levelflags *);
+extern boolean xy_in_gehennom(coordxy, coordxy);
+extern struct ow_portalrec *ow_find_portrec(xint16);
+extern void ow_note_portal(xint16, coordxy, coordxy);
+extern int ow_branch_ring(xint16);
+extern int ow_level_depth(void);
+extern int ow_biome_at(int, int);
+extern const char *ow_biome_name(int);
+extern void ow_init(void);
+extern const char *ow_portal_dest_name(xint16);
+extern boolean ow_generated(int, int);
+extern void ow_ensure_generated(int, int);
+extern void ow_maintain(void);
+extern boolean ow_is_high_altar(coordxy, coordxy);
+extern void ow_home_altar(coordxy *, coordxy *);
+extern void mkoverworld(void);
+extern void ow_arrive(int);
+extern boolean ow_rnd_teleport_spot(coordxy, coordxy, coord *,
+                                    struct monst *);
+extern int ow_max_teleport_ring(void);
+extern void ow_prepare_levtele(int, boolean);
+extern boolean ow_mon_dormant(struct monst *);
+extern boolean ow_rnd_monpos(struct monst *, mmflags_nht, coord *);
+extern void lvl_effect_bounds(coordxy *, coordxy *, coordxy *, coordxy *);
+extern boolean in_lvl_effect_bounds(coordxy, coordxy);
+extern int ow_home_dir(void);
+extern char *ow_compass_str(char *);
+extern void ow_draw_compass(void);
+extern boolean ow_compass_covers(int, int);
 
 /* ### pager.c ### */
 
@@ -3228,6 +3284,7 @@ extern void sysopt_seduce_set(int);
 
 /* ### teleport.c ### */
 
+extern boolean teleok(coordxy, coordxy, boolean);
 extern boolean noteleport_level(struct monst *) NONNULLARG1;
 /* rloc_engr() passes NULL monst arg to goodpos()*/
 extern boolean goodpos(coordxy, coordxy, struct monst *,
@@ -3645,6 +3702,8 @@ extern void vision_init(void);
 extern int does_block(int, int, struct rm *) NONNULLARG3;
 extern void vision_reset(void);
 extern void vision_recalc(int);
+extern void vision_clip_box(int *, int *, int *, int *);
+extern void vision_reset_rows(int, int);
 extern void block_point(int, int);
 extern void unblock_point(int, int);
 extern void recalc_block_point(coordxy, coordxy);

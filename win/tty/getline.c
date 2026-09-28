@@ -166,7 +166,7 @@ hooked_tty_getlin(
         } else if (' ' <= (unsigned char) c && c != '\177'
                    /* avoid isprint() - some people don't have it
                       ' ' is not always a printing char */
-                   && (bufp - obufp < BUFSZ - 1 && bufp - obufp < COLNO)) {
+                   && (bufp - obufp < BUFSZ - 1 && bufp - obufp < DEFCOLNO)) {
 #ifdef NEWAUTOCOMP
             char *i = eos(bufp);
 

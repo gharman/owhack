@@ -14,6 +14,7 @@
 #include "align.h"
 #include "weight.h"
 #include "dungeon.h"
+#include "openworld.h"
 #include "stairs.h"
 #include "objclass.h"
 #include "wintype.h"

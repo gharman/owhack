@@ -24,6 +24,8 @@ struct flag {
     boolean beginner;        /* True early in each game; affects feedback */
     boolean biff;            /* enable checking for mail */
     boolean bones;           /* allow saving/loading bones */
+    boolean centerview;      /* keep hero centered, scrolling the map */
+    boolean compass;         /* show the compass pointing home */
     boolean confirm;         /* confirm before hitting tame monsters */
     boolean dark_room;       /* show shadows in lit rooms */
     boolean debug;           /* in debugging mode (aka wizard mode) */

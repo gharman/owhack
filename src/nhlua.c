@@ -1912,8 +1912,8 @@ static const struct {
     const char *name;
     long value;
 } nhl_consts[] = {
-    { "COLNO",  COLNO },
-    { "ROWNO",  ROWNO },
+    { "COLNO",  DEFCOLNO }, /* special levels are always normal size */
+    { "ROWNO",  DEFROWNO },
     { "NUMMONS", NUMMONS },
     { "LOW_PM", LOW_PM },
     { "HIGH_PM", HIGH_PM },

@@ -1250,6 +1250,13 @@ movemon_singlemon(struct monst *mtmp)
         return FALSE;
     }
 
+    /* open world: monsters far from the hero in the overworld are
+       dormant; they don't move until the hero comes near */
+    if (ow_mon_dormant(mtmp)) {
+        mtmp->movement = 0;
+        return FALSE;
+    }
+
     m_everyturn_effect(mtmp);
 
     /* Find a monster that we have not treated yet. */

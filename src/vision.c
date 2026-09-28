@@ -75,16 +75,52 @@ const coordxy circle_start[] = {
 
 /*------ local variables ------*/
 
-static seenV could_see[2][ROWNO][COLNO]; /* vision work space */
-static seenV *cs_rows0[ROWNO], *cs_rows1[ROWNO];
-static coordxy cs_rmin0[ROWNO], cs_rmax0[ROWNO];
-static coordxy cs_rmin1[ROWNO], cs_rmax1[ROWNO];
+static seenV could_see[2][MAXROWNO][MAXCOLNO]; /* vision work space */
+static seenV *cs_rows0[MAXROWNO], *cs_rows1[MAXROWNO];
+static coordxy cs_rmin0[MAXROWNO], cs_rmax0[MAXROWNO];
+static coordxy cs_rmin1[MAXROWNO], cs_rmax1[MAXROWNO];
 
-static char viz_clear[ROWNO][COLNO]; /* vision clear/blocked map */
-static char *viz_clear_rows[ROWNO];
+static char viz_clear[MAXROWNO][MAXCOLNO]; /* vision clear/blocked map */
+static char *viz_clear_rows[MAXROWNO];
 
-static coordxy left_ptrs[ROWNO][COLNO]; /* LOS algorithm helpers */
-static coordxy right_ptrs[ROWNO][COLNO];
+static coordxy left_ptrs[MAXROWNO][MAXCOLNO]; /* LOS algorithm helpers */
+static coordxy right_ptrs[MAXROWNO][MAXCOLNO];
+
+/*
+ * Open world: on a large map (the overworld), line of sight computations
+ * are confined to a box around the viewer, OW_VISION_RX by OW_VISION_RY.
+ * Nothing outside the box can be seen, and nothing outside it can see the
+ * hero.  On ordinary sized levels the box covers the whole map.
+ */
+static int vc_lx = 0, vc_hx = DEFCOLNO - 1, vc_ly = 0, vc_hy = DEFROWNO - 1;
+/* area of each could_see[] array which may contain non-zero values */
+static struct vc_box {
+    int lx, hx, ly, hy;
+} cs_box[2] = { { 0, -1, 0, -1 }, { 0, -1, 0, -1 } };
+
+staticfn void vision_set_clip(int, int);
+
+staticfn void
+vision_set_clip(int scol, int srow)
+{
+    if (COLNO > DEFCOLNO || ROWNO > DEFROWNO) {
+        vc_lx = max(0, scol - OW_VISION_RX);
+        vc_hx = min(COLNO - 1, scol + OW_VISION_RX);
+        vc_ly = max(0, srow - OW_VISION_RY);
+        vc_hy = min(ROWNO - 1, srow + OW_VISION_RY);
+    } else {
+        vc_lx = 0, vc_hx = COLNO - 1;
+        vc_ly = 0, vc_hy = ROWNO - 1;
+    }
+}
+
+/* for light sources: the part of the map that the current vision
+   computation covers */
+void
+vision_clip_box(int *lx, int *hx, int *ly, int *hy)
+{
+    *lx = vc_lx, *hx = vc_hx, *ly = vc_ly, *hy = vc_hy;
+}
 
 /* Forward declarations. */
 staticfn void fill_point(int, int);
@@ -123,7 +159,7 @@ vision_init(void)
     int i;
 
     /* Set up the pointers. */
-    for (i = 0; i < ROWNO; i++) {
+    for (i = 0; i < MAXROWNO; i++) {
         cs_rows0[i] = could_see[0][i];
         cs_rows1[i] = could_see[1][i];
         viz_clear_rows[i] = viz_clear[i];
@@ -136,6 +172,7 @@ vision_init(void)
 
     gv.vision_full_recalc = 0;
     (void) memset((genericptr_t) could_see, 0, sizeof(could_see));
+    cs_box[0].hx = cs_box[1].hx = -1;
 
     /* Initialize the vision algorithm (currently C). */
     view_init();
@@ -211,8 +248,6 @@ void
 vision_reset(void)
 {
     int y;
-    int x, i, dig_left, block;
-    struct rm *lev;
 
     /* Start out with cs0 as our current array */
     gv.viz_array = cs_rows0;
@@ -220,16 +255,39 @@ vision_reset(void)
     gv.viz_rmax = cs_rmax0;
 
     (void) memset((genericptr_t) could_see, 0, sizeof(could_see));
+    cs_box[0].hx = cs_box[1].hx = -1;
+    for (y = 0; y < ROWNO; y++) {
+        cs_rmin0[y] = cs_rmin1[y] = COLNO - 1;
+        cs_rmax0[y] = cs_rmax1[y] = 1;
+    }
 
     /* Reset the pointers and clear so that we have a "full" dungeon. */
     (void) memset((genericptr_t) viz_clear, 0, sizeof(viz_clear));
 
     /* Dig the level */
-    for (y = 0; y < ROWNO; y++) {
+    vision_reset_rows(0, ROWNO - 1);
+
+    iflags.vision_inited = TRUE; /* vision is ready */
+    gv.vision_full_recalc = 1;   /* we want to run vision_recalc() */
+}
+
+/*
+ * Recompute line-of-sight blockage for rows y1 through y2 (whole rows).
+ * Used by vision_reset() for the whole level, and when a part of the
+ * open world's overworld has been generated.
+ */
+void
+vision_reset_rows(int y1, int y2)
+{
+    int y, x, i, dig_left, block;
+    struct rm *lev;
+
+    for (y = y1; y <= y2; y++) {
+        (void) memset((genericptr_t) viz_clear[y], 0, (size_t) COLNO);
         dig_left = 0;
         block = TRUE; /* location (0,y) is always stone; it's !isok() */
         lev = &levl[1][y];
-        for (x = 1; x < COLNO; x++, lev += ROWNO)
+        for (x = 1; x < COLNO; x++, lev += MAXROWNO)
             if (block != (IS_OBSTRUCTED(lev->typ) || does_block(x, y, lev))) {
                 if (block) {
                     for (i = dig_left; i < x; i++) {
@@ -259,9 +317,6 @@ vision_reset(void)
             viz_clear[y][i] = !block;
         }
     }
-
-    iflags.vision_inited = TRUE; /* vision is ready */
-    gv.vision_full_recalc = 1;   /* we want to run vision_recalc() */
 }
 
 /*
@@ -273,25 +328,35 @@ vision_reset(void)
 staticfn void
 get_unused_cs(seenV ***rows, coordxy **rmin, coordxy **rmax)
 {
-    int row;
+    int row, idx;
     coordxy *nrmin, *nrmax;
+    struct vc_box *bx;
 
     if (gv.viz_array == cs_rows0) {
         *rows = cs_rows1;
         *rmin = cs_rmin1;
         *rmax = cs_rmax1;
+        idx = 1;
     } else {
         *rows = cs_rows0;
         *rmin = cs_rmin0;
         *rmax = cs_rmax0;
+        idx = 0;
     }
 
     /* return an initialized, unused work area */
     nrmin = *rmin;
     nrmax = *rmax;
 
-    (void) memset((genericptr_t) **rows, 0,
-                  ROWNO * COLNO * sizeof (seenV)); /* see nothing */
+    /* see nothing: clear the part of this array used last time, then
+       note the part that is about to be used */
+    bx = &cs_box[idx];
+    if (bx->hx >= bx->lx) {
+        for (row = bx->ly; row <= bx->hy; row++)
+            (void) memset((genericptr_t) &(*rows)[row][bx->lx], 0,
+                          (bx->hx - bx->lx + 1) * sizeof (seenV));
+    }
+    bx->lx = vc_lx, bx->hx = vc_hx, bx->ly = vc_ly, bx->hy = vc_hy;
     for (row = 0; row < ROWNO; row++) { /* set row min & max */
         *nrmin++ = COLNO - 1;
         *nrmax++ = 1;
@@ -512,7 +577,7 @@ void
 vision_recalc(int control)
 {
     extern const seenV seenv_matrix[3][3]; /* from display.c */
-    static coordxy colbump[COLNO + 1]; /* cols to bump sv */
+    static coordxy colbump[MAXCOLNO + 1]; /* cols to bump sv */
     seenV **temp_array; /* points to the old vision array */
     seenV **next_array; /* points to the new vision array */
     seenV *next_row;    /* row pointer for the new array */
@@ -532,6 +597,9 @@ vision_recalc(int control)
     gv.vision_full_recalc = 0; /* reset flag */
     if (gi.in_mklev || program_state.in_getlev || !iflags.vision_inited)
         return;
+
+    /* confine the work to the neighborhood of the hero on large maps */
+    vision_set_clip(u.ux, u.uy);
 
     /*
      * Either the light sources have been taken care of, or we must
@@ -739,7 +807,7 @@ vision_recalc(int control)
         sv = &seenv_matrix[dy + 1][start < u.ux ? 0 : (start > u.ux ? 2 : 1)];
 
         for (col = start; col <= stop;
-             lev += ROWNO, sv += (int) colbump[++col]) {
+             lev += MAXROWNO, sv += (int) colbump[++col]) {
             if (next_row[col] & IN_SIGHT) {
                 /*
                  * We see this position because of night- or xray-vision.
@@ -1160,7 +1228,7 @@ static genericptr_t varg;
  * Compile with NDEBUG defined to suppress them.
  */
 #define is_clear(row, col) viz_clear_rows[row][col]
-#define good_row(z) ((z) >= 0 && (z) < ROWNO)
+#define good_row(z) ((z) >= vc_ly && (z) <= vc_hy)
 #define set_cs(rowp, col) \
     do {                                \
         assert(rowp != NULL);           \
@@ -1695,13 +1763,16 @@ right_side(
     }
     if (limits) {
         lim_max = start_col + *limits;
-        if (lim_max > COLNO - 1)
-            lim_max = COLNO - 1;
+        if (lim_max > vc_hx)
+            lim_max = vc_hx;
         if (right_mark > lim_max)
             right_mark = lim_max;
         limits++; /* prepare for next row */
-    } else
-        lim_max = COLNO - 1;
+    } else {
+        lim_max = vc_hx;
+        if (right_mark > lim_max)
+            right_mark = lim_max;
+    }
 
     while (left <= right_mark) {
         right_edge = right_ptrs[row][left];
@@ -1877,13 +1948,16 @@ left_side(
     }
     if (limits) {
         lim_min = start_col - *limits;
-        if (lim_min < 0)
-            lim_min = 0;
+        if (lim_min < vc_lx)
+            lim_min = vc_lx;
         if (left_mark < lim_min)
             left_mark = lim_min;
         limits++; /* prepare for next row */
-    } else
-        lim_min = 0;
+    } else {
+        lim_min = vc_lx;
+        if (left_mark < lim_min)
+            left_mark = lim_min;
+    }
 
     while (right >= left_mark) {
         left_edge = left_ptrs[row][right];
@@ -2017,6 +2091,7 @@ view_from(
     /* Set globals for q?_path(), left_side(), and right_side() to use. */
     start_col = scol;
     start_row = srow;
+    vision_set_clip(scol, srow);
     cs_rows = loc_cs_rows; /* 'could see' rows */
     cs_left = left_most;
     cs_right = right_most;
@@ -2043,6 +2118,10 @@ view_from(
                                                 : scol + 1);
     }
 
+    if (left < vc_lx)
+        left = vc_lx;
+    if (right > vc_hx)
+        right = vc_hx;
     if (range) {
         if (range > MAX_RADIUS || range < 1)
             panic("view_from called with range %d", range);
@@ -2073,7 +2152,7 @@ view_from(
      * rows here, since we don't do it in the routines right_side() and
      * left_side() [ugliness to remove extra routine calls].
      */
-    if ((nrow = srow + 1) < ROWNO) { /* move down */
+    if ((nrow = srow + 1) <= vc_hy) { /* move down */
         step = 1;
         if (scol < COLNO - 1)
             right_side(nrow, scol, right, limits);
@@ -2081,7 +2160,7 @@ view_from(
             left_side(nrow, left, scol, limits);
     }
 
-    if ((nrow = srow - 1) >= 0) { /* move up */
+    if ((nrow = srow - 1) >= vc_ly) { /* move up */
         step = -1;
         if (scol < COLNO - 1)
             right_side(nrow, scol, right, limits);

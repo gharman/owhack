@@ -47,15 +47,17 @@ selection_free(struct selectionvar *sel, boolean freesel)
 void
 selection_clear(struct selectionvar *sel, int val)
 {
-    (void) memset(sel->map, 1 + val, (COLNO * ROWNO));
+    /* open world: a selection might have been made for a level of some
+       other size; use its own dimensions */
+    (void) memset(sel->map, 1 + val, (sel->wid * sel->hei));
     if (val) {
         sel->bounds.lx = 0;
         sel->bounds.ly = 0;
-        sel->bounds.hx = COLNO - 1;
-        sel->bounds.hy = ROWNO - 1;
+        sel->bounds.hx = sel->wid - 1;
+        sel->bounds.hy = sel->hei - 1;
     } else {
-        sel->bounds.lx = COLNO;
-        sel->bounds.ly = ROWNO;
+        sel->bounds.lx = sel->wid;
+        sel->bounds.ly = sel->hei;
         sel->bounds.hx = sel->bounds.hy = 0;
     }
     sel->bounds_dirty = FALSE;

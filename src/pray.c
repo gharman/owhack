@@ -1492,7 +1492,7 @@ offer_too_soon(aligntyp altaralign)
                     ? "homesick"
                     /* if on track, give a big hint */
                     : (altaralign == u.ualign.type)
-                        ? "an urge to return to the surface"
+                        ? "an urge to return to the high altar at the center of the world"
                         /* else headed towards celestial disgrace */
                         : "ashamed");
 }
@@ -1870,6 +1870,20 @@ dosacrifice(void)
     otmp = floorfood("sacrifice", 1);
     if (!otmp)
         return ECMD_OK;
+
+    /* open world: the three high altars at the center of the world are
+       reserved for the Amulet; the gods accept nothing lesser there */
+    if (ow_is_high_altar(u.ux, u.uy) && otmp->otyp != AMULET_OF_YENDOR
+        && otmp->otyp != FAKE_AMULET_OF_YENDOR) {
+        if (otmp->otyp == CORPSE)
+            pline("%s", Hallucination
+                  ? "The altar seems to be on a strict diet."
+                  : "This high altar will accept no mere corpse; "
+                    "it awaits the Amulet of Yendor.");
+        else
+            pline1(nothing_happens);
+        return ECMD_OK; /* no penalty, and no time used */
+    }
 
     if (otmp->otyp == AMULET_OF_YENDOR) {
         if (!highaltar) {

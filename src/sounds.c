@@ -198,8 +198,36 @@ oracle_sound(struct monst *mtmp)
     return TRUE;
 }
 
+staticfn void dosounds_core(void);
+
+/*
+ * Open world: the overworld's "level" flags describe the whole world; the
+ * hero can only hear what's nearby, so while choosing a sound use flags
+ * describing just the neighborhood.
+ */
 void
 dosounds(void)
+{
+    struct levelflags saveflags;
+
+    if (Deaf || !flags.acoustics || u.uswallow || Underwater)
+        return;
+    if (!In_overworld) {
+        dosounds_core();
+        return;
+    }
+    saveflags = svl.level.flags;
+    ow_local_levelflags(&svl.level.flags);
+    gs.sounds_local = TRUE;
+    dosounds_core();
+    gs.sounds_local = FALSE;
+    /* the core might have cleared some flags upon finding the room gone;
+       keep the world's flags as they were */
+    svl.level.flags = saveflags;
+}
+
+staticfn void
+dosounds_core(void)
 {
     struct mkroom *sroom;
     int hallu, vx, vy;
@@ -236,7 +264,8 @@ dosounds(void)
         return;
     }
     if (svl.level.flags.has_vault && !rn2(200)) {
-        if (!(sroom = search_special(VAULT))) {
+        if (!(sroom = gs.sounds_local ? search_special_near(VAULT, u.ux, u.uy)
+                                      : search_special(VAULT))) {
             /* strange ... */
             svl.level.flags.has_vault = 0;
             return;
@@ -311,7 +340,9 @@ dosounds(void)
             return;
     }
     if (svl.level.flags.has_shop && !rn2(200)) {
-        if (!(sroom = search_special(ANY_SHOP))) {
+        if (!(sroom = gs.sounds_local
+                          ? search_special_near(ANY_SHOP, u.ux, u.uy)
+                          : search_special(ANY_SHOP))) {
             /* strange... */
             svl.level.flags.has_shop = 0;
             return;

@@ -933,7 +933,7 @@ outheader(void)
 
     Strcpy(linebuf, " No  Points     Name");
     bp = eos(linebuf);
-    while (bp < linebuf + COLNO - 9)
+    while (bp < linebuf + DEFCOLNO - 9)
         *bp++ = ' ';
     Strcpy(bp, "Hp [max]");
     topten_print(linebuf);
@@ -1056,7 +1056,7 @@ outentry(int rank, struct toptenentry *t1, boolean so)
     else
         Sprintf(hpbuf, "%d", t1->hp);
     /* beginning of hp column after padding (not actually padded yet) */
-    hppos = COLNO - (int) (sizeof "  Hp [max]" - sizeof "");
+    hppos = DEFCOLNO - (int) (sizeof "  Hp [max]" - sizeof "");
     while (lngr >= hppos) {
         for (bp = eos(linebuf); !(*bp == ' ' && bp - linebuf < hppos); bp--)
             ;
@@ -1073,7 +1073,7 @@ outentry(int rank, struct toptenentry *t1, boolean so)
             Strcpy(linebuf3, bp + 1);
         *bp = '\0';
         if (so) {
-            while (bp < linebuf + (COLNO - 1))
+            while (bp < linebuf + (DEFCOLNO - 1))
                 *bp++ = ' ';
             *bp = '\0';
             topten_print_bold(linebuf);
@@ -1083,7 +1083,7 @@ outentry(int rank, struct toptenentry *t1, boolean so)
         lngr = Strlen(linebuf);
     }
     /* beginning of hp column not including padding */
-    hppos = COLNO - 7 - (int) strlen(hpbuf);
+    hppos = DEFCOLNO - 7 - (int) strlen(hpbuf);
     bp = eos(linebuf);
 
     if (bp <= linebuf + hppos) {
@@ -1098,7 +1098,7 @@ outentry(int rank, struct toptenentry *t1, boolean so)
 
     if (so) {
         bp = eos(linebuf);
-        while (bp < linebuf + (COLNO - 1))
+        while (bp < linebuf + (DEFCOLNO - 1))
             *bp++ = ' ';
         *bp = '\0';
         topten_print_bold(linebuf);

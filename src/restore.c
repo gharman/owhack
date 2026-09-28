@@ -627,6 +627,8 @@ restgamestate(NHFILE *nhfp)
     Sfi_long(nhfp, &urealtime.realtime, "gamestate-realtime");
     Sfi_char(nhfp, timebuf, "gamestate-start_timing", 14);
     timebuf[14] = '\0';
+    /* open world: the overworld's layout and what's been generated */
+    Sfi_char(nhfp, (char *) &svow, "gamestate-overworld", (int) sizeof svow);
 #ifndef SFCTOOL
     urealtime.start_timing = time_from_yyyymmddhhmmss(timebuf);
 
@@ -1130,6 +1132,18 @@ getlev(NHFILE *nhfp, int pid, xint8 lev)
     }
 #endif
     restcemetery(nhfp, &svl.level.bonesinfo);
+    {
+        int cols = DEFCOLNO, rows = DEFROWNO;
+
+        /* open world: levels don't all have the same dimensions */
+        Sfi_int(nhfp, &cols, "lev-colno");
+        Sfi_int(nhfp, &rows, "lev-rowno");
+#ifndef SFCTOOL
+        set_level_dims(cols, rows);
+#else
+        nh_colno = cols, nh_rowno = rows;
+#endif
+    }
     rest_levl(nhfp);
 
     for (c = 0; c < COLNO; ++c) {

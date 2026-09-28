@@ -64,7 +64,7 @@
 /***
  **     formerly vault.h -- vault guard extension
  */
-#define FCSIZ (ROWNO + COLNO)
+#define FCSIZ (MAXROWNO + MAXCOLNO)
 #define GD_EATGOLD 0x01
 #define GD_DESTROYGOLD 0x02
 
@@ -95,7 +95,7 @@ struct egd {
 struct epri {
     unsigned parentmid;   /* make clobber-detection possible */
     aligntyp shralign; /* alignment of priest's shrine */
-    schar shroom;      /* index in rooms */
+    xint16 shroom;     /* index in rooms */
     coord shrpos;      /* position of shrine */
     d_level shrlevel;  /* level (& dungeon) of shrine */
     unsigned cheapskate_count; /* number of cheapskate donations */
@@ -127,7 +127,7 @@ struct eshk {
     long debit;           /* amount of debt for using unpaid items */
     long loan;            /* shop-gold picked (part of debit) */
     int shoptype;         /* the value of svr.rooms[shoproom].rtype */
-    schar shoproom;       /* index in svr.rooms; set by inshop() */
+    xint16 shoproom;      /* index in svr.rooms; set by inshop() */
     schar unused;         /* to force alignment for stupid compilers */
     boolean following;    /* following customer since he owes us sth */
     boolean surcharge;    /* angry shk inflates prices */

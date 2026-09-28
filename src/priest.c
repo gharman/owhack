@@ -244,7 +244,7 @@ priestini(
 
     priest = makemon(prim, px, py, MM_EPRI);
     if (priest) {
-        EPRI(priest)->shroom = (schar) ((sroom - svr.rooms) + ROOMOFFSET);
+        EPRI(priest)->shroom = (xint16) ((sroom - svr.rooms) + ROOMOFFSET);
         EPRI(priest)->shralign = Amask2align(levl[sx][sy].altarmask);
         EPRI(priest)->shrpos.x = sx;
         EPRI(priest)->shrpos.y = sy;

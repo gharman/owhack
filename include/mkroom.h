@@ -19,7 +19,7 @@ struct mkroom {
     int   fdoor;          /* index for the first door of the room */
     schar nsubrooms;      /* number of subrooms */
     boolean irregular;    /* true if room is non-rectangular */
-    schar roomnoidx;
+    xint16 roomnoidx;
     struct mkroom *sbrooms[MAX_SUBROOMS]; /* Subrooms pointers */
     struct monst *resident; /* priest/shopkeeper/guard for this room */
 };

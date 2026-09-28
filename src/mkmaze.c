@@ -1395,7 +1395,7 @@ get_level_extends(
     found = nonwall = FALSE;
     for (ymin = 0; !found && ymin <= ROWNO; ymin++) {
         lev = &levl[xmin][ymin];
-        for (x = xmin; x <= xmax; x++, lev += ROWNO) {
+        for (x = xmin; x <= xmax; x++, lev += MAXROWNO) {
             typ = lev->typ;
             if (typ != STONE) {
                 found = TRUE;
@@ -1409,7 +1409,7 @@ get_level_extends(
     found = nonwall = FALSE;
     for (ymax = ROWNO - 1; !found && ymax >= 0; ymax--) {
         lev = &levl[xmin][ymax];
-        for (x = xmin; x <= xmax; x++, lev += ROWNO) {
+        for (x = xmin; x <= xmax; x++, lev += MAXROWNO) {
             typ = lev->typ;
             if (typ != STONE) {
                 found = TRUE;
@@ -1539,9 +1539,9 @@ void
 movebubbles(void)
 {
     static const struct rm water_pos = {
-        cmap_b_to_glyph(S_water), WATER, 0, 0, 0, 0, 0, 0, 0, 0
+        cmap_b_to_glyph(S_water), WATER, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     }, air_pos = {
-        cmap_b_to_glyph(S_cloud), AIR, 0, 0, 0, 1, 0, 0, 0, 0
+        cmap_b_to_glyph(S_cloud), AIR, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0
     };
     static boolean up = FALSE;
     struct bubble *b;

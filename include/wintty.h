@@ -172,6 +172,9 @@ extern void xwaitforspace(const char *);
  */
 extern void backsp(void);
 extern void cl_end(void);
+extern void tty_shadow_clear_eol(void);
+extern void tty_shadow_clear_eos(void);
+extern void tty_shadow_clear_all(void);
 extern void cl_eos(void);
 extern void graph_on(void);
 extern void graph_off(void);

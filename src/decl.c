@@ -13,6 +13,14 @@ const char * const nhcb_name[NUM_NHCB] = {
 };
 
 int nhcb_counts[NUM_NHCB] = DUMMY;
+/* dimensions of the currently loaded level (see global.h) */
+int nh_colno = DEFCOLNO, nh_rowno = DEFROWNO;
+/* size of the map window, supplied by the window port */
+int nh_vp_cols = DEFCOLNO - 1, nh_vp_rows = DEFROWNO;
+struct viewport_state gvp;
+struct ow_state svow;
+int ow_gen_depth = 0;
+int ow_gen_x = 0, ow_gen_y = 0;
 NEARDATA const struct c_color_names c_color_names = {
     "black",  "amber", "golden", "light blue", "red",   "green",
     "silver", "blue",  "purple", "white",      "orange"
@@ -225,7 +233,7 @@ static const struct instance_globals_b g_init_b = {
     0U, /* bldrpush_oid - last boulder pushed */
     0L, /* bldrpushtime - turn message was given about pushing that boulder */
     /* mkmaze.c */
-    { {COLNO, ROWNO, 0, 0}, {COLNO, ROWNO, 0, 0},
+    { {DEFCOLNO, DEFROWNO, 0, 0}, {DEFCOLNO, DEFROWNO, 0, 0},
             FALSE, FALSE, 0, 0, { 0 } }, /* bughack */
     /* pickup.c */
     FALSE, /* bucx_filter */
@@ -686,6 +694,7 @@ static const struct instance_globals_r g_init_r = {
 };
 
 static const struct instance_globals_s g_init_s = {
+    FALSE, /* sounds_local (sounds.c) */
     /* artifact.c */
     0,  /* spec_dbon_applies */
     /* decl.c */
@@ -837,7 +846,7 @@ static const struct instance_globals_w g_init_w = {
 
 static const struct instance_globals_x g_init_x = {
     /* decl.c */
-    (COLNO - 1) & ~1, /* x_maze_max */
+    (DEFCOLNO - 1) & ~1, /* x_maze_max; reset by set_level_dims() */
     /* lock.c */
     UNDEFINED_VALUES,  /* xlock */
     /* objnam.c */
@@ -850,7 +859,7 @@ static const struct instance_globals_x g_init_x = {
 
 static const struct instance_globals_y g_init_y = {
     /* decl.c */
-    (ROWNO - 1) & ~1, /* y_maze_max */
+    (DEFROWNO - 1) & ~1, /* y_maze_max; reset by set_level_dims() */
     DUMMY, /* youmonst */
     /* pline.c */
     NULL, /* you_buf */

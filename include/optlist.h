@@ -227,6 +227,9 @@ static int optfn_##a(int, int, boolean, char *, char *);
     NHOPTC(catname, Advanced, PL_PSIZ, opt_in, set_gameview,
                 No, Yes, No, No, NoAlias,
                 "name of your starting pet if it is a kitten")
+    NHOPTB(centerview, Map, 0, opt_out, set_in_game,
+           On, Yes, No, No, NoAlias, &flags.centerview, Term_False,
+           "keep the hero centered and scroll the map")
 #ifdef INSURANCE
     NHOPTB(checkpoint, Advanced, 0, opt_out, set_in_game,
            On, Yes, No, No, NoAlias, &flags.ins_chkpt, Term_False,
@@ -242,6 +245,9 @@ static int optfn_##a(int, int, boolean, char *, char *);
     NHOPTB(color, Map, 0, opt_out, set_in_game,
            On, Yes, No, No, "colour", &iflags.wc_color, Term_False,
            "use color in map")
+    NHOPTB(compass, Status, 0, opt_out, set_in_game,
+           On, Yes, No, No, NoAlias, &flags.compass, Term_False,
+           "show a compass pointing home while in the overworld")
     NHOPTB(confirm, Advanced, 0, opt_out, set_in_game,
            On, Yes, No, No, NoAlias, &flags.confirm, Term_False,
            "ask before hitting tame or peaceful monsters")

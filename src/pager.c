@@ -776,6 +776,18 @@ lookat(coordxy x, coordxy y, char *buf, char *monbuf)
         case S_engrcorr:
             Strcpy(buf, "engraving");
             break;
+        case S_room:
+        case S_darkroom:
+        case S_tree:
+        case S_vwall: case S_hwall: case S_tlcorn: case S_trcorn:
+        case S_blcorn: case S_brcorn: case S_crwall: case S_tuwall:
+        case S_tdwall: case S_tlwall: case S_trwall:
+            if (In_overworld && ow_flavor_desc(x, y, symidx)) {
+                Strcpy(buf, ow_flavor_desc(x, y, symidx));
+                break;
+            }
+            Strcpy(buf, defsyms[symidx].explanation);
+            break;
         case S_stone:
             if (!levl[x][y].seenv) {
                 Strcpy(buf, "unexplored");

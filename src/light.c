@@ -174,7 +174,11 @@ do_light_sources(seenV **cs_rows)
     short at_hero_range = 0;
     light_source *ls;
     seenV *row;
+    int clx, chx, cly, chy;
 
+    /* only the part of the map covered by the current vision
+       computation matters (large maps confine vision to a box) */
+    vision_clip_box(&clx, &chx, &cly, &chy);
     for (ls = gl.light_base; ls; ls = ls->next) {
         ls->flags &= ~LSF_SHOW;
 
@@ -213,15 +217,23 @@ do_light_sources(seenV **cs_rows)
             limits = circle_ptr(ls->range);
             if ((max_y = (ls->y + ls->range)) >= ROWNO)
                 max_y = ROWNO - 1;
+            if (max_y > chy)
+                max_y = chy;
             if ((y = (ls->y - ls->range)) < 0)
                 y = 0;
+            if (y < cly)
+                y = cly;
             for (; y <= max_y; y++) {
                 row = cs_rows[y];
                 offset = limits[abs(y - ls->y)];
                 if ((min_x = (ls->x - offset)) < 1)
                     min_x = 1;
+                if (min_x < clx)
+                    min_x = clx;
                 if ((max_x = (ls->x + offset)) >= COLNO)
                     max_x = COLNO - 1;
+                if (max_x > chx)
+                    max_x = chx;
 
                 if (u_at(ls->x, ls->y)) {
                     /*

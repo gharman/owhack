@@ -378,11 +378,32 @@ extern struct nomakedefs_s nomakedefs;
  * executable inoperative.
  */
 
-/* size of terminal screen is (at least) (ROWNO+3) by COLNO */
-#define COLNO 80
-#define ROWNO 21
+/*
+ * Map dimensions.
+ *
+ * Open-world variant: levels no longer share one fixed size.  Ordinary
+ * (branch) levels are DEFCOLNO x DEFROWNO, while the open-world overworld
+ * is much larger.  COLNO and ROWNO are the dimensions of the level that
+ * is currently loaded; arrays holding per-location level data are sized
+ * with the compile-time maximums MAXCOLNO and MAXROWNO.
+ */
+#define DEFCOLNO 80
+#define DEFROWNO 21
+#define MAXCOLNO 1700
+#define MAXROWNO 1700
+extern int nh_colno, nh_rowno; /* decl.c */
+/* maximum size of the viewport (portion of the map shown on screen) */
+#define VP_MAXCOLS 320
+#define VP_MAXROWS 120
+#define COLNO nh_colno
+#define ROWNO nh_rowno
 
-#define MAXNROFROOMS 40 /* max number of rooms per level */
+/* max number of rooms per level; the overworld has many shops, temples
+   and other special rooms.  Room numbers (room index + ROOMOFFSET, with
+   subrooms numbered after MAXNROFROOMS) are kept in 'char' strings and
+   'uchar' fields; the program is compiled with -funsigned-char so they
+   can range up to 255. */
+#define MAXNROFROOMS 120
 #define MAX_SUBROOMS 24 /* max # of subrooms in a given room */
 #define DOORINC      20 /* number of doors per level, increment */
 
@@ -391,11 +412,11 @@ extern struct nomakedefs_s nomakedefs;
 #define TBUFSZ 300 /* gt.toplines[] buffer max msg: 3 81-char names
                     * plus longest prefix plus a few extra words */
 
-/* COLBUFSZ is the larger of BUFSZ and COLNO */
-#if BUFSZ > COLNO
+/* COLBUFSZ is the larger of BUFSZ and the width of an ordinary level */
+#if BUFSZ > DEFCOLNO
 #define COLBUFSZ BUFSZ
 #else
-#define COLBUFSZ COLNO
+#define COLBUFSZ DEFCOLNO
 #endif
 
 #define PL_NSIZ 32 /* name of player, ghost, shopkeeper */
@@ -405,7 +426,7 @@ extern struct nomakedefs_s nomakedefs;
 /* room for "name-role-race-gend-algn" plus 1 character playmode code */
 #define PL_NSIZ_PLUS (PL_NSIZ + 4 * (1 + 3) + 1) /* 49 */
 
-#define MAXDUNGEON 16 /* current maximum number of dungeons */
+#define MAXDUNGEON 24 /* current maximum number of dungeons */
 #define MAXLEVEL 32   /* max number of levels in one dungeon */
 #define MAXSTAIRS 1   /* max # of special stairways in a dungeon */
 #define ALIGNWEIGHT 4 /* generation weight of alignment */

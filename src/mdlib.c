@@ -656,7 +656,7 @@ opt_out_words(
 #endif
         if (word)
             *word = '\0';
-        if (*length_p + (int) strlen(str) > COLNO - 5) {
+        if (*length_p + (int) strlen(str) > DEFCOLNO - 5) {
             STOREOPTTEXT(optbuf);
             Sprintf(optbuf, "%s", opt_indent),
                 *length_p = (int) strlen(opt_indent);
@@ -698,7 +698,7 @@ build_options(void)
     Sprintf(optbuf, "Options compiled into this edition:");
     STOREOPTTEXT(optbuf);
     optbuf[0] = '\0';
-    length = COLNO + 1; /* force 1st item onto new line */
+    length = DEFCOLNO + 1; /* force 1st item onto new line */
     Strcat(strcpy(buf, datamodel(0)), " data model,");
     opt_out_words(buf, &length);
     for (i = 0; i < SIZE(build_opts); i++) {
@@ -722,7 +722,7 @@ build_options(void)
             (winsyscnt > 1) ? "s" : "");
     STOREOPTTEXT(optbuf);
     optbuf[0] = '\0';
-    length = COLNO + 1; /* force 1st item onto new line */
+    length = DEFCOLNO + 1; /* force 1st item onto new line */
 
     for (i = 0; i < SIZE(window_opts) - 1; i++) {
         if (!window_opts[i].valid)
@@ -759,7 +759,7 @@ build_options(void)
     Sprintf(optbuf, "Supported soundlib%s:", (soundlibcnt > 1) ? "s" : "");
     STOREOPTTEXT(optbuf);
     optbuf[0] = '\0';
-    length = COLNO + 1; /* force 1st item onto new line */
+    length = DEFCOLNO + 1; /* force 1st item onto new line */
 
 #ifdef USER_SOUNDS
     soundlibcnt += 1;

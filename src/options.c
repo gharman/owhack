@@ -5368,6 +5368,10 @@ optfn_boolean(
                 reassign();
             update_inventory();
             break;
+        case opt_centerview:
+            vp_invalidate();
+            go.opt_need_redraw = TRUE;
+            break;
         case opt_lit_corridor:
         case opt_dark_room:
             /*
@@ -6265,7 +6269,7 @@ handler_whatis_coord(void)
     if (strcmp(windowprocs.name, "tty")) /* only show for non-tty */
         add_menu_str(tmpwin,
       "screen: row is offset to accommodate tty interface's use of top line");
-#if COLNO == 80
+#if 0 /* map width varies by level in the open world */
 #define COL80ARG flags.verbose ? "; column 80 is not used" : ""
 #else
 #define COL80ARG ""
@@ -7190,6 +7194,10 @@ initoptions_init(void)
     flags.pile_limit = PILE_LIMIT_DFLT;  /* 5 */
     flags.runmode = RUN_LEAP;
     iflags.msg_history = 20;
+    /* open world: the number pad is the default way to move */
+    iflags.num_pad = TRUE;
+    iflags.num_pad_mode = 0;
+    reset_commands(FALSE); /* rebind the movement keys to match */
 
     /* msg_window has conflicting defaults for multi-interface binary */
 #ifdef TTY_GRAPHICS
@@ -9798,12 +9806,12 @@ next_opt(winid datawin, const char *str)
         s = eos(buf);
         if (s > &buf[1] && s[-2] == ',')
             s[-2] = '.', s[-1] = '\0'; /* replace ending ", " with "." */
-        i = COLNO;              /* (greater than COLNO - 2) */
+        i = DEFCOLNO;           /* (greater than DEFCOLNO - 2) */
     } else {
         i = Strlen(buf) + Strlen(str) + 2;
     }
 
-    if (i > COLNO - 2) { /* rule of thumb */
+    if (i > DEFCOLNO - 2) { /* rule of thumb */
         putstr(datawin, 0, buf);
         buf[0] = 0;
     }

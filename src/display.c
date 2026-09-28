@@ -150,7 +150,25 @@ staticfn void set_seenv(struct rm *, coordxy, coordxy, coordxy, coordxy);
 staticfn void t_warn(struct rm *);
 staticfn int wall_angle(struct rm *);
 
-#define _glyph_at(x, y) gg.gbuf[y][x].glyphinfo.glyph
+/*
+ * Viewport.
+ *
+ * The glyph buffer (gg.gbuf) only covers the part of the map that is
+ * shown in the map window.  The viewport is kept centered on the hero
+ * (or on the getpos() cursor while one is active), so the map scrolls
+ * under a stationary hero instead of the hero moving across a fixed map.
+ * Map coordinates <x,y> correspond to viewport cell
+ * <x - gvp.x0, y - gvp.y0>, which the window port receives as map window
+ * position <x - gvp.x0 + 1, y - gvp.y0> (window column 0 is unused).
+ */
+#define vp_in(x, y) \
+    ((x) >= gvp.x0 && (x) < gvp.x0 + gvp.w \
+     && (y) >= gvp.y0 && (y) < gvp.y0 + gvp.h)
+#define VPG(x, y) (gg.gbuf[(y) - gvp.y0][(x) - gvp.x0])
+#define _glyph_at(x, y) VPG(x, y).glyphinfo.glyph
+
+staticfn void vp_sync_size(void);
+staticfn void vp_rerender(void);
 
 /*
  *      See display.h for descriptions of tp_sensemon() through
@@ -1160,7 +1178,7 @@ tether_glyph(coordxy x, coordxy y)
  * DISP_ALWAYS - Like DISP_FLASH, but vision is not taken into account.
  */
 
-#define TMP_AT_MAX_GLYPHS (COLNO * 2)
+#define TMP_AT_MAX_GLYPHS (DEFCOLNO * 2)
 
 static struct tmp_glyph {
     coord saved[TMP_AT_MAX_GLYPHS]; /* previously updated positions */
@@ -1680,8 +1698,7 @@ static glyph_info no_ginfo = {
  * of this !UNBUFFERED_GLYPHINFO (default) variation, but is
  * a requirement for the UNBUFFERED_GLYPHINFO variation */
 #define Glyphinfo_at(x, y, glyph) \
-    (((x) < 0 || (y) < 0 || (x) >= COLNO || (y) >= ROWNO) ? &no_ginfo   \
-     : &gg.gbuf[(y)][(x)].glyphinfo)
+    (!vp_in(x, y) ? &no_ginfo : &VPG(x, y).glyphinfo)
 #else
 static glyph_info ginfo;
 staticfn glyph_info *glyphinfo_at(coordxy, coordxy, int);
@@ -1788,11 +1805,14 @@ docrt_flags(int refresh_flags)
     if (!nocls)
         cls();
 
-    /* display memory */
-    for (x = 1; x < COLNO; x++) {
-        lev = &levl[x][0];
-        for (y = 0; y < ROWNO; y++, lev++)
+    /* display memory (only the part of the map inside the viewport) */
+    vp_sync_size();
+    vp_set_origin();
+    for (x = max(1, gvp.x0); x < min(COLNO, gvp.x0 + gvp.w); x++) {
+        for (y = max(0, gvp.y0); y < min(ROWNO, gvp.y0 + gvp.h); y++) {
+            lev = &levl[x][y];
             show_glyph(x, y, lev->glyph);
+        }
     }
 
     /* see what is to be seen */
@@ -1838,12 +1858,16 @@ redraw_map(boolean cursor_on_u)
      * progress and the screen displays something other than what
      * the map would currently be showing.
      */
-    for (y = 0; y < ROWNO; ++y)
-        for (x = 1; x < COLNO; ++x) {
+    for (y = gvp.y0; y < gvp.y0 + gvp.h; ++y)
+        for (x = gvp.x0; x < gvp.x0 + gvp.w; ++x) {
             glyph = _glyph_at(x, y); /* not levl[x][y].glyph */
-            get_bkglyph_and_framecolor(x, y, &bkglyphinfo.glyph,
-                                       &bkglyphinfo.framecolor);
-            print_glyph(WIN_MAP, x, y,
+            if (isok(x, y))
+                get_bkglyph_and_framecolor(x, y, &bkglyphinfo.glyph,
+                                           &bkglyphinfo.framecolor);
+            else
+                bkglyphinfo.glyph = GLYPH_UNEXPLORED,
+                bkglyphinfo.framecolor = NO_COLOR;
+            print_glyph(WIN_MAP, x - gvp.x0 + 1, y - gvp.y0,
                         Glyphinfo_at(x, y, glyph), &bkglyphinfo);
         }
     flush_screen(cursor_on_u);
@@ -1904,11 +1928,13 @@ void
 newsym_force(coordxy x, coordxy y)
 {
     newsym(x, y);
-    gg.gbuf[y][x].gnew = 1;
-    if (gg.gbuf_start[y] > x)
-        gg.gbuf_start[y] = x;
-    if (gg.gbuf_stop[y] < x)
-        gg.gbuf_stop[y] = x;
+    if (!vp_in(x, y))
+        return;
+    VPG(x, y).gnew = 1;
+    if (gg.gbuf_start[y - gvp.y0] > x - gvp.x0)
+        gg.gbuf_start[y - gvp.y0] = x - gvp.x0;
+    if (gg.gbuf_stop[y - gvp.y0] < x - gvp.x0)
+        gg.gbuf_stop[y - gvp.y0] = x - gvp.x0;
 }
 
 /*
@@ -2040,6 +2066,10 @@ show_glyph(coordxy x, coordxy y, int glyph)
                    glyph, MAX_GLYPH, x, y);
         return;
     }
+    /* locations outside the viewport aren't displayed at all; they'll be
+       redrawn from scratch if/when the viewport moves to include them */
+    if (!vp_in(x, y))
+        return;
 #ifndef UNBUFFERED_GLYPHINFO
     /* without UNBUFFERED_GLYPHINFO defined the glyphinfo values are buffered
        alongside the glyphs themselves for better performance, increased
@@ -2047,13 +2077,13 @@ show_glyph(coordxy x, coordxy y, int glyph)
     map_glyphinfo(x, y, glyph, 0, &glyphinfo);
 #endif
 
-    oldglyph = gg.gbuf[y][x].glyphinfo.glyph;
+    oldglyph = VPG(x, y).glyphinfo.glyph;
 
     if (a11y.glyph_updates && !a11y.mon_notices_blocked
         && !program_state.in_docrt && !program_state.gameover
         && !program_state.in_getlev && !program_state.stopprint
         && !_suppress_map_output()
-        && (oldglyph != glyph || gg.gbuf[y][x].gnew)) {
+        && (oldglyph != glyph || VPG(x, y).gnew)) {
         int c = glyph_to_cmap(glyph);
 
         if ((glyph_is_nothing(oldglyph) || glyph_is_unexplored(oldglyph)
@@ -2069,7 +2099,7 @@ show_glyph(coordxy x, coordxy y, int glyph)
         }
     }
 
-    if (gg.gbuf[y][x].glyphinfo.glyph != glyph
+    if (VPG(x, y).glyphinfo.glyph != glyph
 #ifndef UNBUFFERED_GLYPHINFO
         /* flags might change (single object vs pile, monster tamed or pet
            gone feral), color might change (altar's alignment converted by
@@ -2077,24 +2107,26 @@ show_glyph(coordxy x, coordxy y, int glyph)
            glyph does too (changing boulder symbol would be an exception,
            but that triggers full redraw so doesn't matter here); still,
            be thorough and check everything */
-        || gg.gbuf[y][x].glyphinfo.ttychar != glyphinfo.ttychar
-        || gg.gbuf[y][x].glyphinfo.gm.customcolor != glyphinfo.gm.customcolor
-        || gg.gbuf[y][x].glyphinfo.gm.glyphflags != glyphinfo.gm.glyphflags
-        || gg.gbuf[y][x].glyphinfo.gm.sym.color != glyphinfo.gm.sym.color
-        || gg.gbuf[y][x].glyphinfo.gm.tileidx != glyphinfo.gm.tileidx
+        || VPG(x, y).glyphinfo.ttychar != glyphinfo.ttychar
+        || VPG(x, y).glyphinfo.gm.customcolor != glyphinfo.gm.customcolor
+        || VPG(x, y).glyphinfo.gm.glyphflags != glyphinfo.gm.glyphflags
+        || VPG(x, y).glyphinfo.gm.sym.color != glyphinfo.gm.sym.color
+        || VPG(x, y).glyphinfo.gm.tileidx != glyphinfo.gm.tileidx
 #endif
         || iflags.use_background_glyph) {
-        gg.gbuf[y][x].glyphinfo.glyph = glyph;
-        gg.gbuf[y][x].gnew = 1;
+        int sx = x - gvp.x0, sy = y - gvp.y0;
+
+        VPG(x, y).glyphinfo.glyph = glyph;
+        VPG(x, y).gnew = 1;
 #ifndef UNBUFFERED_GLYPHINFO
-        gg.gbuf[y][x].glyphinfo.glyph = glyphinfo.glyph;
-        gg.gbuf[y][x].glyphinfo.ttychar = glyphinfo.ttychar;
-        gg.gbuf[y][x].glyphinfo.gm = glyphinfo.gm;
+        VPG(x, y).glyphinfo.glyph = glyphinfo.glyph;
+        VPG(x, y).glyphinfo.ttychar = glyphinfo.ttychar;
+        VPG(x, y).glyphinfo.gm = glyphinfo.gm;
 #endif
-        if (gg.gbuf_start[y] > x)
-            gg.gbuf_start[y] = x;
-        if (gg.gbuf_stop[y] < x)
-            gg.gbuf_stop[y] = x;
+        if (gg.gbuf_start[sy] > sx)
+            gg.gbuf_start[sy] = sx;
+        if (gg.gbuf_stop[sy] < sx)
+            gg.gbuf_stop[sy] = sx;
     }
 
     if (show_glyph_change) {
@@ -2120,8 +2152,8 @@ show_glyph(coordxy x, coordxy y, int glyph)
     {                                     \
         int i;                            \
                                           \
-        for (i = 0; i < ROWNO; i++) {     \
-            gg.gbuf_start[i] = COLNO - 1; \
+        for (i = 0; i < VP_MAXROWS; i++) { \
+            gg.gbuf_start[i] = VP_MAXCOLS - 1; \
             gg.gbuf_stop[i] = 0;          \
         }                                 \
     }
@@ -2172,13 +2204,13 @@ clear_glyph_buffer(void)
                      || (giptr->gm.glyphflags & ~MG_UNEXPL) != 0)
 #endif
                          ? 1 : 0;
-    for (y = 0; y < ROWNO; y++) {
+    for (y = 0; y < VP_MAXROWS; y++) {
         gptr = &gg.gbuf[y][0];
-        for (x = COLNO; x; x--) {
+        for (x = VP_MAXCOLS; x; x--) {
             *gptr++ = nul_gbuf;
         }
-        gg.gbuf_start[y] = 1;
-        gg.gbuf_stop[y] = COLNO - 1;
+        gg.gbuf_start[y] = 0;
+        gg.gbuf_stop[y] = (gvp.w > 0) ? gvp.w - 1 : 0;
     }
 }
 
@@ -2213,15 +2245,30 @@ row_refresh(coordxy start, coordxy stop, coordxy y)
                  || (giptr->gm.glyphflags & ~MG_UNEXPL) != 0)
 #endif
                  ? 1 : 0;
+    /* start, stop, and y are map window coordinates (window column #N
+       shows viewport column #N-1); convert and clip to the viewport */
+    if (y < 0 || y >= gvp.h)
+        return;
+    if (start < 1)
+        start = 1;
+    if (stop > gvp.w)
+        stop = gvp.w;
     for (x = start; x <= stop; x++) {
-        gptr = &gg.gbuf[y][x];
+        coordxy mx = x - 1 + gvp.x0, my = y + gvp.y0;
+
+        gptr = &gg.gbuf[y][x - 1];
         glyph = gptr->glyphinfo.glyph;
-        get_bkglyph_and_framecolor(x, y, &bkglyphinfo.glyph,
-                                   &bkglyphinfo.framecolor);
+        if (isok(mx, my)) {
+            get_bkglyph_and_framecolor(mx, my, &bkglyphinfo.glyph,
+                                       &bkglyphinfo.framecolor);
+        } else {
+            bkglyphinfo.glyph = GLYPH_UNEXPLORED;
+            bkglyphinfo.framecolor = NO_COLOR;
+        }
         if (force || glyph != GLYPH_UNEXPLORED
             || bkglyphinfo.framecolor != NO_COLOR) {
             print_glyph(WIN_MAP, x, y,
-                        Glyphinfo_at(x, y, glyph), &bkglyphinfo);
+                        Glyphinfo_at(mx, my, glyph), &bkglyphinfo);
         }
     }
 }
@@ -2257,6 +2304,7 @@ flush_screen(int cursor_on_u)
     glyph_info bkglyphinfo = nul_glyphinfo;
     int bkglyph;
 
+    nhUse(x);
     /* 5.0: don't update map, status, or perm_invent during save/restore */
     if (_suppress_map_output())
         return;
@@ -2279,19 +2327,35 @@ flush_screen(int cursor_on_u)
     else if (disp.time_botl)
         timebot();
 
-    for (y = 0; y < ROWNO; y++) {
-        gbuf_entry *gptr = &gg.gbuf[y][x = gg.gbuf_start[y]];
+    /* scroll the map if the hero (or getpos cursor) has moved away from
+       the center of the viewport */
+    vp_check_recenter();
 
-        for (; x <= gg.gbuf_stop[y]; gptr++, x++) {
-            get_bkglyph_and_framecolor(x, y, &bkglyph,
-                                       &bkglyphinfo.framecolor);
+    for (y = 0; y < gvp.h; y++) {
+        coordxy sx = gg.gbuf_start[y];
+        gbuf_entry *gptr = &gg.gbuf[y][sx];
+
+        for (; sx <= gg.gbuf_stop[y] && sx < gvp.w; gptr++, sx++) {
+            coordxy mx = sx + gvp.x0, my = y + gvp.y0;
+
+            if (isok(mx, my)) {
+                get_bkglyph_and_framecolor(mx, my, &bkglyph,
+                                           &bkglyphinfo.framecolor);
+            } else {
+                bkglyph = GLYPH_UNEXPLORED;
+                bkglyphinfo.framecolor = NO_COLOR;
+            }
+            if (gptr->gnew && ow_compass_covers(sx, y)) {
+                gptr->gnew = 0; /* hidden under the compass rose */
+                continue;
+            }
             if (gptr->gnew
                 || (gw.wsettings.map_frame_color != NO_COLOR
                     && bkglyphinfo.framecolor != NO_COLOR)) {
                 /* map_glyphinfo() won't touch framecolor */
-                map_glyphinfo(x, y, bkglyph, 0, &bkglyphinfo);
-                print_glyph(WIN_MAP, x, y,
-                            Glyphinfo_at(x, y, gptr->glyphinfo.glyph),
+                map_glyphinfo(mx, my, bkglyph, 0, &bkglyphinfo);
+                print_glyph(WIN_MAP, sx + 1, y,
+                            Glyphinfo_at(mx, my, gptr->glyphinfo.glyph),
                             &bkglyphinfo);
                 gptr->gnew = 0;
             }
@@ -2299,15 +2363,180 @@ flush_screen(int cursor_on_u)
     }
     reset_glyph_bbox();
 
+    /* open world: the compass rose pointing home */
+    ow_draw_compass();
+
     /* after map update, before display_nhwindow(WIN_MAP) */
     if (cursor_on_u)
-        curs(WIN_MAP, u.ux, u.uy); /* move cursor to the hero */
+        map_curs(u.ux, u.uy); /* move cursor to the hero */
 
     display_nhwindow(WIN_MAP, FALSE);
     flushing = 0;
 }
 
 /* ======================================================================== */
+/* Viewport management ==================================================== */
+
+/* pick up the current map window size from the window port */
+staticfn void
+vp_sync_size(void)
+{
+    int w = nh_vp_cols, h = nh_vp_rows;
+
+    if (w < 10)
+        w = 10;
+    if (h < 3)
+        h = 3;
+    if (w > VP_MAXCOLS)
+        w = VP_MAXCOLS;
+    if (h > VP_MAXROWS)
+        h = VP_MAXROWS;
+    if (w != gvp.w || h != gvp.h) {
+        gvp.w = w, gvp.h = h;
+        gvp.valid = FALSE;
+    }
+}
+
+/* compute where the viewport's top-left corner should be */
+staticfn void
+vp_desired_origin(int *x0, int *y0)
+{
+    int cx, cy;
+
+    if (gvp.focusx) {
+        cx = gvp.focusx, cy = gvp.focusy;
+    } else {
+        cx = u.ux, cy = u.uy;
+    }
+    if (!flags.centerview) {
+        /* traditional display: a level which fits is shown in its
+           normal fixed position; larger maps scroll by half-screens */
+        if (COLNO <= gvp.w + 1 && ROWNO <= gvp.h) {
+            *x0 = 1, *y0 = 0;
+            return;
+        }
+        *x0 = gvp.valid ? gvp.x0 : cx - gvp.w / 2;
+        *y0 = gvp.valid ? gvp.y0 : cy - gvp.h / 2;
+        if (cx < *x0 + gvp.w / 6 || cx >= *x0 + gvp.w - gvp.w / 6)
+            *x0 = cx - gvp.w / 2;
+        if (cy < *y0 + gvp.h / 6 || cy >= *y0 + gvp.h - gvp.h / 6)
+            *y0 = cy - gvp.h / 2;
+        return;
+    }
+    /* keep the hero (or focus point) in the middle of the map window */
+    *x0 = cx - gvp.w / 2;
+    *y0 = cy - gvp.h / 2;
+}
+
+/* regenerate the whole viewport's contents after it has moved */
+staticfn void
+vp_rerender(void)
+{
+    coordxy x, y;
+    int sx, sy;
+
+    for (sy = 0; sy < VP_MAXROWS; sy++) {
+        for (sx = 0; sx < VP_MAXCOLS; sx++) {
+            gg.gbuf[sy][sx] = nul_gbuf;
+            gg.gbuf[sy][sx].gnew = 1; /* force it to be sent */
+        }
+        gg.gbuf_start[sy] = 0;
+        gg.gbuf_stop[sy] = gvp.w - 1;
+    }
+    if (!u.ux || _suppress_map_output())
+        return;
+    if (u.uswallow) {
+        swallowed(0);
+        return;
+    }
+    if (Underwater && !Is_waterlevel(&u.uz)) {
+        under_water(0);
+        return;
+    }
+    if (u.uburied) {
+        under_ground(0);
+        return;
+    }
+    for (y = max(0, gvp.y0); y < min(ROWNO, gvp.y0 + gvp.h); y++)
+        for (x = max(1, gvp.x0); x < min(COLNO, gvp.x0 + gvp.w); x++)
+            newsym(x, y);
+}
+
+/* establish the viewport origin without redrawing (used by docrt) */
+void
+vp_set_origin(void)
+{
+    int nx0, ny0;
+
+    vp_sync_size();
+    vp_desired_origin(&nx0, &ny0);
+    gvp.x0 = nx0, gvp.y0 = ny0;
+    gvp.valid = TRUE;
+}
+
+/* if the viewport is no longer where it ought to be, move it */
+void
+vp_check_recenter(void)
+{
+    int nx0, ny0;
+
+    if (!u.ux)
+        return;
+    vp_sync_size();
+    vp_desired_origin(&nx0, &ny0);
+    if (!gvp.valid || nx0 != gvp.x0 || ny0 != gvp.y0) {
+        gvp.x0 = nx0, gvp.y0 = ny0;
+        gvp.valid = TRUE;
+        vp_rerender();
+    }
+}
+
+/* the viewport must be recomputed (new level, window resized, &c) */
+void
+vp_invalidate(void)
+{
+    gvp.valid = FALSE;
+}
+
+/* center the viewport on <x,y> instead of on the hero; 0,0 reverts */
+void
+vp_set_focus(coordxy x, coordxy y)
+{
+    gvp.focusx = x, gvp.focusy = y;
+}
+
+/* is map location <x,y> currently shown in the map window? */
+boolean
+vp_shows(coordxy x, coordxy y)
+{
+    return (boolean) (gvp.valid && vp_in(x, y));
+}
+
+/* place the map window's cursor on map location <x,y> */
+void
+map_curs(coordxy x, coordxy y)
+{
+    int sx = x - gvp.x0, sy = y - gvp.y0;
+
+    if (sx < 0)
+        sx = 0;
+    if (sx >= gvp.w)
+        sx = gvp.w - 1;
+    if (sy < 0)
+        sy = 0;
+    if (sy >= gvp.h)
+        sy = gvp.h - 1;
+    curs(WIN_MAP, sx + 1, sy);
+}
+
+/* convert a map window position (as passed to print_glyph) back to map
+   coordinates; for window ports which need to know the real location */
+void
+vp_win_to_map(coordxy wx, coordxy wy, coordxy *mx, coordxy *my)
+{
+    *mx = wx - 1 + gvp.x0;
+    *my = wy + gvp.y0;
+}
 
 /*
  * back_to_glyph()
@@ -2520,7 +2749,11 @@ glyph_at(coordxy x, coordxy y)
 {
     if (x < 0 || y < 0 || x >= COLNO || y >= ROWNO)
         return cmap_to_glyph(S_room); /* XXX */
-    return gg.gbuf[y][x].glyphinfo.glyph; /* _glyph_at(x,y) */
+    /* outside the viewport, nothing is currently displayed; report what
+       the hero remembers being there instead */
+    if (!vp_in(x, y))
+        return levl[x][y].glyph;
+    return _glyph_at(x, y);
 }
 
 #ifdef UNBUFFERED_GLYPHINFO
@@ -2554,7 +2787,7 @@ get_bkglyph_and_framecolor(
     struct rm *lev = &levl[x][y];
 
     if (iflags.use_background_glyph && lev->seenv != 0
-        && (gg.gbuf[y][x].glyphinfo.glyph != GLYPH_UNEXPLORED)) {
+        && (glyph_at(x, y) != GLYPH_UNEXPLORED)) {
         switch (lev->typ) {
         case SCORR:
         case STONE:
@@ -2690,6 +2923,15 @@ map_glyphinfo(
         /* one more accessibility kludge;
            turn off override symbol if caller has specified NOOVERRIDE */
         glyphinfo->gm.sym.symidx = mons[glyph_to_mon(glyph)].mlet + SYM_OFF_M;
+    }
+    /* open world: color the overworld's terrain by what kind of ground
+       it is (grass, sand, snow, mountain cliffs, ...) */
+    if (iflags.use_color && In_overworld && isok(x, y)
+        && glyph_is_cmap(glyph) && !is_you) {
+        int clr = ow_flavor_color(x, y, glyph_to_cmap(glyph));
+
+        if (clr != NO_COLOR)
+            glyphinfo->gm.sym.color = clr;
     }
     glyphinfo->ttychar = gs.showsyms[glyphinfo->gm.sym.symidx];
     glyphinfo->glyph = glyph;

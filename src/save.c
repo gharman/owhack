@@ -314,6 +314,8 @@ savegamestate(NHFILE *nhfp)
     Sfo_char(nhfp, yyyymmddhhmmss(ubirthday), "gamestate-ubirthday", 14);
     Sfo_long(nhfp, &urealtime.realtime, "gamestate-realtime");
     Sfo_char(nhfp, yyyymmddhhmmss(urealtime.start_timing), "gamestate-start_timing", 14);
+    /* open world: the overworld's layout and what's been generated */
+    Sfo_char(nhfp, (char *) &svow, "gamestate-overworld", (int) sizeof svow);
     /* this is the value to use for the next update of urealtime.realtime */
     urealtime.start_timing = urealtime.finish_time;
     save_killers(nhfp);
@@ -536,6 +538,9 @@ savelev_core(NHFILE *nhfp, xint8 lev)
     if (nhfp->mode == FREEING) /* see above */
         goto skip_lots;
 
+    /* open world: levels don't all have the same dimensions */
+    Sfo_int(nhfp, &nh_colno, "lev-colno");
+    Sfo_int(nhfp, &nh_rowno, "lev-rowno");
     savelevl(nhfp);
     for (c = 0; c < COLNO; ++c) {
         for (r = 0; r < ROWNO; ++r) {

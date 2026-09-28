@@ -224,7 +224,7 @@ do_statusline2(void)
      * wider displays can still show wider status than the map if the
      * interface supports that.
      */
-    if ((dln - dx) + 1 + hln + 1 + xln + 1 + tln + 1 + cln + vrn <= COLNO) {
+    if ((dln - dx) + 1 + hln + 1 + xln + 1 + tln + 1 + cln + vrn <= DEFCOLNO) {
         Snprintf(newbot2, sizeof newbot2, "%s %s %s %s %s%s", dloc, hlth,
                  expr, tmmv, cond, vers);
     } else {
@@ -233,10 +233,10 @@ do_statusline2(void)
                   (unsigned) (dln + 1 + hln + 1 + xln + 1 + tln + 1 + cln
                               + vrn),
                   MAXCO);
-        } else if ((dln - dx) + 1 + hln + 1 + xln + 1 + cln <= COLNO) {
+        } else if ((dln - dx) + 1 + hln + 1 + xln + 1 + cln <= DEFCOLNO) {
             Snprintf(newbot2, sizeof newbot2, "%s %s %s %s %s%s", dloc, hlth,
                      expr, cond, tmmv, vers);
-        } else if ((dln - dx) + 1 + hln + 1 + cln <= COLNO) {
+        } else if ((dln - dx) + 1 + hln + 1 + cln <= DEFCOLNO) {
             Snprintf(newbot2, sizeof newbot2, "%s %s %s %s %s%s", dloc, hlth,
                      cond, expr, tmmv, vers);
         } else {
@@ -451,6 +451,15 @@ describe_level(
         addbranch = FALSE;
     } else if (In_quest(&u.uz)) {
         Sprintf(buf, "Home %d", dunlev(&u.uz));
+    } else if (In_overworld && svow.inited && !addbranch) {
+        /* open world: depth here is the ring; add the compass bearing
+           toward the high altars at the center of the world */
+        char cbuf[BUFSZ];
+
+        Sprintf(buf, "Dlvl:%-2d", depth(&u.uz));
+        if (*ow_compass_str(cbuf))
+            Sprintf(eos(buf), " %s", cbuf);
+        ret = 0;
     } else if (In_endgame(&u.uz)) {
         /* [3.6.2: this used to be "Astral Plane" or generic "End Game"] */
         (void) endgamelevelname(buf, depth(&u.uz));
@@ -466,7 +475,10 @@ describe_level(
             Sprintf(buf, "level %d", depth(&u.uz));
         ret = 0;
     }
-    if (addbranch) {
+    if (addbranch && In_overworld) {
+        Sprintf(eos(buf), ", in the %s of the Overworld",
+                ow_biome_name(u.ux ? ow_biome_at(u.ux, u.uy) : OWB_PLAZA));
+    } else if (addbranch) {
         Sprintf(eos(buf), ", %s", svd.dungeons[u.uz.dnum].dname);
         (void) strsubst(buf, "The ", "the ");
     }

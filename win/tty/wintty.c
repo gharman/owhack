@@ -197,6 +197,120 @@ static int clipy = 0, clipymax = 0;
 extern void adjust_cursor_flags(struct WinDesc *);
 #endif
 
+/*
+ * Shadow of the map portion of the screen.  The map scrolls under the hero
+ * so nearly every move causes the core to resend the whole viewport; the
+ * shadow lets us skip cells that already show the right thing, which keeps
+ * terminal output (and flicker) down.
+ */
+struct tty_shadow_cell {
+    int ch;
+    const char *u8;
+    uint32 color, frame, custom;
+    unsigned special;
+    unsigned char opts;
+    unsigned char valid; /* 0: unknown, 1: known */
+};
+static struct tty_shadow_cell tty_shadow[VP_MAXROWS + 4][VP_MAXCOLS + 2];
+
+static int tty_map_rows(void);
+static void tty_shadow_blank(int, int, int);
+static void tty_shadow_unknown(int, int, int);
+static void tty_sync_vp_size(void);
+
+/* how many terminal rows the map window gets */
+static int
+tty_map_rows(void)
+{
+    int r = (ttyDisplay ? ttyDisplay->rows : LI) - 1
+            - ((iflags.wc2_statuslines <= 2) ? 2 : 3);
+
+#ifdef TTY_PERM_INVENT
+    /* leave room below the status lines for the inventory */
+    if (iflags.perm_invent && r > DEFROWNO)
+        r = DEFROWNO;
+#endif
+    if (r > VP_MAXROWS)
+        r = VP_MAXROWS;
+    return (r < 3) ? 3 : r;
+}
+
+/* tell the core how big the map window is */
+static void
+tty_sync_vp_size(void)
+{
+    int w = (ttyDisplay ? ttyDisplay->cols : CO) - 1;
+
+    if (w > VP_MAXCOLS)
+        w = VP_MAXCOLS;
+    nh_vp_cols = w;
+    nh_vp_rows = tty_map_rows();
+}
+
+/* screen row y (absolute), columns x0..x1 (absolute) now show blanks */
+static void
+tty_shadow_blank(int y, int x0, int x1)
+{
+    int my = y - 1; /* map window starts on screen row 1 */
+
+    if (my < 0 || my >= VP_MAXROWS + 4)
+        return;
+    if (x0 < 0)
+        x0 = 0;
+    if (x1 > VP_MAXCOLS + 1)
+        x1 = VP_MAXCOLS + 1;
+    for (; x0 <= x1; x0++) {
+        struct tty_shadow_cell *sc = &tty_shadow[my][x0];
+
+        sc->ch = ' ', sc->u8 = 0, sc->color = NO_COLOR, sc->frame = NO_COLOR;
+        sc->custom = 0, sc->special = 0, sc->opts = 0, sc->valid = 1;
+    }
+}
+
+/* screen row y, columns x0..x1 contain something the shadow can't know */
+static void
+tty_shadow_unknown(int y, int x0, int x1)
+{
+    int my = y - 1;
+
+    if (my < 0 || my >= VP_MAXROWS + 4)
+        return;
+    if (x0 < 0)
+        x0 = 0;
+    if (x1 > VP_MAXCOLS + 1)
+        x1 = VP_MAXCOLS + 1;
+    for (; x0 <= x1; x0++)
+        tty_shadow[my][x0].valid = 0;
+}
+
+void
+tty_shadow_clear_eol(void)
+{
+    if (ttyDisplay)
+        tty_shadow_blank(ttyDisplay->cury, ttyDisplay->curx, VP_MAXCOLS + 1);
+}
+
+void
+tty_shadow_clear_eos(void)
+{
+    int y;
+
+    if (!ttyDisplay)
+        return;
+    tty_shadow_blank(ttyDisplay->cury, ttyDisplay->curx, VP_MAXCOLS + 1);
+    for (y = ttyDisplay->cury + 1; y < VP_MAXROWS + 4; y++)
+        tty_shadow_blank(y, 0, VP_MAXCOLS + 1);
+}
+
+void
+tty_shadow_clear_all(void)
+{
+    int y;
+
+    for (y = 0; y < VP_MAXROWS + 4; y++)
+        tty_shadow_blank(y, 0, VP_MAXCOLS + 1);
+}
+
 #if defined(ASCIIGRAPH)
 boolean GFlag = FALSE;
 boolean HE_resets_AS; /* see termcap.c */
@@ -405,6 +519,13 @@ resize_tty(void)
 
     ttyDisplay->rows = LI;
     ttyDisplay->cols = CO;
+    tty_sync_vp_size();
+    tty_shadow_clear_all();
+    vp_invalidate();
+    if (WIN_MAP != WIN_ERR && wins[WIN_MAP]) {
+        wins[WIN_MAP]->rows = nh_vp_rows;
+        wins[WIN_MAP]->cols = nh_vp_cols + 1;
+    }
 
     cw = wins[BASE_WINDOW];
     cw->rows = ttyDisplay->rows;
@@ -470,18 +591,15 @@ resize_tty(void)
 static void
 newclipping(coordxy x, coordxy y)
 {
-#ifdef CLIPPING
-    if (CO < COLNO || LI < 1 + ROWNO + iflags.wc2_statuslines) {
-        setclipped(); /* sets clipping=TRUE */
-        if (x)
-            tty_cliparound(x, y);
-    } else {
-        clipping = FALSE;
-        clipx = clipy = 0;
-    }
-#else
+    /* the core handles scrolling of the map (see vp_* in display.c);
+       just resynchronize the map window size */
     nhUse(x + y);
+#ifdef CLIPPING
+    clipping = FALSE;
+    clipx = clipy = 0;
 #endif
+    tty_sync_vp_size();
+    vp_invalidate();
     return;
 }
 
@@ -910,7 +1028,7 @@ tty_create_nhwindow(int type)
             newwin->offy = rowoffset;
         } else
 #endif
-            newwin->offy = min(rowoffset, ROWNO + 1);
+            newwin->offy = min(rowoffset, 1 + tty_map_rows());
         newwin->rows = newwin->maxrow = iflags.wc2_statuslines;
         newwin->cols = newwin->maxcol = ttyDisplay->cols;
         break;
@@ -918,8 +1036,10 @@ tty_create_nhwindow(int type)
         /* map window, ROWNO lines long, full width, below message window */
         newwin->offx = 0;
         newwin->offy = 1;
-        newwin->rows = ROWNO;
-        newwin->cols = COLNO;
+        tty_sync_vp_size();
+        newwin->rows = nh_vp_rows;
+        newwin->cols = nh_vp_cols + 1;
+        tty_shadow_clear_all();
         newwin->maxrow = 0; /* no buffering done -- let gbuf do it */
         newwin->maxcol = 0;
         break;
@@ -2118,6 +2238,12 @@ tty_curs(
     x += cw->offx;
     y += cw->offy;
 
+    /* something other than the map is about to write into the map area;
+       we can't track what, so forget what the shadow thinks is there */
+    if (window != WIN_MAP && WIN_MAP != WIN_ERR && y >= 1
+        && y < 1 + nh_vp_rows)
+        tty_shadow_unknown(y, x, VP_MAXCOLS + 1);
+
 #ifdef CLIPPING
     if (clipping && window == WIN_MAP) {
         x -= clipx;
@@ -2882,7 +3008,7 @@ tty_ctrl_nhwindow(
             /* something is terribly wrong, possibly too early in startup */
             wri->tocore.tocore_flags |= too_early;
         } else {
-            wri->tocore.needrows = (int) (minrow + 1 + ROWNO + StatusRows());
+            wri->tocore.needrows = (int) (minrow + 1 + tty_map_rows() + StatusRows());
             wri->tocore.needcols = (int) tty_perminv_mincol;
             wri->tocore.haverows = (int) ttyDisplay->rows;
             wri->tocore.havecols = (int) ttyDisplay->cols;
@@ -2960,7 +3086,7 @@ ttyinv_create_window(int newid, struct WinDesc *newwin)
         pline("%s.", "tty perm_invent could not be enabled");
         pline("tty perm_invent needs a terminal that is at least %dx%d, "
               "yours is %dx%d.",
-              (int) (minrow + 1 + ROWNO + StatusRows()), tty_perminv_mincol,
+              (int) (minrow + 1 + tty_map_rows() + StatusRows()), tty_perminv_mincol,
               ttyDisplay->rows, ttyDisplay->cols);
         tty_wait_synch();
 #ifndef RESIZABLE
@@ -3577,7 +3703,7 @@ assesstty(
 
     *offx = 0;
     /* topline + map rows + status lines */
-    *offy = 1 + ROWNO + StatusRows(); /* 1 + 21 + (2 or 3) */
+    *offy = 1 + tty_map_rows() + StatusRows(); /* 1 + map + (2 or 3) */
     *rows = (ttyDisplay->rows - *offy);
     *cols = ttyDisplay->cols;
     *minrow = perminv_minrow;
@@ -3694,22 +3820,13 @@ docorner(
             tty_refresh_inventory(xmin - (int) icw->offx, icw->maxcol,
                                   y - (int) icw->offy);
 #endif
-#ifdef CLIPPING
-        if (y < (int) cw->offy || y + clipy > ROWNO)
+        if (y < (int) cw->offy || y >= (int) cw->offy + tty_map_rows())
             continue; /* only refresh board */
-#if defined(TILES_IN_GLYPHMAP) && defined(MSDOS)
-        if (iflags.tile_view)
-            row_refresh((xmin / 2) + clipx - ((int) cw->offx / 2), COLNO - 1,
-                        y + clipy - (int) cw->offy);
-        else
-#endif
-            row_refresh(xmin + clipx - (int) cw->offx, COLNO - 1,
-                        y + clipy - (int) cw->offy);
-#else
-        if (y < cw->offy || y > ROWNO)
-            continue; /* only refresh board  */
-        row_refresh(xmin - (int) cw->offx, COLNO - 1, y - (int) cw->offy);
-#endif
+        /* row_refresh() takes map window coordinates; window column #1
+           is screen column #0, and tty_curs(BASE_WINDOW, xmin, y) above
+           put the cursor (hence cleared from) screen column xmin-1 */
+        row_refresh(xmin - (int) cw->offx, VP_MAXCOLS,
+                    y - (int) cw->offy);
 
     }
 
@@ -3810,6 +3927,11 @@ g_pututf8(uint8 *utf8str)
 void
 setclipped(void)
 {
+    /* the map is scrolled by the core now, never by the tty port */
+    clipping = FALSE;
+    nhUse(clipping);
+    return;
+    /*NOTREACHED*/
     clipping = TRUE;
     clipx = clipy = 0;
     clipxmax = CO;
@@ -3877,6 +3999,32 @@ tty_print_glyph(
     ch = glyphinfo->ttychar;
     color = glyphinfo->gm.sym.color;
     special = glyphinfo->gm.glyphflags;
+
+    if (window == WIN_MAP && y >= 0 && y < VP_MAXROWS && x >= 1
+        && x <= VP_MAXCOLS) {
+        struct tty_shadow_cell *sc = &tty_shadow[y][x - 1];
+        const char *u8 = 0;
+        uint32 frame = (iflags.use_color && bkglyphinfo)
+                           ? bkglyphinfo->framecolor : NO_COLOR;
+        unsigned char opts = (iflags.use_color ? 1 : 0)
+                             | (iflags.hilite_pet ? 2 : 0)
+                             | (iflags.hilite_pile ? 4 : 0)
+                             | (iflags.use_inverse ? 8 : 0)
+                             | ((iflags.wc2_petattr & 7) << 4);
+
+#ifdef ENHANCED_SYMBOLS
+        if ((tty_procs.wincap2 & WC2_U_UTF8STR) && SYMHANDLING(H_UTF8)
+            && glyphinfo->gm.u && glyphinfo->gm.u->utf8str)
+            u8 = (const char *) glyphinfo->gm.u->utf8str;
+#endif
+        if (sc->valid && sc->ch == ch && sc->u8 == u8 && sc->color == color
+            && sc->frame == frame && sc->custom == glyphinfo->gm.customcolor
+            && sc->special == special && sc->opts == opts)
+            return; /* already showing exactly this */
+        sc->ch = ch, sc->u8 = u8, sc->color = color, sc->frame = frame;
+        sc->custom = glyphinfo->gm.customcolor, sc->special = special;
+        sc->opts = opts, sc->valid = 1;
+    }
 
     print_vt_code2(AVTC_SELECT_WINDOW, window);
 

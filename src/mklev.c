@@ -19,7 +19,6 @@ staticfn void mkaltar(struct mkroom *);
 staticfn void mkgrave(struct mkroom *);
 staticfn void mkinvpos(coordxy, coordxy, int);
 staticfn int mkinvk_check_wall(coordxy x, coordxy y);
-staticfn void mk_knox_portal(coordxy, coordxy);
 staticfn void makevtele(void);
 staticfn void fill_ordinary_room(struct mkroom *, boolean) NONNULLARG1;
 staticfn void themerooms_post_level_generate(void);
@@ -841,6 +840,24 @@ count_level_features(void)
         }
 }
 
+/* set the dimensions of the level about to be created or loaded */
+void
+set_level_dims(int cols, int rows)
+{
+    if (cols < DEFCOLNO)
+        cols = DEFCOLNO;
+    if (rows < DEFROWNO)
+        rows = DEFROWNO;
+    if (cols > MAXCOLNO)
+        cols = MAXCOLNO;
+    if (rows > MAXROWNO)
+        rows = MAXROWNO;
+    nh_colno = cols, nh_rowno = rows;
+    gx.x_maze_max = (COLNO - 1) & ~1;
+    gy.y_maze_max = (ROWNO - 1) & ~1;
+    vp_invalidate();
+}
+
 /* clear out various globals that keep information on the current level.
  * some of this is only necessary for some types of levels (maze, normal,
  * special) but it's easier to put it all in one place than make sure
@@ -850,7 +867,7 @@ void
 clear_level_structures(void)
 {
     static struct rm zerorm = { GLYPH_UNEXPLORED,
-                                0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     coordxy x, y;
     struct rm *lev;
 
@@ -1264,8 +1281,21 @@ makelevel(void)
     level_status_init();
     level_status.making = 1;
 
+    /* the overworld is enormous; everything else is the classic size */
+    if (In_overworld)
+        set_level_dims(OW_SIZE, OW_SIZE);
+    else
+        set_level_dims(DEFCOLNO, DEFROWNO);
+
     oinit(); /* assign level dependent obj probabilities */
     clear_level_structures();
+
+    if (In_overworld) {
+        mkoverworld();
+        level_status.shkready = 1;
+        level_status.making = 0, level_status.ready = 1;
+        return;
+    }
 
     slev = Is_special(&u.uz);
     /* check for special levels */
@@ -1549,6 +1579,15 @@ level_finalize_topology(void)
 {
     struct mkroom *croom;
     int ridx;
+
+    if (In_overworld) {
+        /* the overworld's chunks are finished as they are generated
+           (walls, rooms, buried treasure); the whole-map passes below
+           would be both redundant and very slow */
+        gi.in_mklev = FALSE;
+        gx.xstart = gy.ystart = 0;
+        return;
+    }
 
     bound_digging();
     mineralize(-1, -1, -1, -1, FALSE);
@@ -2189,8 +2228,31 @@ mkstairs(
      * attempt can happen when a special level is placed at an end and
      * has an up or down stair specified in its description file.
      */
-    if (dunlev(&u.uz) == (up ? 1 : dunlevs_in_dungeon(&u.uz)))
+    if (dunlev(&u.uz) == (up ? 1 : dunlevs_in_dungeon(&u.uz))) {
+        branch *br = Is_branchlev(&u.uz);
+
+        /* open world: most special levels are now alone in their own
+           branch dungeon hanging off the overworld; a staircase that
+           would lead out of that dungeon becomes the branch's staircase,
+           so that (for instance) Medusa's island is still arrived at on
+           its traditional upstairs */
+        if (br && !gm.made_branch && br->type != BR_PORTAL) {
+            boolean goes_up = on_level(&br->end1, &u.uz) ? br->end1_up
+                                                         : !br->end1_up;
+
+            if (goes_up == (up ? TRUE : FALSE)) {
+                place_branch(br, x, y);
+                return;
+            }
+        }
+        /* the Valley of the Dead's way down leads out into the burning
+           lands of Gehennom (the overworld beyond the barrier) */
+        if (!up && Is_valley(&u.uz) && !t_at(x, y)) {
+            levl[x][y].typ = ROOM;
+            mkportal(x, y, 0, 1);
+        }
         return;
+    }
 
     dest.dnum = u.uz.dnum;
     dest.dlevel = u.uz.dlevel + (up ? -1 : 1);
@@ -2624,7 +2686,7 @@ mkinvk_check_wall(coordxy x, coordxy y)
  *
  * Ludios will remain isolated until the branch is corrected by this function.
  */
-staticfn void
+void
 mk_knox_portal(coordxy x, coordxy y)
 {
     d_level *source;
@@ -2638,8 +2700,9 @@ mk_knox_portal(coordxy x, coordxy y)
     if (on_level(&knox_level, &br->end1)) {
         source = &br->end2;
     } else {
-        /* disallow Knox branch on a level with one branch already */
-        if (Is_branchlev(&u.uz))
+        /* disallow Knox branch on a level with one branch already
+           (the overworld has lots of branches but plenty of room) */
+        if (Is_branchlev(&u.uz) && !In_overworld)
             return;
         source = &br->end1;
     }
@@ -2648,7 +2711,17 @@ mk_knox_portal(coordxy x, coordxy y)
     if (source->dnum < svn.n_dgns || (rn2(3) && !wizard))
         return;
 
-    if (!(u.uz.dnum == oracle_level.dnum      /* in main dungeon */
+    if (In_overworld) {
+        /* open world: a vault between depth 11 and Medusa's depth, not in
+           the quest's ring */
+        int ring = ow_ring_at(x, y);
+
+        if (ring <= 10 || ring >= depth(&medusa_level)
+            || ring == ow_branch_ring(quest_dnum))
+            return;
+        svd.dungeons[br->end2.dnum].depth_start = ring;
+        nhUse(u_depth);
+    } else if (!(u.uz.dnum == oracle_level.dnum      /* in main dungeon */
           && !at_dgn_entrance("The Quest")    /* but not Quest's entry */
           && (u_depth = depth(&u.uz)) > 10    /* beneath 10 */
           && u_depth < depth(&medusa_level))) /* and above Medusa */

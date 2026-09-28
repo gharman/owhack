@@ -9,6 +9,14 @@
  */
 
 #include "hack.h"
+
+/* open world: in the overworld, detection and mapping cover the hero's
+   neighborhood (see lvl_effect_bounds()) rather than the whole world */
+#define DET_OK(x, y) (!In_overworld || in_lvl_effect_bounds((x), (y)))
+#define DET_LX (In_overworld ? max(1, u.ux - OW_LOCAL_RX) : 1)
+#define DET_HX (In_overworld ? min(COLNO - 1, u.ux + OW_LOCAL_RX) : COLNO - 1)
+#define DET_LY (In_overworld ? max(0, u.uy - OW_LOCAL_RY) : 0)
+#define DET_HY (In_overworld ? min(ROWNO - 1, u.uy + OW_LOCAL_RY) : ROWNO - 1)
 #include "artifact.h"
 
 #ifndef FOUND_FLASH_COUNT
@@ -320,9 +328,9 @@ clear_stale_map(char oclass, unsigned material)
     coordxy zx, zy;
     boolean change_made = FALSE;
 
-    for (zx = 1; zx < COLNO; zx++)
-        for (zy = 0; zy < ROWNO; zy++)
-            if (check_map_spot(zx, zy, oclass, material)) {
+    for (zx = DET_LX; zx <= DET_HX; zx++)
+        for (zy = DET_LY; zy <= DET_HY; zy++)
+            if (DET_OK(zx, zy) && check_map_spot(zx, zy, oclass, material)) {
                 unmap_object(zx, zy);
                 change_made = TRUE;
             }
@@ -345,6 +353,8 @@ gold_detect(struct obj *sobj)
 
     /* look for gold carried by monsters (might be in a container) */
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (!DET_OK(mtmp->mx, mtmp->my))
+            continue;
         if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
             continue;
         if (findgold(mtmp->minvent) || monsndx(mtmp->data) == PM_GOLD_GOLEM) {
@@ -370,6 +380,8 @@ gold_detect(struct obj *sobj)
 
     /* look for gold objects */
     for (obj = fobj; obj; obj = obj->nobj) {
+        if (!DET_OK(obj->ox, obj->oy))
+            continue;
         if (sobj->blessed && o_material(obj, GOLD)) {
             gk.known = TRUE;
             if (obj->ox != u.ux || obj->oy != u.uy)
@@ -416,6 +428,8 @@ gold_detect(struct obj *sobj)
     (void) unconstrain_map();
     /* Discover gold locations. */
     for (obj = fobj; obj; obj = obj->nobj) {
+        if (!DET_OK(obj->ox, obj->oy))
+            continue;
         if (sobj->blessed && (temp = o_material(obj, GOLD)) != 0) {
             if (temp != obj) {
                 temp->ox = obj->ox;
@@ -433,6 +447,8 @@ gold_detect(struct obj *sobj)
             ugold = TRUE;
     }
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (!DET_OK(mtmp->mx, mtmp->my))
+            continue;
         if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
             continue;
         temp = 0;
@@ -490,6 +506,7 @@ food_detect(struct obj *sobj)
         u.usteed->mx = u.ux, u.usteed->my = u.uy;
 
     for (obj = fobj; obj; obj = obj->nobj)
+        if (DET_OK(obj->ox, obj->oy))
         if (o_in(obj, oclass)) {
             if (u_at(obj->ox, obj->oy))
                 ctu++;
@@ -497,6 +514,8 @@ food_detect(struct obj *sobj)
                 ct++;
         }
     for (mtmp = fmon; mtmp && (!ct || !ctu); mtmp = mtmp->nmon) {
+        if (!DET_OK(mtmp->mx, mtmp->my))
+            continue;
         if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
             continue;
         for (obj = mtmp->minvent; obj; obj = obj->nobj)
@@ -553,6 +572,7 @@ food_detect(struct obj *sobj)
         cls();
         (void) unconstrain_map();
         for (obj = fobj; obj; obj = obj->nobj)
+            if (DET_OK(obj->ox, obj->oy))
             if ((temp = o_in(obj, oclass)) != 0) {
                 if (temp != obj) {
                     temp->ox = obj->ox;
@@ -561,6 +581,8 @@ food_detect(struct obj *sobj)
                 map_object(temp, 1);
             }
         for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+            if (!DET_OK(mtmp->mx, mtmp->my))
+                continue;
             if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
                 continue;
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
@@ -641,6 +663,8 @@ object_detect(struct obj *detector, /* object doing the detecting */
             observe_recursively(obj);
 
     for (obj = fobj; obj; obj = obj->nobj) {
+        if (!DET_OK(obj->ox, obj->oy))
+            continue;
         if ((!class && !boulder) || o_in(obj, class) || o_in(obj, boulder)) {
             if (u_at(obj->ox, obj->oy))
                 ctu++;
@@ -652,6 +676,8 @@ object_detect(struct obj *detector, /* object doing the detecting */
     }
 
     for (obj = svl.level.buriedobjlist; obj; obj = obj->nobj) {
+        if (!DET_OK(obj->ox, obj->oy))
+            continue;
         if (!class || o_in(obj, class)) {
             if (u_at(obj->ox, obj->oy))
                 ctu++;
@@ -666,6 +692,8 @@ object_detect(struct obj *detector, /* object doing the detecting */
         u.usteed->mx = u.ux, u.usteed->my = u.uy;
 
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (!DET_OK(mtmp->mx, mtmp->my))
+            continue;
         if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
             continue;
         for (obj = mtmp->minvent; obj; obj = obj->nobj) {
@@ -700,6 +728,7 @@ object_detect(struct obj *detector, /* object doing the detecting */
      *  Map all buried objects first.
      */
     for (obj = svl.level.buriedobjlist; obj; obj = obj->nobj)
+        if (DET_OK(obj->ox, obj->oy))
         if (!class || (otmp = o_in(obj, class)) != 0) {
             if (class) {
                 if (otmp != obj) {
@@ -718,8 +747,8 @@ object_detect(struct obj *detector, /* object doing the detecting */
      *
      * Objects on the floor override buried objects.
      */
-    for (x = 1; x < COLNO; x++)
-        for (y = 0; y < ROWNO; y++)
+    for (x = DET_LX; x <= DET_HX; x++)
+        for (y = DET_LY; y <= DET_HY; y++)
             for (obj = svl.level.objects[x][y]; obj; obj = obj->nexthere)
                 if ((!class && !boulder) || (otmp = o_in(obj, class)) != 0
                     || (otmp = o_in(obj, boulder)) != 0) {
@@ -736,6 +765,8 @@ object_detect(struct obj *detector, /* object doing the detecting */
 
     /* Objects in the monster's inventory override floor objects. */
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (!DET_OK(mtmp->mx, mtmp->my))
+            continue;
         if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
             continue;
         for (obj = mtmp->minvent; obj; obj = obj->nobj)
@@ -807,6 +838,8 @@ monster_detect(struct obj *otmp, /* detecting object (if any) */
      * with positive hit-points to know for sure.
      */
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (!DET_OK(mtmp->mx, mtmp->my))
+            continue;
         if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
             continue;
         ++mcnt;
@@ -826,6 +859,8 @@ monster_detect(struct obj *otmp, /* detecting object (if any) */
         cls();
         unconstrained = unconstrain_map();
         for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+            if (!DET_OK(mtmp->mx, mtmp->my))
+                continue;
             if (DEADMONSTER(mtmp) || PARKEDMONSTER(mtmp))
                 continue;
             if (!mclass || mtmp->data->mlet == mclass
@@ -969,6 +1004,8 @@ display_trap_map(int cursed_src)
     (void) detect_obj_traps(svl.level.buriedobjlist, TRUE, cursed_src, NULL);
     (void) detect_obj_traps(fobj, TRUE, cursed_src, NULL);
     for (mon = fmon; mon; mon = mon->nmon) {
+        if (!DET_OK(mon->mx, mon->my))
+            continue;
         if (DEADMONSTER(mon) || PARKEDMONSTER(mon))
             continue;
         (void) detect_obj_traps(mon->minvent, TRUE, cursed_src, NULL);
@@ -976,6 +1013,7 @@ display_trap_map(int cursed_src)
     (void) detect_obj_traps(gi.invent, TRUE, cursed_src, NULL);
 
     for (ttmp = gf.ftrap; ttmp; ttmp = ttmp->ntrap)
+        if (DET_OK(ttmp->tx, ttmp->ty))
         sense_trap(ttmp, 0, 0, cursed_src);
 
     dummytrap.ttyp = TRAPPED_DOOR;
@@ -1023,6 +1061,8 @@ trap_detect(
 
     /* floor/ceiling traps */
     for (ttmp = gf.ftrap; ttmp; ttmp = ttmp->ntrap) {
+        if (!DET_OK(ttmp->tx, ttmp->ty))
+            continue;
         if (ttmp->tx != u.ux || ttmp->ty != u.uy) {
             display_trap_map(cursed_src);
             return 0;
@@ -1046,6 +1086,8 @@ trap_detect(
         found = TRUE;
     }
     for (mon = fmon; mon; mon = mon->nmon) {
+        if (!DET_OK(mon->mx, mon->my))
+            continue;
         if (DEADMONSTER(mon) || PARKEDMONSTER(mon))
             continue;
         if ((tr = detect_obj_traps(mon->minvent, FALSE, 0, NULL))
@@ -1096,8 +1138,8 @@ furniture_detect(void)
 
     (void) unconstrain_map();
 
-    for (y = 0; y < ROWNO; ++y)
-        for (x = 1; x < COLNO; ++x) {
+    for (y = DET_LY; y <= DET_HY; ++y)
+        for (x = DET_LX; x <= DET_HX; ++x) {
             glyph = glyph_at(x, y);
             sym = glyph_to_cmap(glyph);
             if (IS_FURNITURE(levl[x][y].typ)) {
@@ -1425,8 +1467,8 @@ do_mapping(void)
     boolean unconstrained;
 
     unconstrained = unconstrain_map();
-    for (zx = 1; zx < COLNO; zx++)
-        for (zy = 0; zy < ROWNO; zy++)
+    for (zx = DET_LX; zx <= DET_HX; zx++)
+        for (zy = DET_LY; zy <= DET_HY; zy++)
             show_map_spot(zx, zy, Confusion);
 
     if (!svl.level.flags.hero_memory || unconstrained) {
@@ -2138,8 +2180,8 @@ premap_detect(void)
     struct obj *obj;
 
     /* Map the background and boulders */
-    for (x = 1; x < COLNO; x++)
-        for (y = 0; y < ROWNO; y++) {
+    for (x = DET_LX; x <= DET_HX; x++)
+        for (y = DET_LY; y <= DET_HY; y++) {
             if (skip_premap_detect(x, y))
                 continue;
             levl[x][y].seenv = SVALL;
@@ -2153,6 +2195,8 @@ premap_detect(void)
 
     /* Map the traps */
     for (ttmp = gf.ftrap; ttmp; ttmp = ttmp->ntrap) {
+        if (!DET_OK(ttmp->tx, ttmp->ty))
+            continue;
         ttmp->tseen = 1;
         map_trap(ttmp, 1);
     }
@@ -2313,10 +2357,10 @@ dump_map(void)
      */
     skippedrows = 0;
     toprow = TRUE;
-    for (y = 0; y < ROWNO; y++) {
+    for (y = DET_LY; y <= DET_HY; y++) {
         blankrow = TRUE; /* assume blank until we discover otherwise */
         lastnonblank = -1; /* buf[] index rather than map's x */
-        for (x = 1; x < COLNO; x++) {
+        for (x = DET_LX; x <= DET_HX; x++) {
             int ch;
             glyph_info glyphinfo;
 
@@ -2376,8 +2420,8 @@ reveal_terrain(
             docrt();
         default_glyph = cmap_to_glyph(default_sym);
 
-        for (x = 1; x < COLNO; x++)
-            for (y = 0; y < ROWNO; y++) {
+        for (x = DET_LX; x <= DET_HX; x++)
+            for (y = DET_LY; y <= DET_HY; y++) {
                 glyph = reveal_terrain_getglyph(x, y, swallowed,
                                                 default_glyph, which_subset);
                 show_glyph(x, y, glyph);
