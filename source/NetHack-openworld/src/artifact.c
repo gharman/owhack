@@ -2308,7 +2308,6 @@ artifact_has_invprop(struct obj *otmp, uchar inv_prop)
                       && (arti->inv_prop == inv_prop));
 }
 
-/* Return the price sold to the hero of a given artifact or unique item */
 /* the material that artifact #artinum is made of, or 0 (NO_MATERIAL) for
    "whatever its base object is made of" (artimaterials[] in artilist.h) */
 int
@@ -2323,6 +2322,7 @@ artifact_material(int artinum)
     return NO_MATERIAL;
 }
 
+/* Return the price sold to the hero of a given artifact or unique item */
 long
 arti_cost(struct obj *otmp)
 {
