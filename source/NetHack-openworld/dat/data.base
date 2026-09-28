@@ -468,6 +468,7 @@ barbarian
 # takes "bat or bird" when specifying 'B'
 ~*combat
 ~*wombat
+~mongbat
 *bat
 bat or bird
 	A bat, flitting in the darkness outside, took the wrong turn
@@ -565,6 +566,7 @@ blind io
 	large number, led a semi-independent life of their
 	own.  Several were currently hovering above the table.
 	    [ The Colour of Magic, by Terry Pratchett ]
+~lava blob
 * blob
 ooze
 * ooze
@@ -602,6 +604,7 @@ bone devil
 	which causes a loss of strength to those they sting.
 book of the dead
 candelabrum*
+~magic candle
 *candle
 	Faustus: Come on Mephistopheles.  What shall we do?
 	Mephistopheles: Nay, I know not.  We shall be cursed with bell,
@@ -636,6 +639,7 @@ boomerang
 	of wood that grew here.
 		[ The Last Continent, by Terry Pratchett ]
 ~*jack*boot*
+~*plasteel boots
 *boot*
 *shoes
 	In Fantasyland these are remarkable in that they seldom or
@@ -756,6 +760,12 @@ camelot*
 	degli Uberti, the Italian poet, claims to have seen the ruins
 	in the 14th century.
 		[ Encyclopedia Mythica, ed. M.F. Lindemans ]
+candle of eternal flame
+	The most sacred treasure of the Flame Mages is a candle whose
+	flame, it is said, was kindled at the dawn of the world and has
+	never once been extinguished since.  It burns without consuming
+	itself, and the Flame Mages hold that for as long as it burns,
+	the fire at the heart of their order can never die.
 candy bar
 	Only once a year, on his birthday, did Charlie Bucket ever
 	get to taste a bit of chocolate.  The whole family saved up
@@ -1275,6 +1285,13 @@ dart*
 	I saw the thing that should have pierced his heart
 	Turn to a golden staff.
 		[ Gifts, by Mary Coleridge ]
+deep freeze
+	A staff prized among the Ice Mages, said to be so bitterly cold
+	that frost gathers upon it even beneath the summer sun.
+deluder
+	This cloak of displacement was woven for a master of illusion,
+	so that no foe who faced its wearer could ever be quite certain
+	where he truly stood.
 demogorgon
 	A terrible deity, whose very name was capable of producing the
 	most horrible effects.  He is first mentioned by the 4th-century
@@ -1500,6 +1517,23 @@ dragonbane
 	would keep its edge, as the dragon discovered
 	as soon as they came together in combat.
 		[ Beowulf, translated by Seamus Heaney ]
+droid
+	A droid is a mechanical servant, built to perform some particular
+	task: to translate, to repair starships, to fight, or merely to
+	fetch and carry.  Though they are only machines, droids that go
+	long enough without having their memories wiped are said to
+	develop quirks of personality all their own, and more than one
+	Jedi has come to regard a droid as a faithful companion.
+
+	       Obi-Wan:  You don't need to see his identification.
+	  Stormtrooper:  We don't need to see his identification.
+	       Obi-Wan:  These aren't the droids you're looking for.
+	  Stormtrooper:  These aren't the droids we're looking for.
+	       Obi-Wan:  He can go about his business.
+	  Stormtrooper:  You can go about your business.
+	       Obi-Wan:  Move along.
+	  Stormtrooper:  Move along... move along.
+		[ Star Wars, written and directed by George Lucas ]
 *drum*
 	Many travelers have seen the drums of the great apes, and
 	some have heard the sounds of their beating and the noise of
@@ -1632,6 +1666,8 @@ electric eel
 	This eel is known for its electrical organ which enables it
 	to paralyse creatures up to the size of a horse.
 	   [ Van Dale's Groot Woordenboek der Nederlandse Taal ]
+~ice elemental
+~magma elemental
 *elemental
 	Elementals are manifestations of the basic nature of the
 	universe.  There are four known forms of elementals:  air, fire,
@@ -1676,6 +1712,15 @@ elven cloak
 	brown as fallow fields by night, dusk-silver as water under
 	the stars.
 		[ The Fellowship of the Ring, by J.R.R. Tolkien ]
+embalmer
+	Embalming is the art of preserving the bodies of the dead against
+	decay.  Its most celebrated practitioners, the embalmers of
+	ancient Egypt, drew out the brain through the nostrils with an
+	iron hook, removed the organs through a cut in the side, and
+	dried the body for many weeks in natron before anointing it with
+	resins and wrapping it in bandages of linen.  Among necromancers,
+	who have their own uses for the dead, the embalmer's craft is
+	held in particular esteem.
 emerald
 	'Put off that mask of burning gold
 	With emerald eyes.'
@@ -1821,6 +1866,15 @@ figurine*
 	years by private owners and dealers too stupid to see what
 	it was under the skin.
 		[ The Maltese Falcon, by Dashiell Hammett ]
+fire bomb
+bomb
+	A bomb is a hollow shell of iron or baked clay, packed with an
+	explosive or incendiary charge and fitted with a fuse.  The fire
+	bomb holds a volatile mixture that bursts into flame as the shell
+	breaks apart, splashing burning matter over everything nearby.
+	Such weapons are very old: the defenders of Byzantium flung clay
+	pots of Greek fire at their enemies more than a thousand years
+	ago.
 fire trap
 	'Let him be for a while,' said Cohen.  'I reckon the fish
 	disagreed with him.'
@@ -1834,6 +1888,14 @@ fire trap
 	to expect unexpected flames, what's the point of going
 	_anywhere_?'
 		[ The Last Hero, by Terry Pratchett ]
+fire vampire
+	A swirling cloud of bright, burning motes, the fire vampire
+	descends upon its victim and easily burns them to death once
+	they are in its deadly embrace.
+firewall
+	A firewall is a wall of brick or stone, built to keep a fire from
+	spreading from one part of a building to the next.  The Flame
+	Mages have given the name to one of their most prized staves.
 f* brand
 	Some say the world will end in fire,
 	Some say in ice.
@@ -1845,6 +1907,18 @@ f* brand
 	Is also great
 	And would suffice.
 		[ Fire and Ice, by Robert Frost ]
+flame mage
+* flame mage
+igniter
+	The Flame Mages are an ancient order of sorcerers who have
+	devoted themselves to the mastery of elemental fire.  Under the
+	guidance of the High Flame Mage, their apprentices learn to call
+	forth flame from the empty air and to bend the elementals of fire
+	to their will.  Their oldest and bitterest enemies are the masters
+	of water, the element that quenches fire.
+
+	Death by fire is the purest death.
+		[ A Game of Thrones, by George R.R. Martin ]
 flesh golem
 	With an anxiety that almost amounted to agony, I collected
 	the instruments of life around me, that I might infuse a spark
@@ -2128,6 +2202,7 @@ giant humanoid
 	boulders as weapons, hurling them over large distances.  All
 	types of giants share a love for men - roasted, boiled, or
 	fried.  Their table manners are legendary.
+~*plasteel gloves
 *gloves
 gauntlets*
 	And her old Uncle William used to say a lady is known by her
@@ -2255,6 +2330,11 @@ grayswandir
 	ANOINT, v.t.  To grease a king or other great functionary
 	already sufficiently slippery.
 		[ The Devil's Dictionary, by Ambrose Bierce ]
+great dagger of glaurgnaa
+	This ancient great dagger is the most jealously guarded relic of
+	the Necromancers, who keep it in the tower of their Dark Lord.
+	Its black blade is said to be steeped in the cold power of the
+	grave.
 gremlin
 	The gremlin is a highly intelligent and completely evil
 	creature.  It lives to torment other creatures and will go
@@ -2671,6 +2751,7 @@ hunter
 # but should be able to fit within a normal-width screen once nethack strips
 # off the leading <tab>.
 ~ice box
+~scroll of ice
 ice
 # thawing ice: "solid ice", "thin ice", &c
 * ice
@@ -2707,6 +2788,27 @@ ice devil
 	equally at home in the fires of Hell and the cold of Limbo,
 	and who can cause the traveller to feel the latter with just
 	a touch of their tail.
+ice elemental
+magma elemental
+	Where the elemental planes meet, their substances mingle, and
+	from these borderlands come the para-elementals.  Ice elementals
+	are born where the plane of Air touches the plane of Water, and
+	magma elementals where Fire meets Earth.  Like their purer
+	cousins, they are living embodiments of their elements, with
+	little regard for creatures of flesh.
+ice mage
+* ice mage
+froster
+	Found mainly near the frozen wastes of the north, the Ice Mages
+	are a mysterious group of individuals who are rumored to be
+	descendants of a once great northern civilization that fell into
+	chaos over a thousand years ago.
+	They wield the power of elemental cold, a conglomeration of
+	elemental air and water.  They are particularly effective
+	fighting fire-based creatures.  Although they command of two of
+	the four elements, Ice Mages have difficulty affecting undead,
+	who are immune to cold.
+		[ by Drew Curtis ]
 idefix
 	Another clever translation [of the _Asterix_ character names]
 	is that of Idefix.  An _idee fixe_ is a "fixed idea", i.e.
@@ -2718,6 +2820,7 @@ idefix
 		[ Wikipedia, the free encyclopedia ]
 # takes "imp or minor demon" when specifying 'i'
 imp
+blood imp
 imp or minor demon
 	 ... imps ... little creatures of two feet high that could
 	gambol and jump prodigiously; ...
@@ -2898,6 +3001,27 @@ jaguar
 	South America.  This feline predator (_Panthera onca_) is
 	sometimes incorrectly called a panther.
 	    [ Van Dale's Groot Woordenboek der Nederlandse Taal ]
+jedi
+* jedi
+jedi master
+jedi knight
+jedi trainer
+padawan
+	The Jedi are an ancient order of warrior-monks, devoted to the
+	study of the Force: an energy field created by all living things,
+	which surrounds them, penetrates them, and binds the galaxy
+	together.  Children strong in the Force are brought to the Jedi
+	Temple as younglings; the most promising become Padawans, each
+	apprenticed to a single Knight or Master who teaches them the
+	ways of the Force and the use of the lightsaber.  Sworn to serve
+	the light side, the Jedi stand forever opposed to the Sith, who
+	draw their power from the dark side.
+
+	"For over a thousand generations, the Jedi Knights were the
+	guardians of peace and justice in the Old Republic.  Before the
+	dark times -- before the Empire."
+		[ Obi-Wan Kenobi, in Star Wars,
+		  written and directed by George Lucas ]
 jellyfish
 	I do not care to share the seas
 	With jellyfishes such as these;
@@ -3182,6 +3306,10 @@ lava
 	already hellish scene.  A dark, forboding passage exits to the
 	south.
 		[ Adventure, by Will Crowther and Don Woods ]
+lava blob
+	The lava blob is a sluggish mound of molten rock that somehow
+	lives and moves.  It glows a dull, angry red, and gives off a
+	heat so fierce that the air shimmers around it.
 leash
 	They had splendid heads, fine shoulders, strong legs, and
 	straight tails.  The spots on their bodies were jet-black and
@@ -3285,6 +3413,27 @@ light
 	Strange creatures formed from energy rather than matter,
 	lights are given to self-destructive behavior when battling
 	foes.
+*lightsaber
+	The lightsaber is a blade of pure energy, projected from a metal
+	hilt scarcely a foot long, that will cut through almost anything.
+	The color of the blade is set by the crystal at the heart of the
+	hilt; the Sith favor red.  Every Jedi constructs a lightsaber of
+	his or her own in the course of training, and the weapon has
+	become the very symbol of the Jedi Order.  A few, such as the
+	Sith warrior Darth Maul, wield a double-bladed saber, with a
+	blade springing from either end of an elongated hilt.
+
+	"Your father's lightsaber.  This is the weapon of a Jedi Knight.
+	Not as clumsy or random as a blaster; an elegant weapon for a
+	more civilized age."
+		[ Obi-Wan Kenobi, in Star Wars,
+		  written and directed by George Lucas ]
+lightsaber prototype
+	This is said to be the very first lightsaber ever made, and no
+	blade built since has ever equaled it.  Long believed lost
+	forever, it resurfaced at last in the hands of a merchant on the
+	Outer Rim, and the Jedi and the Sith alike have shed much blood
+	in their struggle to claim it.
 gecko
 iguana
 lizard
@@ -3344,6 +3493,15 @@ lord sato
 	Lord Sato was the family head of the Taro Clan, and a mighty
 	daimyo.  He is a loyal servant of the Emperor, and will do
 	everything in his power to further the imperial cause.
+lord sidious
+darth sidious
+	Darth Sidious, Dark Lord of the Sith, hid his true nature for
+	decades behind the kindly face of Palpatine, a senator of the
+	Galactic Republic.  By patient scheming he engineered the fall of
+	the Republic and the destruction of the Jedi Order, and made
+	himself Emperor of the galaxy.  He is a master of the dark side
+	of the Force, and can call down lightning upon his foes with a
+	gesture.
 lord surt*
 	Yet first was the world in the southern region, which was
 	named Muspell; it is light and hot; that region is glowing
@@ -3425,6 +3583,12 @@ sceptre
 	about in armour, and sovereigns needed champions to vindicate
 	their rights.
 		[ Brewer's Concise Dictionary of Phrase and Fable ]
+magic candle
+	My candle burns at both ends;
+	It will not last the night;
+	But ah, my foes, and oh, my friends --
+	It gives a lovely light.
+		[ First Fig, by Edna St. Vincent Millay ]
 magic marker
 	The pen is mightier than the sword.
 		[ Richelieu, by Edward Bulwer-Lytton ]
@@ -3559,6 +3723,11 @@ mastodon
 	Ages of Europe, the mattock served as an improvised shafted
 	weapon for the poorer classes.
 		[ Wikipedia, the free encyclopedia ]
+maugneshaagar
+	Maugneshaagar is a demon of vast age and boundless malice.  He
+	was believed to have perished at the close of the last age, but
+	he has returned, and from his lair he now sends forth armies of
+	abominations against the tower of the Necromancers.
 meat*
 huge chunk of meat
 	Some hae meat and canna eat,
@@ -3724,6 +3893,19 @@ mol?ch
 	family, and will cut him off, and all that go a whoring after
 	him, to commit whoredom with Molech, from among their people.
 		[ Leviticus 20:1-5 ]
+mongbat
+	In appearance, a cross between a small boy and a bat, this nimble
+	creature is capable of quick, aerial strikes.  Fortunately, a
+	mongbat's small size renders its attack little more than a painful
+	nuisance.
+		[ Beyond the Serpent Pillars, by Andrew Morris ]
+
+	Though a novice, the warrior had riches.
+	In finery, he assaulted the liches.
+	  An orc got his suit,
+	  A spectre one boot,
+	And a mongbat is wearing his britches.
+		[ Limericks, by Magus ]
 monk
 * monk
 grand master
@@ -3879,6 +4061,22 @@ neanderthal*
 	1.  Valley between Duesseldorf and Elberfeld in Germany,
 	where an ancient skull of a prehistoric ancestor to modern
 	man was found.  2.  Human(oid) of the race mentioned above.
+necromancer
+* necromancer
+dark lord
+	Necromancy is the practice of magic or black magic involving
+	communication with the dead by summoning their spirits as
+	apparitions or visions, or by resurrection for the purpose of
+	divination; imparting the means to foretell future events;
+	discovery of hidden knowledge; returning a person to life, or to
+	use the dead as a weapon.  Sometimes referred to as "death magic,"
+	the term is used in a more general sense to refer to black magic
+	or witchcraft.
+		[ Wikipedia, the free encyclopedia ]
+
+	I never had many friends, growing up.  Then I went to the local
+	graveyard, and found all the friends I could ask for.
+		[]
 neferet
 neferet the green
 	Neferet the Green holds office in her hidden tower, only
@@ -3932,6 +4130,13 @@ nunchaku
 	Bruce Lee in a number of films, made in both Hollywood and
 	Hong Kong.
 		[ Wikipedia, the free encyclopedia ]
+nupperibo
+	The nupperibos are among the lowest of all devils: pallid,
+	bloated little horrors shaped, it is said, in the pits of Hell
+	from the souls of the petty and the selfish.  Possessed of little
+	intellect and no will of their own, they are driven before the
+	greater devils in great numbers, and spent without a moment's
+	regret.
 *nymph
 naiad
 	A female creature from Roman and Greek mythology, the nymph
@@ -4247,6 +4452,11 @@ pit fiend
 	attacking twice with weapons as well as grabbing and crushing
 	the life out of those unwary enough to enter their
 	domains.
+*plasteel *
+	Plasteel is a composite of steel and plastic, lighter than iron
+	yet very nearly as strong.  Molded into gleaming white plates and
+	fitted closely to the body, it forms the familiar armor of the
+	Imperial stormtrooper.
 platinum yendorian express card
 	This is an ancient artifact made of an unknown material.  It
 	is rectangular in shape, very thin, and inscribed with archaic
@@ -4544,6 +4754,12 @@ quit*
 	          be cast into the Flaming Pit of Death.
 		[ Snow Day, directed by Chris Koch,
 		  written by Will McRobb and Chris Viscardi ]
+ragnaros
+	Ragnaros the Firelord is the mightiest of the lords of the fire
+	elementals: a towering, living inferno of flame and molten rock
+	whose very presence sets the air ablaze.  Ancient beyond reckoning
+	and consumed by hatred for all things of ice and cold, he would
+	see the whole world burn.
 raijin
 raiden
 	The Japanese god of thunder (rai) and lightning (den).  He
@@ -4913,6 +5129,12 @@ scroll *
 	I read these words, and read again, and tried
 	My eyes against the heavens, and read again.
 		[ Endymion, by John Keats ]
+serpent's tongue
+	A dagger prized among the Necromancers.
+
+	They have sharpened their tongues like a serpent; adders' poison
+	is under their lips.
+		[ Psalms, 140:3 ]
 set
 seth
 	The ancient Egyptian god of chaos (Set), the embodiment of
@@ -5335,6 +5557,10 @@ sting
 	"I will give you a name," he said to it, "and I shall call
 	you Sting."
 		[ The Hobbit, by J.R.R. Tolkien ]
+storm whistle
+	The Storm Whistle is the treasured relic of the Ice Mages: a
+	magic whistle whose shrill note, it is said, carries the voice of
+	the winter gales that sweep across the frozen north.
 stormbringer
 	There were sounds in the distance, incongruent with the
 	sounds of even this nameless, timeless sea: thin sounds,
@@ -5353,6 +5579,13 @@ stormbringer
 	heard men cry so when his salvation and his nemesis, his
 	great black battle-blade Stormbringer, drank their souls.
 		[ The Lands Beyond the World, by Michael Moorcock ]
+stormtrooper
+	The name "stormtrooper" was first given to the specially trained
+	assault troops of the German army in the last years of the First
+	World War.  It is better known today for the shock troops of the
+	Galactic Empire: faceless soldiers clad head to foot in gleaming
+	white armor, utterly loyal to the Emperor, and sent in vast
+	numbers wherever the will of the Empire is to be enforced.
 *strange object
 strange
 glorkum*
@@ -5697,6 +5930,7 @@ tyr
 	at the place now called 'the wolf's joint;' and Tyr is one-
 	handed, and is not called a reconciler of men.
 			[ The Prose Edda, by Snorri Sturluson ]
+~water hulk
 *hulk
 	Umber hulks are powerful subterranean predators whose
 	iron-like claws allow them to burrow through solid stone in
@@ -5906,6 +6140,18 @@ water demon
 	and drink, I will enjoy eating you, the biggest monkey, most
 	of all!"  He grinned, and saliva dripped down his hairy chin.
 		[ Buddhist Tales for Young and Old, Vol. 1 ]
+water hulk
+	A close cousin of the umber hulk, the water hulk makes its home
+	in sunless underground lakes and flooded caverns.  It is as much
+	at ease swimming through black water as it is burrowing through
+	solid stone.
+water mage
+	The Water Mage is a sorcerer of immense age and power, who is
+	said to have learned his art in the days before Atlantis sank
+	beneath the waves.  Master of the element that quenches fire, he
+	commands hordes of elementals called forth from the plane of
+	Water, and has long sought the destruction of the Flame Mages and
+	all their works.
 water troll
 	It wasn't that the troll was _horrifying_. Instead of the
 	rotting, betentacled monstrosity he had been expecting
@@ -6228,6 +6474,28 @@ pioneer
 	Nomad            22 to 25
 	Rover            26 to 29
 	Pioneer             30
+fla* ranks
+flame mage
+spark
+igniter
+broiler
+combuster
+torcher
+scorcher
+incinerator
+disintegrator
+flame-master
+	Flame Mage ranks
+	  title            level
+	Spark             1 to 2
+	Igniter           3 to 5
+	Broiler           6 to 9
+	Combuster        10 to 13
+	Torcher          14 to 17
+	Scorcher         18 to 21
+	Incinerator      22 to 25
+	Disintegrator    26 to 29
+	Flame-Master        30
 hea* ranks
 healer
 rhizotomist
@@ -6253,6 +6521,44 @@ chirurgeon
 	 Magistra        22 to 25
 	Physician        26 to 29
 	Chirurgeon          30
+ice* ranks
+ice mage
+cooler
+condenser
+chiller
+froster
+permafroster
+icer
+freezer
+sublimer
+ice-master
+	Ice Mage ranks
+	  title            level
+	Cooler            1 to 2
+	Condenser         3 to 5
+	Chiller           6 to 9
+	Froster          10 to 13
+	Permafroster     14 to 17
+	Icer             18 to 21
+	Freezer          22 to 25
+	Sublimer         26 to 29
+	Ice-Master          30
+jed* ranks
+jedi
+youngling
+padawan
+jedi apprentice
+jedi knight
+jedi hero
+jedi master
+	Jedi ranks
+	  title            level
+	Youngling         1 to 2
+	Padawan           3 to 5
+	Jedi Apprentice   6 to 9
+	Jedi Knight      10 to 13
+	Jedi Hero        14 to 17
+	Jedi Master      18 to 30
 kni* ranks
 knight
 gallant
@@ -6301,6 +6607,25 @@ master
 	  of Winds       22 to 25
 	  of Fire        26 to 29
 	Master              30
+nec* ranks
+necromancer
+gravedigger
+embalmer
+mortician
+zombie lord
+ghoul master
+undead master
+lich lord
+	Necromancer ranks
+	  title            level
+	Gravedigger       1 to 2
+	Embalmer          3 to 5
+	Mortician         6 to 9
+	Zombie Lord      10 to 13
+	Ghoul Master     14 to 17
+	Necromancer      18 to 25
+	Undead Master    26 to 29
+	Lich Lord           30
 pri* ranks
 priest*
 aspirant
