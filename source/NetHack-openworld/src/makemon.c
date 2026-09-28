@@ -224,9 +224,14 @@ m_initweap(struct monst *mtmp)
             if (w2)
                 (void) mongets(mtmp, w2);
         } else if (is_elf(ptr)) {
-            if (rn2(2))
-                (void) mongets(mtmp,
-                               rn2(2) ? ELVEN_MITHRIL_COAT : ELVEN_CLOAK);
+            if (rn2(2)) {
+                /* elves who used to get an elven mithril-coat get mithril
+                   elven chain mail */
+                if (rn2(2))
+                    (void) mongets_mat(mtmp, ELVEN_CHAIN_MAIL, MITHRIL);
+                else
+                    (void) mongets(mtmp, ELVEN_CLOAK);
+            }
             if (rn2(2))
                 (void) mongets(mtmp, ELVEN_LEATHER_HELM);
             else if (!rn2(4))
@@ -373,8 +378,8 @@ m_initweap(struct monst *mtmp)
                 m_initthrow(mtmp, !rn2(4) ? FLINT : ROCK, 6);
                 break;
             }
-            if (!rn2(10))
-                (void) mongets(mtmp, ELVEN_MITHRIL_COAT);
+            if (!rn2(10)) /* hobbits: Bilbo's mithril shirt */
+                (void) mongets_mat(mtmp, ELVEN_CHAIN_MAIL, MITHRIL);
             if (!rn2(10))
                 (void) mongets(mtmp, DWARVISH_CLOAK);
         } else if (is_dwarf(ptr)) {
@@ -392,8 +397,10 @@ m_initweap(struct monst *mtmp)
                     (void) mongets(mtmp, DWARVISH_ROUNDSHIELD);
                 }
                 (void) mongets(mtmp, DWARVISH_IRON_HELM);
+                /* dwarves who used to get a dwarvish mithril-coat get
+                   mithril dwarvish chain mail */
                 if (!rn2(3))
-                    (void) mongets(mtmp, DWARVISH_MITHRIL_COAT);
+                    (void) mongets_mat(mtmp, DWARVISH_CHAIN_MAIL, MITHRIL);
             } else {
                 (void) mongets(mtmp, !rn2(3) ? PICK_AXE : DAGGER);
             }
@@ -1385,8 +1392,12 @@ makemon(
     } else if (mndx == PM_PESTILENCE) {
         mitem = POT_SICKNESS;
     }
-    if (mitem != STRANGE_OBJECT && allow_minvent)
-        (void) mongets(mtmp, mitem);
+    if (mitem != STRANGE_OBJECT && allow_minvent) {
+        if (mndx == PM_CROESUS)
+            (void) mongets_mat(mtmp, mitem, GOLD); /* bling */
+        else
+            (void) mongets(mtmp, mitem);
+    }
 
     if (gi.in_mklev) {
         if ((is_ndemon(ptr) || mndx == PM_WUMPUS
@@ -2185,12 +2196,46 @@ grow_up(struct monst *mtmp, struct monst *victim)
 struct obj *
 mongets(struct monst *mtmp, int otyp)
 {
+    return mongets_mat(mtmp, otyp, NO_MATERIAL);
+}
+
+/* give a monster an object made of a specific material (or, if mat is
+   NO_MATERIAL, of whatever material the object randomly gets) */
+struct obj *
+mongets_mat(struct monst *mtmp, int otyp, int mat)
+{
     struct obj *otmp;
 
     if (!otyp)
         return (struct obj *) 0;
     otmp = mksobj(otyp, TRUE, FALSE);
     if (otmp) {
+        if (mat != NO_MATERIAL && valid_obj_material(otmp, mat))
+            set_material(otmp, mat);
+        /* if mtmp would hate the material of a worn or wielded object it
+           is getting, pick a different one (pointless for objects that
+           only have one valid material, such as rings and wands) */
+        if ((otmp->oclass == WEAPON_CLASS || otmp->oclass == ARMOR_CLASS
+             || is_weptool(otmp) || otmp->oclass == AMULET_CLASS)
+            && mon_hates_material(mtmp, otmp->material)
+            && !otmp->oartifact) {
+            int tryct = 0;
+
+            while (mon_hates_material(mtmp, otmp->material)
+                   && ++tryct < 100)
+                init_obj_material(otmp);
+            if (mon_hates_material(mtmp, otmp->material)) {
+                /* will anything work? */
+                int m;
+
+                for (m = NO_MATERIAL + 1; m < NUM_MATERIAL_TYPES; ++m)
+                    if (valid_obj_material(otmp, m)
+                        && !mon_hates_material(mtmp, m)) {
+                        set_material(otmp, m);
+                        break;
+                    }
+            }
+        }
         if (mtmp->data->mlet == S_DEMON) {
             /* demons never get blessed objects */
             if (otmp->blessed)

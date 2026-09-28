@@ -775,7 +775,9 @@ scatter(
 
         /* 9 in 10 chance of fracturing boulders or statues */
         if ((scflags & MAY_FRACTURE) != 0
-            && (otmp->otyp == BOULDER || otmp->otyp == STATUE)
+            && (otmp->otyp == BOULDER
+                /* copper and gold statues don't fracture */
+                || (otmp->otyp == STATUE && !is_metallic(otmp)))
             && rn2(10)) {
             if (otmp->otyp == BOULDER) {
                 if (cansee(sx, sy)) {
@@ -810,7 +812,7 @@ scatter(
 
             /* 1 in 10 chance of destruction of obj; glass, egg destruction */
         } else if ((scflags & MAY_DESTROY) != 0
-                   && (!rn2(10) || (objects[otmp->otyp].oc_material == GLASS
+                   && (!rn2(10) || (otmp->material == GLASS
                                     || otmp->otyp == EGG))) {
             if (breaks(otmp, sx, sy))
                 used_up = TRUE;

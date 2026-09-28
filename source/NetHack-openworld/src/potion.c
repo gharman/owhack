@@ -147,8 +147,20 @@ make_sick(long xtime,
         talk = FALSE;
 #endif
     if (xtime > 0L) {
+        int copperarmor = 0;
+        struct obj *otmp;
+
         if (Sick_resistance)
             return;
+        /* copper's antimicrobial properties help to ward off sickness:
+           each piece of worn copper armor gives a 1 in 5 chance */
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+            if ((otmp->owornmask & W_ARMOR) && otmp->material == COPPER)
+                copperarmor++;
+        if (rn2(5) < copperarmor) {
+            You_feel("briefly ill.");
+            return;
+        }
         if (!old) {
             /* newly sick */
             You_feel("deathly sick.");
@@ -2797,6 +2809,7 @@ potion_dip(struct obj *obj, struct obj *potion)
                 fakeobj.dknown = 1; /* no need to observe_object */
                 fakeobj.otyp = old_otyp;
                 fakeobj.oclass = POTION_CLASS;
+                fakeobj.material = objects[old_otyp].oc_material;
                 docall(&fakeobj);
             }
         }

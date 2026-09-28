@@ -399,6 +399,20 @@ oname(
     if (lth)
         artifact_exists(obj, name, TRUE, oflgs);
     if (obj->oartifact) {
+        int amat = artifact_material(obj->oartifact);
+
+        /* artifacts with a specific material get it; others are made of
+           their base type's default material, except when made by naming
+           an existing object (so no irregular-material Excalibur from
+           dipping, wishing or crowning, but "Sting" can be named from any
+           elven dagger) */
+        if (amat != NO_MATERIAL) {
+            if (obj->material != amat)
+                set_material(obj, amat);
+        } else if (!via_naming
+                   && obj->material != objects[obj->otyp].oc_material) {
+            set_material(obj, objects[obj->otyp].oc_material);
+        }
         /* can't dual-wield with artifact as secondary weapon */
         if (obj == uswapwep)
             untwoweapon();
@@ -611,6 +625,10 @@ docall_xname(struct obj *obj)
     otemp.quan = 1L;
     /* in case water is already known, convert "[un]holy water" to "water" */
     otemp.blessed = otemp.cursed = 0;
+    /* a type is being called, so drop the individual object's material
+       from the name unless it's always mentioned */
+    if (!force_material_name(otemp.otyp))
+        otemp.material = objects[otemp.otyp].oc_material;
     /* remove attributes that are doname() caliber but get formatted
        by xname(); most of these fixups aren't really needed because the
        relevant type of object isn't callable so won't reach this far */

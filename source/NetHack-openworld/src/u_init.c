@@ -819,7 +819,7 @@ u_init_race(void)
         knows_object(ELVEN_SPEAR, FALSE);
         knows_object(ELVEN_DAGGER, FALSE);
         knows_object(ELVEN_BROADSWORD, FALSE);
-        knows_object(ELVEN_MITHRIL_COAT, FALSE);
+        knows_object(ELVEN_CHAIN_MAIL, FALSE);
         knows_object(ELVEN_LEATHER_HELM, FALSE);
         knows_object(ELVEN_SHIELD, FALSE);
         knows_object(ELVEN_BOOTS, FALSE);
@@ -832,7 +832,7 @@ u_init_race(void)
         knows_object(DWARVISH_SHORT_SWORD, FALSE);
         knows_object(DWARVISH_MATTOCK, FALSE);
         knows_object(DWARVISH_IRON_HELM, FALSE);
-        knows_object(DWARVISH_MITHRIL_COAT, FALSE);
+        knows_object(DWARVISH_CHAIN_MAIL, FALSE);
         knows_object(DWARVISH_CLOAK, FALSE);
         knows_object(DWARVISH_ROUNDSHIELD, FALSE);
         break;
@@ -1161,7 +1161,11 @@ ini_inv_mkobj_filter(int oclass, boolean got_level1_spellbook)
            || (obj->oclass == SPBOOK_CLASS
                && (objects[otyp].oc_level > (got_level1_spellbook ? 3 : 1)
                    || restricted_spell_discipline(otyp)))
-           || otyp == SPE_NOVEL) {
+           || otyp == SPE_NOVEL
+           /* random items that would be made of a material the hero hates
+              (iron rings or wands for elves) and can't become copper */
+           || (Hate_material(objects[otyp].oc_material)
+               && !valid_obj_material(obj, COPPER))) {
         dealloc_obj(obj);
         if (++trycnt > 1000) {
             /* This lonely pancake's potential will never be realized.
@@ -1246,6 +1250,14 @@ ini_inv_adjust_obj(const struct trobj *trop, struct obj *obj)
         if (trop->trbless != UNDEF_BLESS)
             obj->blessed = trop->trbless;
 
+        /* starting inventory is made of its default material (so that
+           materials can't be start-scummed; this also fixes up objects
+           whose otyp was substituted for the hero's race), except that
+           races who hate cold iron (elves) get copper instead */
+        set_material(obj, objects[obj->otyp].oc_material);
+        if (Hate_material(obj->material)
+            && valid_obj_material(obj, COPPER))
+            set_material(obj, COPPER);
     }
     /* defined after setting otyp+quan + blessedness */
     obj->owt = weight(obj);

@@ -48,6 +48,8 @@ armour*
 suit or piece of armor
 ~*dragon*scale*
 ~scroll of mail
+~dwarvish chain mail
+~elven chain mail
 *mail
 	"The last spot on the school jousting team came down to another
 	boy and me.  He was poor, and his only armor was a blanket his
@@ -3670,6 +3672,8 @@ mit*ra*
 	    [ The Encyclopaedia of Myths and Legends of All Nations,
 		by Herbert Spencer Robinson and Knox Wilson ]
 *mithril*
+dwarvish chain mail
+elven chain mail
 	_Mithril_!  All folk desired it.  It could be beaten like
 	copper, and polished like glass; and the Dwarves could make
 	of it a metal, light and yet harder than tempered steel.

@@ -145,6 +145,7 @@ extern void init_artifacts(void);
 extern void save_artifacts(NHFILE *);
 extern void restore_artifacts(NHFILE *);
 extern const char *artiname(int);
+extern int artifact_material(int);
 extern struct obj *mk_artifact(struct obj *, aligntyp, uchar, boolean);
 extern const char *artifact_name(const char *, short *, boolean) NONNULLARG1;
 extern boolean exist_artifact(int, const char *) NONNULLPTRS;
@@ -185,6 +186,7 @@ extern const char *glow_color(int);
 extern const char *glow_verb(int, boolean);
 extern void Sting_effects(int);
 extern int retouch_object(struct obj **, boolean) NONNULLARG1;
+extern int retouch_object_prot(struct obj **, boolean, boolean) NONNULLARG1;
 extern void retouch_equipment(int);
 extern void mkot_trap_warn(void);
 extern boolean is_magic_key(struct monst *, struct obj *);
@@ -760,6 +762,7 @@ extern const char *obj_pmname(struct obj *) NONNULLARG1;
 
 /* ### do_wear.c ### */
 
+extern boolean will_touch_skin(long);
 extern const char *fingers_or_gloves(boolean);
 extern void off_msg(struct obj *) NONNULLARG1;
 extern void toggle_displacement(struct obj *, long, boolean);
@@ -876,6 +879,8 @@ extern int breaks(struct obj *, coordxy, coordxy) NONNULLARG1;
 extern void release_camera_demon(struct obj *, coordxy, coordxy) NONNULLARG1;
 extern int breakobj(struct obj *, coordxy, coordxy, boolean, boolean) NONNULLARG1;
 extern boolean breaktest(struct obj *) NONNULLARG1;
+extern boolean crack_glass_obj(struct obj *);
+extern boolean breaks_unseen(struct obj *) NONNULLARG1;
 extern boolean walk_path(coord *, coord *,
                          boolean(*)(void *, coordxy, coordxy), genericptr_t) NONNULLARG12;
 
@@ -1515,6 +1520,7 @@ extern int mkclass_poly(int);
 extern int adj_lev(struct permonst *) NONNULLARG1;
 extern struct permonst *grow_up(struct monst *, struct monst *) NONNULLARG1;
 extern struct obj* mongets(struct monst *, int) NONNULLARG1;
+extern struct obj *mongets_mat(struct monst *, int, int) NONNULLARG1;
 extern int golemhp(int);
 extern boolean peace_minded(struct permonst *) NONNULLARG1;
 extern void set_malign(struct monst *) NONNULLARG1;
@@ -1571,6 +1577,7 @@ extern void expels(struct monst *, struct permonst *, boolean) NONNULLARG12;
 extern struct attack *getmattk(struct monst *, struct monst *, int, int *,
                                struct attack *) NONNULLARG12;
 extern boolean mtrapped_in_pit(struct monst *) NONNULLARG1;
+extern long attack_contact_slots(struct monst *, int) NONNULLARG1;
 extern int mattacku(struct monst *) NONNULLARG1;
 boolean diseasemu(struct permonst *) NONNULLARG1;
 boolean u_slip_free(struct monst *, struct attack *) NONNULLARG12;
@@ -1759,6 +1766,14 @@ extern struct obj *obj_absorb(struct obj **, struct obj **);
 extern struct obj *obj_meld(struct obj **, struct obj **);
 extern void pudding_merge_message(struct obj *, struct obj *) NONNULLARG12;
 extern struct obj *init_dummyobj(struct obj *, short, long);
+/* object materials */
+extern void init_obj_material(struct obj *) NONNULLARG1;
+extern boolean valid_obj_material(struct obj *, int) NONNULLARG1;
+extern void set_material(struct obj *, int) NONNULLARG1;
+extern void fixup_obj_material(struct obj *) NONNULLARG1;
+extern int material_weight(struct obj *, int) NONNULLARG1;
+extern int material_bonus(struct obj *) NONNULLARG1;
+extern int armor_bonus(struct obj *) NONNULLARG1;
 
 /* ### mkroom.c ### */
 
@@ -1906,6 +1921,10 @@ extern boolean can_blnd(struct monst *, struct monst *,
 extern boolean ranged_attk(struct permonst *) NONNULLARG1;
 extern boolean mon_hates_silver(struct monst *) NONNULLARG1;
 extern boolean hates_silver(struct permonst *) NONNULLARG1;
+extern boolean mon_hates_material(struct monst *, int) NONNULLARG1;
+extern boolean hates_material(struct permonst *, int) NONNULLARG1;
+extern int sear_damage(int);
+extern int monmaterial(int);
 extern boolean mon_hates_blessings(struct monst *) NONNULLARG1;
 extern boolean hates_blessings(struct permonst *) NONNULLARG1;
 extern boolean mon_hates_light(struct monst *) NONNULLARG1;
@@ -2331,6 +2350,8 @@ extern char *safe_qbuf(char *, const char *, const char *, struct obj *,
                        char * (*)(struct obj *), char * (*)(struct obj *),
                        const char *) NONNULL NONNULLARG14;
 extern int shiny_obj(char);
+extern int legacy_objname_material(const char *, int *) NONNULLARG12;
+extern int material_prefix_len(const char *) NONNULLARG1;
 
 /* ### options.c ### */
 
@@ -2992,6 +3013,7 @@ extern void bclose(int);
 
 /* ### shk.c ### */
 
+extern long material_price(struct obj *, long) NONNULLARG1;
 /* setpaid() has a conditional code block near the end of the
    function, where arg1 is tested for NULL, preventing NONNULLARG1 */
 extern void setpaid(struct monst *) NO_NNARGS;
@@ -3840,8 +3862,12 @@ extern int vms_get_saved_games(const char *, char ***);
 extern const char *weapon_descr(struct obj *) NONNULLARG1;
 extern int hitval(struct obj *, struct monst *) NONNULLARG12;
 extern int dmgval(struct obj *, struct monst *) NONNULLARG12;
-extern int special_dmgval(struct monst *, struct monst *, long, long *) NONNULLARG12;
-extern void silver_sears(struct monst *, struct monst *, long) NONNULLARG2;
+extern int material_hitval(struct obj *) NONNULLARG1;
+extern int material_dmgval(struct obj *) NONNULLARG1;
+extern int special_dmgval(struct monst *, struct monst *, long,
+                          struct obj **) NONNULLARG12;
+extern void searmsg(struct monst *, struct monst *, struct obj *,
+                    boolean) NONNULLARG2;
 extern struct obj *select_rwep(struct monst *) NONNULLARG1;
 extern boolean monmightthrowwep(struct obj *) NONNULLARG1;
 extern struct obj *select_hwep(struct monst *) NONNULLARG1;

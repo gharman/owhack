@@ -27,6 +27,7 @@ struct _readobjnam_data {
     int tmp, tinv, tvariety, mgend;
     int wetness, gsize;
     int ftype;
+    int material; /* requested material, or NO_MATERIAL */
     boolean zombify;
     char globbuf[BUFSZ];
     char fruitbuf[BUFSZ];
@@ -38,6 +39,14 @@ staticfn void releaseobuf(char *) NONNULLARG1;
 staticfn void xcalled(char *, int, const char *, const char *);
 staticfn char *xname_flags(struct obj *, unsigned);
 staticfn char *minimal_xname(struct obj *);
+staticfn boolean show_material(struct obj *, boolean);
+staticfn const char *material_prefix(struct obj *);
+staticfn boolean not_actually_specifying_material(const char *const,
+                                                  const char *);
+staticfn int legacy_objname(const char *, int *);
+staticfn boolean is_legacy_objname(const char *);
+staticfn int wish_material(const char *, int *);
+staticfn void wish_set_material(struct _readobjnam_data *);
 staticfn void add_erosion_words(struct obj *, char *);
 staticfn char *doname_base(struct obj *obj, unsigned);
 staticfn boolean singplur_lookup(char *, char *, boolean,
@@ -571,6 +580,31 @@ xcalled(
     Sprintf(eos(buf), "%s called %.*s", pfx, bufsiz - pfxlen, sfx);
 }
 
+/* should obj's material be part of its name?  yes, once it has been seen
+   up close, if it isn't the usual material for its type or if its type
+   always has its material named (force_material_name(), objclass.h) */
+staticfn boolean
+show_material(struct obj *obj, boolean dknown)
+{
+    return (boolean) (dknown && obj->material > NO_MATERIAL
+                      && obj->material < NUM_MATERIAL_TYPES
+                      && (obj->material != objects[obj->otyp].oc_material
+                          || force_material_name(obj->otyp)));
+}
+
+/* the adjective (with trailing space) used for obj's material in its
+   name: "silver ", "wooden ", "crystal " for glass boxes */
+staticfn const char *
+material_prefix(struct obj *obj)
+{
+    static char matbuf[40];
+
+    if (Is_box(obj) && obj->material == GLASS)
+        return "crystal ";
+    Snprintf(matbuf, sizeof matbuf, "%s ", materialnm[obj->material]);
+    return matbuf;
+}
+
 char *
 xname(struct obj *obj)
 {
@@ -670,17 +704,21 @@ xname_flags(
        until after the switch. */
     switch (obj->oclass) {
     case AMULET_CLASS:
+        if (show_material(obj, dknown)) {
+            Strcat(buf, material_prefix(obj));
+            ConcUpdate(buf);
+        }
         if (!dknown)
-            Strcpy(buf, "amulet");
+            Concat(buf, 0, "amulet");
         else if (typ == AMULET_OF_YENDOR || typ == FAKE_AMULET_OF_YENDOR)
             /* each must be identified individually */
-            Strcpy(buf, known ? actualn : dn);
+            Concat(buf, 0, known ? actualn : dn);
         else if (nn)
-            Strcpy(buf, actualn);
+            Concat(buf, 0, actualn);
         else if (un)
             xcalled(buf, BUFSZ - PREFIX, "amulet", un);
         else
-            Sprintf(buf, "%s amulet", dn);
+            ConcatF1(buf, 0, "%s amulet", dn);
         break;
     case WEAPON_CLASS:
         if (is_poisonable(obj) && obj->opoisoned)
@@ -695,6 +733,9 @@ xname_flags(
             Strcpy(buf, "pair of ");
         else if (is_wet_towel(obj))
             Strcpy(buf, (obj->spe < 3) ? "moist " : "wet ");
+        /* "silver long sword", "wooden dagger", "crystal chest" */
+        if (show_material(obj, dknown))
+            Strcat(buf, material_prefix(obj));
 
         if (!dknown)
             Strcat(buf, dn);
@@ -733,6 +774,9 @@ xname_flags(
                 break;
             }
         }
+        /* "mithril chain mail", "pair of plastic high boots" */
+        if (show_material(obj, dknown))
+            Strcat(buf, material_prefix(obj));
         ConcUpdate(buf);
 
         if (nn)
@@ -802,10 +846,11 @@ xname_flags(
             char anbuf[10];
             const char *statue_pmname = obj_pmname(obj);
 
-            Snprintf(buf, bufspaceleft, "%s%s of %s%s",
+            Snprintf(buf, bufspaceleft, "%s%s%s of %s%s",
                      (Role_if(PM_ARCHEOLOGIST)
                       && (obj->spe & CORPSTAT_HISTORIC) != 0) ? "historic "
                        : "",
+                     show_material(obj, dknown) ? material_prefix(obj) : "",
                      actualn,
                      type_is_pname(&mons[omndx]) ? ""
                        : the_unique_pm(&mons[omndx]) ? "the "
@@ -822,7 +867,9 @@ xname_flags(
                use ordinary "boulder" */
             obj->next_boulder = 0;
         } else {
-            Strcpy(buf, actualn); /* "boulder" or "statue" */
+            if (show_material(obj, dknown))
+                Strcpy(buf, material_prefix(obj)); /* "gold statue" */
+            Strcat(buf, actualn); /* "boulder" or "statue" */
         }
         break;
     case BALL_CLASS:
@@ -1057,6 +1104,9 @@ minimal_xname(struct obj *obj)
     bareobj = cg.zeroobj;
     bareobj.otyp = otyp;
     bareobj.oclass = obj->oclass;
+    /* use the default material unless the material is always named */
+    bareobj.material = force_material_name(otyp) ? obj->material
+                       : objects[otyp].oc_material;
     /* not observe_object, either the hero observed the object already or this
        is overriding ID and shouldn't discover the object */
     bareobj.dknown = (obj->dknown || iflags.override_ID) ? 1 : 0;
@@ -3420,7 +3470,6 @@ static const struct alt_spellings {
     { "helm of esp", HELM_OF_TELEPATHY },
     { "gauntlets of ogre power", GAUNTLETS_OF_POWER },
     { "gauntlets of giant strength", GAUNTLETS_OF_POWER },
-    { "elven chain mail", ELVEN_MITHRIL_COAT },
     { "silver shield", SHIELD_OF_REFLECTION },
     { "potion of sleep", POT_SLEEPING },
     { "scroll of recharging", SCR_CHARGING },
@@ -3985,6 +4034,7 @@ readobjnam_init(char *bp, struct _readobjnam_data *d)
     d->actualn = d->dn = d->un = 0;
     d->wetness = 0;
     d->gsize = 0;
+    d->material = NO_MATERIAL;
     d->zombify = FALSE;
     d->bp = d->origbp = bp;
     d->p = (char *) 0;
@@ -4198,6 +4248,10 @@ readobjnam_preparse(struct _readobjnam_data *d)
                 || !strncmpi(d->bp + l, "an ", more_l = 3)
                 || !strncmpi(d->bp + l, "the ", more_l = 4))
                 l += more_l;
+        } else if (!d->material && (l = wish_material(d->bp,
+                                                      &d->material)) > 0) {
+            ; /* "mithril chain mail", "silver long sword", "wooden dagger";
+               * d->material has been set, skip past the material word */
         } else {
             break;
         }
@@ -4206,6 +4260,201 @@ readobjnam_preparse(struct _readobjnam_data *d)
     if (save_bp)
         d->bp = save_bp;
     return res;
+}
+
+/* names of materials in wishes, besides materialnm[] */
+static const struct material_synonym {
+    const char *name;
+    int mat;
+} material_synonyms[] = {
+    { "wood", WOOD },
+    { "metal", STEEL }, /* vanilla's name for it */
+    { "crystal", GLASS },
+    { "bronze", COPPER },
+    { "brass", COPPER },
+    { "dragon hide", DRAGON_HIDE },
+    { "dragon-hide", DRAGON_HIDE },
+    { (const char *) 0, NO_MATERIAL }
+};
+
+/* If str starts with a material word followed by a space, and isn't the
+   name of something that merely happens to start with a material word
+   ("silver saber", "iron bars", "gold detection"), set *matp to the
+   material and return the length to skip past it; otherwise return 0. */
+staticfn int
+wish_material(const char *str, int *matp)
+{
+    const struct material_synonym *syn;
+    int mat, l;
+
+    for (mat = NO_MATERIAL + 1; mat < NUM_MATERIAL_TYPES; ++mat) {
+        l = (int) strlen(materialnm[mat]);
+        if (!strncmpi(str, materialnm[mat], l) && str[l] == ' '
+            && !not_actually_specifying_material(str, materialnm[mat])) {
+            *matp = mat;
+            return l + 1;
+        }
+    }
+    for (syn = material_synonyms; syn->name; ++syn) {
+        l = (int) strlen(syn->name);
+        if (!strncmpi(str, syn->name, l) && str[l] == ' '
+            && !not_actually_specifying_material(str, syn->name)) {
+            *matp = syn->mat;
+            return l + 1;
+        }
+    }
+    return 0;
+}
+
+/* Return TRUE if str, which starts with the material word matstr, is really
+   the name of something else (an object, a monster, an artifact, a trap
+   or a map feature) rather than an object made of that material. */
+staticfn boolean
+not_actually_specifying_material(const char *const str, const char *matstr)
+{
+    int i;
+    int matlen = (int) strlen(matstr);
+    short otyp;
+
+    /* is this the entire string? e.g. "gold" is a wish for zorkmids */
+    if (!strcmpi(str, matstr))
+        return TRUE;
+    /* does it match some object's name or description?
+       e.g. "gold detection", "wax candle", "wooden shield", "silver bell";
+       and "silver ring", "iron wand": a material that's a description
+       followed by the class name ("ring", "wand", "spellbook") */
+    for (i = STRANGE_OBJECT + 1; i < NUM_OBJECTS; ++i) {
+        const char *oc_name = OBJ_NAME(objects[i]),
+                   *oc_descr = OBJ_DESCR(objects[i]);
+
+        if (oc_name && !strncmpi(str, oc_name, strlen(oc_name)))
+            return TRUE;
+        if (oc_descr && !strncmpi(str, oc_descr, strlen(oc_descr))
+            && strlen(oc_descr) > (size_t) matlen)
+            return TRUE;
+        if (oc_descr && !strcmpi(matstr, oc_descr)) {
+            const char *aftermat = str + matlen + 1, /* past material */
+                       *clsname = def_oc_syms[(int) objects[i].oc_class]
+                                      .explain;
+            size_t clslen = clsname ? strlen(clsname) : 0;
+
+            /* "copper ring" or "copper rings" but not "copper ring mail" */
+            if (clsname && !strncmpi(aftermat, clsname, clslen)
+                && (!aftermat[clslen]
+                    || (lowc(aftermat[clslen]) == 's'
+                        && !aftermat[clslen + 1])))
+                return TRUE;
+        }
+    }
+    /* legacy object names like "elven mithril-coat", "silver shield" */
+    if (is_legacy_objname(str))
+        return TRUE;
+    /* alternate spellings like "iron ball" */
+    {
+        const struct alt_spellings *as;
+
+        /* (not "stone" itself, which is also an alternate spelling) */
+        for (as = spellings; as->sp; as++)
+            if (strlen(as->sp) > (size_t) matlen
+                && !strncmpi(str, as->sp, strlen(as->sp)))
+                return TRUE;
+    }
+    /* does it match some monster? e.g. "silver dragon scale mail" */
+    for (i = LOW_PM; i < NUMMONS; ++i) {
+        int gend;
+
+        for (gend = 0; gend < NUM_MGENDERS; ++gend) {
+            const char *pmname = mons[i].pmnames[gend];
+
+            if (pmname && !strncmpi(str, pmname, strlen(pmname)))
+                return TRUE;
+        }
+    }
+    /* does it match some artifact? e.g. "platinum yendorian express card" */
+    if (artifact_name(str, &otyp, TRUE))
+        return TRUE;
+    /* does it match some terrain or a trap? e.g. "iron bars" */
+    for (i = 0; i < MAXPCHARS; ++i) {
+        const char *terr_name = defsyms[i].explanation;
+
+        /* "stone" is a valid material and you can't wish for solid rock */
+        if (i == S_stone)
+            continue;
+        if (terr_name && *terr_name
+            && !strncmpi(str, terr_name, strlen(terr_name)))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+/* Names of object types that no longer exist because what distinguished
+   them is now a material, and of object names and descriptions that were
+   changed because the object can be made of other materials.  Wishes and
+   level files asking for them get the corresponding object made of the
+   corresponding material. */
+static const struct legacy_objnames {
+    const char *name;
+    short otyp;
+    uchar mat;
+} legacy_objnames[] = {
+    { "elven mithril-coat", ELVEN_CHAIN_MAIL, MITHRIL },
+    { "elven mithril", ELVEN_CHAIN_MAIL, MITHRIL },
+    { "dwarvish mithril-coat", DWARVISH_CHAIN_MAIL, MITHRIL },
+    { "dwarvish mithril", DWARVISH_CHAIN_MAIL, MITHRIL },
+    { "mithril-coat", STRANGE_OBJECT, MITHRIL }, /* elven or dwarvish */
+    { "mithril", STRANGE_OBJECT, MITHRIL },
+    { "dwarvish iron helm", DWARVISH_IRON_HELM, IRON },
+    { "iron skull cap", ORCISH_HELM, IRON },
+    { "polished silver shield", SHIELD_OF_REFLECTION, SILVER },
+    { "silver shield", SHIELD_OF_REFLECTION, SILVER },
+    { (const char *) 0, 0, 0 }
+};
+
+/* is name one of the legacy object names above? (no random choices) */
+staticfn boolean
+is_legacy_objname(const char *name)
+{
+    const struct legacy_objnames *ln;
+
+    for (ln = legacy_objnames; ln->name; ++ln)
+        if (wishymatch(name, ln->name, FALSE))
+            return TRUE;
+    return FALSE;
+}
+
+/* if name is one of the legacy object names above, return its object type
+   and set *matp to its material; otherwise return STRANGE_OBJECT */
+staticfn int
+legacy_objname(const char *name, int *matp)
+{
+    const struct legacy_objnames *ln;
+
+    for (ln = legacy_objnames; ln->name; ++ln)
+        if (wishymatch(name, ln->name, FALSE)) {
+            *matp = (int) ln->mat;
+            return (ln->otyp != STRANGE_OBJECT) ? (int) ln->otyp
+                   : rn2(2) ? ELVEN_CHAIN_MAIL : DWARVISH_CHAIN_MAIL;
+        }
+    return STRANGE_OBJECT;
+}
+
+/* length of the material word (and following space) at the start of an
+   object name such as "mithril chain mail", or 0 if there isn't one (or
+   it is part of the object's actual name, such as "silver saber") */
+int
+material_prefix_len(const char *str)
+{
+    int mat = NO_MATERIAL;
+
+    return wish_material(str, &mat);
+}
+
+/* for level files (sp_lev.c): the object type for an object name that is
+   no longer used, and the material it implies; STRANGE_OBJECT if none */
+int
+legacy_objname_material(const char *name, int *matp)
+{
+    return legacy_objname(name, matp);
 }
 
 staticfn void
@@ -4367,6 +4616,9 @@ readobjnam_postparse1(struct _readobjnam_data *d)
     } else if (!strncmpi(d->bp, "sets of ", 8)) {
         d->bp += 8;
     }
+    /* "pair of plastic high boots": the material comes after "pair of" */
+    if (!d->material)
+        d->bp += wish_material(d->bp, &d->material);
 
     /* Intercept pudding globs here; they're a valid wish target,
      * but we need them to not get treated like a corpse.
@@ -4492,12 +4744,21 @@ readobjnam_postparse1(struct _readobjnam_data *d)
     {
         const struct alt_spellings *as = spellings;
 
+        int legmat, legtyp;
+
         while (as->sp) {
             if (wishymatch(d->bp, as->sp, TRUE)) {
                 d->typ = as->ob;
                 return 2; /*goto typfnd;*/
             }
             as++;
+        }
+        /* names of former object types, such as elven mithril-coat */
+        if ((legtyp = legacy_objname(d->bp, &legmat)) != STRANGE_OBJECT) {
+            d->typ = legtyp;
+            if (!d->material)
+                d->material = legmat;
+            return 2; /*goto typfnd;*/
         }
         /* can't use spellings list for this one due to shuffling */
         if (!strncmpi(d->bp, "grey spell", 10))
@@ -5071,6 +5332,12 @@ readobjnam(char *bp, struct obj *no_wish)
     d.otmp = d.typ ? mksobj(d.typ, TRUE, FALSE) : mkobj(d.oclass, FALSE);
     d.typ = d.otmp->otyp, d.oclass = d.otmp->oclass; /* what we actually got */
 
+    /* A wished-for object is made of its default material (not whatever
+       mksobj() picked, which could be a nuisance such as glass arrows)
+       unless some other material was asked for and is one that this kind
+       of object can be made of.  Artifacts get theirs from oname(). */
+    wish_set_material(&d);
+
     /* if player specified a reasonable count, maybe honor it;
        quantity for gold is handled elsewhere and d.cnt is 0 for it here */
     if (d.otmp->globby) {
@@ -5279,9 +5546,12 @@ readobjnam(char *bp, struct obj *no_wish)
             break;
         case SCALE_MAIL:
             /* Dragon mail - depends on the order of objects & dragons. */
-            if (d.mntmp >= PM_GRAY_DRAGON && d.mntmp <= PM_YELLOW_DRAGON)
+            if (d.mntmp >= PM_GRAY_DRAGON && d.mntmp <= PM_YELLOW_DRAGON) {
                 d.otmp->otyp = GRAY_DRAGON_SCALE_MAIL
                               + d.mntmp - PM_GRAY_DRAGON;
+                /* dragon scale mail is always dragonhide */
+                set_material(d.otmp, objects[d.otmp->otyp].oc_material);
+            }
             break;
         }
     }
@@ -5354,9 +5624,14 @@ readobjnam(char *bp, struct obj *no_wish)
             d.otmp->owt = weight(d.otmp);
         }
     }
-    /* set locked/unlocked/broken */
+    /* set locked/unlocked/broken, except on stone boxes, which have no
+       lock, and crystal boxes, whose magical locks can't be broken */
     if (Is_box(d.otmp)) {
-        if (d.locked) {
+        if (d.otmp->material == MINERAL) {
+            d.otmp->olocked = 0, d.otmp->obroken = 0;
+        } else if (d.otmp->material == GLASS) {
+            d.otmp->olocked = 1, d.otmp->obroken = 0;
+        } else if (d.locked) {
             d.otmp->olocked = 1, d.otmp->obroken = 0;
         } else if (d.unlocked) {
             d.otmp->olocked = 0, d.otmp->obroken = 0;
@@ -5431,6 +5706,28 @@ readobjnam(char *bp, struct obj *no_wish)
         d.otmp->owt += WT_IRON_BALL_INCR;
 
     return d.otmp;
+}
+
+/* set the material of a wished-for object d->otmp; see readobjnam() */
+staticfn void
+wish_set_material(struct _readobjnam_data *d)
+{
+    int mat = d->material;
+
+    if (mat != NO_MATERIAL && !valid_obj_material(d->otmp, mat)) {
+        if (wizard && !iflags.debug_fuzzer)
+            pline("Note: %s is not a valid material for %s; using %s.",
+                  materialnm[mat], simpleonames(d->otmp),
+                  materialnm[objects[d->otmp->otyp].oc_material]);
+        mat = NO_MATERIAL;
+    }
+    if (mat == NO_MATERIAL)
+        mat = objects[d->otmp->otyp].oc_material;
+    if (d->otmp->material != mat) {
+        set_material(d->otmp, mat);
+        if (Has_contents(d->otmp))
+            d->otmp->owt = weight(d->otmp);
+    }
 }
 
 int

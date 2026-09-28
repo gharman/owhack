@@ -887,6 +887,13 @@ The table parameter accepts the following:
 | greased     | boolean  | Is the object greased?
 | broken      | boolean  | Is the object broken?
 | achievement | boolean  | Is there an achievement attached to the object?
+| material    | string   | What the object is made of: one of "liquid", "wax", "organic",
+                           "flesh", "paper", "cloth", "leather", "wooden" (or "wood"),
+                           "bone", "dragonhide", "iron", "steel" (or "metal"), "copper",
+                           "silver", "gold", "platinum", "mithril", "plastic", "glass"
+                           (or "crystal"), "gemstone", "stone".  Must be a material that
+                           kind of object can be made of.  Default is whatever material
+                           the object randomly gets (usually its normal one).
 | x, y        | int      | Coordinates on the level; defaults to a random location.
 | coord       | table    | x,y coordinates in table format; defaults to a random location.
 | montype     | string   | Monster id or class
@@ -907,7 +914,13 @@ Example:
  des.object({ class = "%" });
  des.object({ id = "boulder", x = 03, y = 12});
  des.object({ id = "chest", coord = {03, 12}, locked = true, contents = function(obj) des.object("rock"); end });
+ des.object({ id = "chain mail", material = "mithril" });
  local o = des.object();
+
+Object names that no longer exist because they now denote a material, such
+as "elven mithril-coat" and "dwarvish mithril-coat", are still accepted and
+give the corresponding object made of that material (elven or dwarvish
+chain mail made of mithril).
 
 
 === random_corridors

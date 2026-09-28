@@ -192,7 +192,7 @@ ready_weapon(struct obj *wep)
         /* claws out (eviscerate technique): they can't be retracted */
         You_cant("retract your claws!");
         res = ECMD_FAIL;
-    } else if (!retouch_object(&wep, FALSE)) {
+    } else if (!retouch_object_prot(&wep, FALSE, !will_touch_skin(W_WEP))) {
         res = ECMD_TIME; /* takes a turn even though it doesn't get wielded */
     } else {
         /* Weapon WILL be wielded after this point */
@@ -255,7 +255,7 @@ ready_weapon(struct obj *wep)
 #if 0
         /* we'll get back to this someday, but it's not balanced yet */
         if (Race_if(PM_ELF) && !wep->oartifact
-            && objects[wep->otyp].oc_material == IRON) {
+            && wep->material == IRON) {
             /* Elves are averse to wielding cold iron */
             You("have an uneasy feeling about wielding cold iron.");
             change_luck(-1);

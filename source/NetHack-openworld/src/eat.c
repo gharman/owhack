@@ -2434,7 +2434,7 @@ eatspecial(void)
         vault_gd_watching(GD_EATGOLD);
         return;
     }
-    if (objects[otmp->otyp].oc_material == PAPER) {
+    if (otmp->material == PAPER) {
 #ifdef MAIL_STRUCTURES
         if (otmp->otyp == SCR_MAIL)
             /* no nutrition */
@@ -2492,7 +2492,7 @@ eatspecial(void)
 
 /* NOTE: the order of these words exactly corresponds to the
    order of oc_material values #define'd in objclass.h. */
-static const char *const foodwords[] = {
+static const char *const foodwords[NUM_MATERIAL_TYPES] = {
     "meal",    "liquid",  "wax",       "food", "meat",     "paper",
     "cloth",   "leather", "wood",      "bone", "scale",    "metal",
     "metal",   "metal",   "silver",    "gold", "platinum", "mithril",
@@ -2504,10 +2504,10 @@ foodword(struct obj *otmp)
 {
     if (otmp->oclass == FOOD_CLASS)
         return "food";
-    if (otmp->oclass == GEM_CLASS && objects[otmp->otyp].oc_material == GLASS
+    if (otmp->oclass == GEM_CLASS && otmp->material == GLASS
         && otmp->dknown)
         makeknown(otmp->otyp);
-    return foodwords[objects[otmp->otyp].oc_material];
+    return foodwords[otmp->material];
 }
 
 /* called after consuming (non-corpse) food */
@@ -2639,7 +2639,7 @@ edibility_prompts(struct obj *otmp)
          it_or_they[QBUFSZ];
     /* 5.0: decaying globs don't become tainted anymore; in 3.6, they did */
     boolean cadaver = (otmp->otyp == CORPSE), stoneorslime = FALSE;
-    int material = objects[otmp->otyp].oc_material, mnum = otmp->corpsenm;
+    int material = otmp->material, mnum = otmp->corpsenm;
     long rotted = 0L;
 
     Strcpy(foodsmell, Tobjnam(otmp, "smell"));
@@ -2773,7 +2773,7 @@ doeat_nonfood(struct obj *otmp)
         livelog_printf(LL_CONDUCT, "ate for the first time (%s)",
                        food_xname(otmp, FALSE));
     }
-    material = objects[otmp->otyp].oc_material;
+    material = otmp->material;
     if (material == LEATHER || material == BONE
         || material == DRAGON_HIDE || material == WAX) {
         if (!u.uconduct.unvegan++ && !ll_conduct) {
@@ -2794,7 +2794,7 @@ doeat_nonfood(struct obj *otmp)
     if (otmp->cursed) {
         (void) rottenfood(otmp);
         nodelicious = TRUE;
-    } else if (objects[otmp->otyp].oc_material == PAPER)
+    } else if (otmp->material == PAPER)
         nodelicious = TRUE;
 
     if (otmp->oclass == WEAPON_CLASS && otmp->opoisoned) {
@@ -3000,7 +3000,7 @@ doeat(void)
         /* No checks for WAX, LEATHER, BONE, DRAGON_HIDE.  These are
          * all handled in the != FOOD_CLASS case, above.
          */
-        switch (objects[otmp->otyp].oc_material) {
+        switch (otmp->material) {
         case FLESH:
             if (!u.uconduct.unvegan++ && !ll_conduct) {
                 livelog_printf(LL_CONDUCT,

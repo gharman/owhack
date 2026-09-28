@@ -943,6 +943,13 @@ checkfile(
         if (*dbase_str == ' ')
             ++dbase_str;
     }
+    /* remove material ("mithril chain mail" -> "chain mail") unless it is
+       part of the name ("silver saber", "iron shoes", "gold piece") */
+    dbase_str += material_prefix_len(dbase_str);
+    if (!strncmp(dbase_str, "statue of ", 10))
+        dbase_str[6] = '\0';
+    else if (!strncmp(dbase_str, "figurine of ", 12))
+        dbase_str[8] = '\0';
     /* "towel", "wet towel", and "moist towel" share one data.base entry;
        for "wet towel", we keep prefix so that the prompt will ask about
        "wet towel"; for "moist towel", we also want to ask about "wet towel".

@@ -2893,6 +2893,54 @@ oid_price_adjustment(struct obj *obj, unsigned int oid)
     return res;
 }
 
+/* Relative prices for the different materials.  The units are poorly
+ * defined ("zorkmids per aum" at best); only the ratio of the price for an
+ * object's material to the price for its type's default material matters.
+ * (Mithril: an ordinary dwarvish chain mail costs 48, a mithril one 240,
+ * the price of the old dwarvish mithril-coat.)
+ */
+static const int matprices[NUM_MATERIAL_TYPES] = {
+      0, /* NO_MATERIAL */
+      1, /* LIQUID */
+      1, /* WAX */
+      1, /* VEGGY */
+      3, /* FLESH */
+      2, /* PAPER */
+      3, /* CLOTH */
+      5, /* LEATHER */
+      8, /* WOOD */
+     20, /* BONE */
+    200, /* DRAGON_HIDE */
+     10, /* IRON */
+     10, /* STEEL */
+     10, /* COPPER */
+     30, /* SILVER */
+     60, /* GOLD */
+     80, /* PLATINUM */
+     50, /* MITHRIL */
+      3, /* PLASTIC */
+     20, /* GLASS */
+    500, /* GEMSTONE */
+     10, /* MINERAL */
+};
+
+/* adjust price 'tmp' of obj for being made of something other than its
+   type's default material */
+long
+material_price(struct obj *obj, long tmp)
+{
+    int mat = obj->material, basemat = objects[obj->otyp].oc_material;
+
+    if (mat != basemat && mat > NO_MATERIAL && mat < NUM_MATERIAL_TYPES
+        && basemat > NO_MATERIAL && basemat < NUM_MATERIAL_TYPES
+        && matprices[basemat] > 0 && tmp > 0L) {
+        tmp = (tmp * (long) matprices[mat]) / (long) matprices[basemat];
+        if (tmp < 1L)
+            tmp = 1L;
+    }
+    return tmp;
+}
+
 /* calculate the value that the shk will charge for [one of] an object */
 staticfn long
 get_cost(
@@ -2917,7 +2965,7 @@ get_cost(
        especially when gem prices are concerned */
     if (!obj->dknown || !objects[obj->otyp].oc_name_known) {
         if (obj->oclass == GEM_CLASS
-            && objects[obj->otyp].oc_material == GLASS) {
+            && obj->material == GLASS) {
             int i;
             /* get a value that's 'random' from game to game, but the
                same within the same game */
@@ -3185,8 +3233,8 @@ set_cost(struct obj *obj, struct monst *shkp)
     if (!obj->dknown || !objects[obj->otyp].oc_name_known) {
         if (obj->oclass == GEM_CLASS) {
             /* different shop keepers give different prices */
-            if (objects[obj->otyp].oc_material == GEMSTONE
-                || objects[obj->otyp].oc_material == GLASS) {
+            if (obj->material == GEMSTONE
+                || obj->material == GLASS) {
                 tmp = ((obj->otyp - FIRST_REAL_GEM) % (6 - shkp->m_id % 3));
                 tmp = (tmp + 3) * obj->quan;
                 divisor = 1L;
@@ -4345,6 +4393,10 @@ getprice(struct obj *obj, boolean shk_buying)
         tmp = arti_cost(obj);
         if (shk_buying)
             tmp /= 4;
+    } else {
+        /* a silver or mithril version of something costs more than the
+           usual iron one, a plastic one less */
+        tmp = material_price(obj, tmp);
     }
     switch (obj->oclass) {
     case FOOD_CLASS:

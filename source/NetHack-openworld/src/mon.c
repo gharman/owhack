@@ -680,6 +680,9 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
                             : rn2(3) ? CLUB
                             : rn2(3) ? ELVEN_SPEAR : BOOMERANG,
                             x, y, TRUE, FALSE);
+            /* made of the golem, so wooden whatever mksobj() chose */
+            if (obj->material != WOOD)
+                set_material(obj, WOOD);
         }
         free_mgivenname(mtmp);
         break;
@@ -694,10 +697,13 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
         break;
     case PM_LEATHER_GOLEM:
         num = d(2, 4);
-        while (num--)
+        while (num--) {
             obj = mksobj_at(rn2(4) ? LEATHER_ARMOR
                             : rn2(3) ? LEATHER_CLOAK : SADDLE,
                             x, y, TRUE, FALSE);
+            if (obj->material != LEATHER)
+                set_material(obj, LEATHER);
+        }
         free_mgivenname(mtmp);
         break;
     case PM_GOLD_GOLEM:
@@ -1845,7 +1851,7 @@ mpickgold(struct monst *mtmp)
     int mat_idx;
 
     if ((gold = g_at(mtmp->mx, mtmp->my)) != 0) {
-        mat_idx = objects[gold->otyp].oc_material;
+        mat_idx = gold->material;
         obj_extract_self(gold);
         add_to_minv(mtmp, gold);
         if (cansee(mtmp->mx, mtmp->my)) {
@@ -1980,7 +1986,7 @@ can_touch_safely(struct monst *mtmp, struct obj *otmp)
         return FALSE;
     if (otyp == CORPSE && is_rider(&mons[otmp->corpsenm]))
         return FALSE;
-    if (objects[otyp].oc_material == SILVER && mon_hates_silver(mtmp)
+    if (mon_hates_material(mtmp, otmp->material)
         && (otyp != BELL_OF_OPENING || !is_covetous(mdat)))
         return FALSE;
     if (!touch_artifact(otmp, mtmp))
@@ -2342,6 +2348,10 @@ mfndpos(
                         data->info[cnt] |= ALLOW_SANCT;
                     }
                 }
+                /* the fae won't cross a line of cold iron */
+                if (checkobj && mon_hates_material(mon, IRON)
+                    && sobj_at(IRON_CHAIN, nx, ny))
+                    continue;
                 if (checkobj && sobj_at(CLOVE_OF_GARLIC, nx, ny)) {
                     if (flag & NOGARLIC)
                         continue;

@@ -330,4 +330,28 @@ static NEARDATA struct artifact artilist[] = {
 #undef STUN
 #endif
 
+#ifdef ARTI_MATERIALS
+/*
+ * Artifacts made of something other than the default material of their
+ * base object type (see "Materials" in objclass.h).  Any artifact that is
+ * created at random, wished for, bestowed or dipped for gets the material
+ * listed here, or else its base type's default material; an artifact made
+ * by naming an ordinary object keeps that object's material unless it is
+ * listed here.  Add artifacts here in any order; entries whose material is
+ * the default one just document that the material is part of what the
+ * artifact is.
+ */
+static const struct arti_material {
+    short artinum;
+    uchar material;
+} artimaterials[] = {
+    { ART_DEMONBANE, SILVER },
+    { ART_WEREBANE, SILVER },
+    { ART_GRAYSWANDIR, SILVER },
+    { ART_SCEPTRE_OF_MIGHT, GOLD },
+    { ART_YENDORIAN_EXPRESS_CARD, PLATINUM },
+    { 0, 0 } /* terminator */
+};
+#endif /* ARTI_MATERIALS */
+
 /*artilist.h*/

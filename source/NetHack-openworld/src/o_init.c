@@ -572,6 +572,7 @@ sortloot_descr(int otyp, char *outbuf)
     o = cg.zeroobj;
     o.otyp = otyp;
     o.oclass = objects[otyp].oc_class;
+    o.material = objects[otyp].oc_material;
     o.dknown = 1; /* not observe_object, this isn't a real object */
     o.known = (objects[otyp].oc_name_known || !objects[otyp].oc_uses_known)
               ? 1 : 0;
@@ -1195,6 +1196,7 @@ rename_disco(void)
             odummy = cg.zeroobj;
             odummy.otyp = dis;
             odummy.oclass = objects[dis].oc_class;
+            odummy.material = objects[dis].oc_material;
             odummy.quan = 1L;
             odummy.known = !objects[dis].oc_uses_known;
             odummy.dknown = 1; /* not observe_object: it isn't real */

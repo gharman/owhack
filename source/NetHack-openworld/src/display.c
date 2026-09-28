@@ -2864,6 +2864,23 @@ get_bkglyph_and_framecolor(
 #define GMAP_SET            0x0001
 #define GMAP_ROGUELEVEL     0x0002
 
+/* colors of objects made of an unusual material; same order as the
+   materials in objclass.h */
+static const int materialclr[NUM_MATERIAL_TYPES] = {
+    CLR_BLACK,  HI_ORGANIC, CLR_WHITE, HI_ORGANIC, CLR_RED,   /* -, liquid,
+                                                    wax, veggy, flesh */
+    CLR_WHITE,  HI_CLOTH,   HI_LEATHER, HI_WOOD,   CLR_WHITE, /* paper, cloth,
+                                                    leather, wood, bone */
+    CLR_BLACK,  HI_METAL,   HI_METAL,  HI_COPPER,  HI_SILVER, /* dragonhide,
+                                                    iron, steel, copper,
+                                                    silver */
+    HI_GOLD,    CLR_WHITE,  HI_SILVER, CLR_WHITE,  HI_GLASS,  /* gold,
+                                                    platinum, mithril,
+                                                    plastic, glass */
+    CLR_RED,    CLR_GRAY                                      /* gemstone,
+                                                    mineral */
+};
+
 void
 map_glyphinfo(
     coordxy x, coordxy y,
@@ -2923,6 +2940,21 @@ map_glyphinfo(
         /* one more accessibility kludge;
            turn off override symbol if caller has specified NOOVERRIDE */
         glyphinfo->gm.sym.symidx = mons[glyph_to_mon(glyph)].mlet + SYM_OFF_M;
+    }
+    /* objects made of something other than their usual material are shown
+       in that material's color (a silver long sword, a wooden dagger);
+       only when the object there is the one the glyph shows, since the
+       glyph might be a stale memory or a mimic's disguise */
+    if (iflags.use_color && isok(x, y) && !is_you
+        && (glyph_is_normal_object(glyph) || glyph_is_statue(glyph))) {
+        struct obj *otmp = vobj_at(x, y);
+
+        if (otmp && otmp->material != objects[otmp->otyp].oc_material
+            && otmp->material > NO_MATERIAL
+            && otmp->material < NUM_MATERIAL_TYPES
+            && (glyph_is_statue(glyph) ? otmp->otyp == STATUE
+                                       : otmp->otyp == glyph_to_obj(glyph)))
+            glyphinfo->gm.sym.color = materialclr[otmp->material];
     }
     /* open world: color the overworld's terrain by what kind of ground
        it is (grass, sand, snow, mountain cliffs, ...) */
