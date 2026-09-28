@@ -1787,6 +1787,11 @@ Take off one piece of armor. Default key is `\texttt{T}'.
 \item[\#takeoffall]
 Remove all armor. Default key is `\texttt{A}'.
 %.lp
+\item[\#technique]
+Perform a technique, one of the special abilities of your role or race;
+see the section on ``Techniques'' below.
+Autocompletes. Default key is `\texttt{M-x}'.
+%.lp
 \item[\#teleport]
 Teleport around the level. Default key is `\texttt{\textasciicircum T}'.
 %.lp
@@ -2033,6 +2038,11 @@ Smell monster.
 Autocompletes.
 Debug mode only.
 %.lp
+\item[\#wiztechnique]
+Learn or forget any technique, or reset all technique timeouts.
+Autocompletes.
+Debug mode only.
+%.lp
 \item[\#wizwhere]
 Show locations of special levels.
 Autocompletes.
@@ -2164,6 +2174,9 @@ equivalent is used for another command, so the three key combination
 %.lp
 \item[M-w]
 {\tt\#wipe}
+%.lp
+\item[M-x]
+{\tt\#technique}
 %.lp
 \item[M-X]
 {\tt\#exploremode}
@@ -3600,6 +3613,45 @@ option can be enabled in order to show an item differently when it is
 the top one of a pile.
 
 %.hn 1
+\section{Techniques}
+
+%.pg
+Besides the spells they can learn, heroes have techniques: special
+abilities that come from their role and their race.
+You know some of them from the start and learn others as you gain
+experience levels (``You learn how to perform ...!'').
+If you lose levels, you forget the techniques that you learned at
+those levels, though never the ones you started out with, and you
+learn them again when you regain the levels.
+Advancing a melee weapon skill to Skilled teaches the disarm technique.
+
+%.pg
+The {\tt \#technique} command (`{\tt M-x}') lists your techniques with
+their current level and status and lets you pick one to perform.
+A technique's level starts at 1 and rises with your experience level;
+higher levels make most techniques stronger and their timeouts shorter.
+After you use a technique you must wait a while before you can use
+it again: its status is ``Prepared'' when it is ready,
+``Soon'' when it will be ready within a hundred turns or so,
+and ``Not Ready'' otherwise.
+Some techniques, such as berserk or rage eruption, stay ``Active''
+for a few turns once performed.
+A technique whose level has dropped to zero or below after losing
+experience levels is ``Beyond recall'' until you regain them.
+
+%.pg
+For example, Barbarians go berserk, Samurai shout ``KIIILLL!'',
+Monks learn a whole repertoire of martial arts blows that can be chained
+together into a blitz, Priests and Knights turn undead (the same action
+as {\tt \#turn}), Wizards reinforce their memory of spells and draw energy
+from their surroundings, dwarves fly into a rage, gnomes vanish in a puff
+of smoke and tinker with their tools, and Cartographers survey the land
+around them, find the nearest magic portal and town (or, in a branch,
+the way out) and can mark a spot on a level to return to later.
+Your techniques are listed by the {\tt \#attributes} command (`{\tt \^{}X}')
+and at the end of the game.
+
+%.hn 1
 \section{Conduct}
 
 %.pg
@@ -3750,6 +3802,8 @@ body into another creature (``polyself'') by wand, spell, or potion of
 polymorph; avoiding these effects are each considered challenges.
 Polymorphing monsters, including pets, does not break either of these
 challenges.
+Never performing any of your techniques with {\tt \#technique} (see
+\textit{Techniques} above) is another challenge.
 Finally, you may sometimes receive wishes; a game without an attempt to
 wish for any items is a challenge, as is a game without wishing for
 an artifact (even if the artifact immediately disappears).  When the

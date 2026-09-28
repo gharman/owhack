@@ -78,6 +78,8 @@ staticfn int tech_primalroar(int);
 staticfn int tech_liquidleap(int);
 staticfn int tech_raisezombies(void);
 staticfn int tech_whistleundead(void);
+staticfn int revive_ok(struct obj *);
+staticfn struct obj *revive_corpse_pick(void);
 staticfn int tech_revive(int);
 staticfn int tech_tinker(int);
 staticfn int tech_rage(int);
@@ -573,6 +575,14 @@ adjtech(int oldlevel, int newlevel)
                         tech_names[tp->tech_id]);
             }
         }
+    }
+    /* automated testing (wizard mode only): start knowing everything */
+    if (!oldlevel && wizard && getenv("OWHACK_ALLTECH")) {
+        int t;
+
+        for (t = 1; t < NUM_TECHS; t++)
+            if (!tech_known((short) t))
+                learntech((short) t, FROMOUTSIDE, 1);
     }
 }
 
@@ -1755,7 +1765,7 @@ draw_energy_occ(void)
         struct rm *lev;
 
         tech_delay++;
-        confdir(FALSE);
+        confdir(TRUE); /* draw from a random adjacent spot */
         if (isok(u.ux + u.dx, u.uy + u.dy)) {
             lev = &levl[u.ux + u.dx][u.uy + u.dy];
             switch (lev->typ) {
@@ -2499,7 +2509,7 @@ blitz_dash(void)
         return 0;
     }
     if (Stunned || Confusion || Fumbling)
-        confdir(FALSE);
+        confdir(TRUE);
     if (!u.dx && !u.dy) {
         You("stretch.");
         return 0;
@@ -3161,19 +3171,24 @@ tech_raisezombies(void)
 
             if (!isok(x, y))
                 continue;
-            for (obj = svl.level.objects[x][y]; obj; obj = otmp) {
-                int zmndx;
+            /* reviving changes the pile, so look it over again after
+               each corpse; a corpse that fails to rise has become an
+               undead one and won't be tried again */
+            for (;;) {
+                int zmndx = NON_PM;
 
-                otmp = obj->nexthere;
-                if (obj->otyp != CORPSE || obj->corpsenm < LOW_PM)
-                    continue;
-                /* only undead are raised */
-                zmndx = zombie_form(&mons[obj->corpsenm]);
-                if (zmndx == NON_PM
-                    || (svm.mvitals[zmndx].mvflags & G_GENOD))
-                    continue;
-                if (m_at(x, y) && !u_at(x, y))
-                    continue; /* no room there */
+                for (obj = svl.level.objects[x][y]; obj; obj = otmp) {
+                    otmp = obj->nexthere;
+                    if (obj->otyp != CORPSE || obj->corpsenm < LOW_PM)
+                        continue;
+                    /* only undead are raised */
+                    zmndx = zombie_form(&mons[obj->corpsenm]);
+                    if (zmndx != NON_PM
+                        && !(svm.mvitals[zmndx].mvflags & G_GENOD))
+                        break;
+                }
+                if (!obj)
+                    break;
                 /* keep the proportion of oeaten to cnutrit, so that the
                    zombie's hit points reflect how much corpse was left */
                 if (obj->oeaten)
@@ -3188,8 +3203,6 @@ tech_raisezombies(void)
                         setmangry(mtmp, FALSE);
                     }
                 }
-                /* the object list may have changed under us */
-                break;
             }
         }
     if (!nraised)
@@ -3245,6 +3258,46 @@ tech_whistleundead(void)
     return 1;
 }
 
+/* getobj callback for the revivification technique */
+staticfn int
+revive_ok(struct obj *obj)
+{
+    if (obj && obj->otyp == CORPSE)
+        return GETOBJ_SUGGEST;
+    return GETOBJ_EXCLUDE;
+}
+
+/* choose a corpse to revive: one here on the floor, or one carried */
+staticfn struct obj *
+revive_corpse_pick(void)
+{
+    struct obj *otmp;
+    char qbuf[QBUFSZ], qsfx[QBUFSZ], c;
+
+    if (can_reach_floor(TRUE)) {
+        for (otmp = svl.level.objects[u.ux][u.uy]; otmp;
+             otmp = otmp->nexthere) {
+            if (otmp->otyp != CORPSE)
+                continue;
+            /* touching a cockatrice corpse blind and bare-handed... */
+            if (will_feel_cockatrice(otmp, FALSE)) {
+                feel_cockatrice(otmp, FALSE);
+                return (struct obj *) 0;
+            }
+            Sprintf(qbuf, "There %s ", otense(otmp, "are"));
+            Sprintf(qsfx, " here; revive %s?",
+                    (otmp->quan == 1L) ? "it" : "one");
+            (void) safe_qbuf(qbuf, qbuf, qsfx, otmp, doname, ansimpleoname,
+                             (otmp->quan == 1L) ? "a corpse" : "corpses");
+            if ((c = yn_function(qbuf, ynqchars, 'n', TRUE)) == 'y')
+                return otmp;
+            else if (c == 'q')
+                return (struct obj *) 0;
+        }
+    }
+    return getobj("revive", revive_ok, GETOBJ_NOFLAGS);
+}
+
 staticfn int
 tech_revive(int tech_no)
 {
@@ -3261,12 +3314,8 @@ tech_revive(int tech_no)
         You("don't have the strength to perform revivification!");
         return 0;
     }
-    if (!(obj = floorfood("revive", 1)))
+    if (!(obj = revive_corpse_pick()))
         return 0;
-    if (obj->otyp != CORPSE) {
-        You("can only revive corpses.");
-        return 0;
-    }
     mtmp = revive(obj, TRUE);
     if (mtmp) {
         if (mtmp->isshk)
@@ -3752,15 +3801,31 @@ tech_spirittempest(int tech_no)
     /* a throwback to the sigil of tempest in Slash'EM: several blasts
        around the hero at experience level 21 and up */
     while (blasts--) {
-        for (tries = 0; tries < 10; tries++) {
-            confdir(FALSE); /* random direction */
+        for (tries = 0; tries < 20; tries++) {
+            int i, j;
+            struct monst *mtmp;
+            boolean friendly = FALSE;
+
+            confdir(TRUE); /* random direction */
             x = u.ux + u.dx * (2 + rn2(2));
             y = u.uy + u.dy * (2 + rn2(2));
-            if (isok(x, y) && cansee(x, y) && !IS_STWALL(levl[x][y].typ)
-                && distu(x, y) > 2)
+            if (!isok(x, y) || !cansee(x, y) || IS_STWALL(levl[x][y].typ)
+                || distu(x, y) <= 2)
+                continue;
+            /* the spirits spare you and your companions */
+            for (i = -1; i <= 1 && !friendly; i++)
+                for (j = -1; j <= 1; j++)
+                    if (isok(x + i, y + j)
+                        && (u_at(x + i, y + j)
+                            || ((mtmp = m_at(x + i, y + j)) != 0
+                                && mtmp->mpeaceful && canspotmon(mtmp)))) {
+                        friendly = TRUE;
+                        break;
+                    }
+            if (!friendly)
                 break;
         }
-        if (tries == 10)
+        if (tries == 20)
             continue;
         dmg = d(3, 6) + num;
         explode(x, y, TECH_ZT_SPELL_MM, dmg, SPBOOK_CLASS,
