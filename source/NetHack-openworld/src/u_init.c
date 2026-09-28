@@ -1479,7 +1479,19 @@ ini_inv(const struct trobj *trop)
          * it was UNDEF_TYP or not after this. */
 
         otyp = ini_inv_obj_substitution(trop, obj);
-        nhUse(otyp);
+        /* a substitute of another class (a vampire's potions of blood
+           in place of food) must be made afresh, as one of its own kind */
+        if (objects[otyp].oc_class != obj->oclass) {
+            struct obj *subst = mksobj(otyp, TRUE, FALSE);
+
+            subst->quan = obj->quan;
+            subst->owt = weight(subst);
+            dealloc_obj(obj);
+            obj = subst;
+        }
+        /* a substitute may weigh something else (a giant's helmet in place
+           of body armor) */
+        obj->owt = weight(obj);
 
         /* nudist gets no armor; a ghost has no use for food */
         if ((u.uroleplay.nudist && obj->oclass == ARMOR_CLASS)
