@@ -1012,9 +1012,9 @@ welcome(boolean new_game) /* false => restoring an old game */
                   "the compass points home.  (Press ? for more.)");
         } else if (In_overworld && u.ualign.type == A_NONE) {
             /* an Infidel has no altar here, yet */
-            pline("You stand in the sacred plaza at the heart of the world, "
-                  "before the high altars of the gods %s would overthrow.",
-                  u_gname());
+            pline("You stand in the sacred plaza at the heart of the world.");
+            pline("Here stand the high altars of the gods %s would "
+                  "overthrow.", u_gname());
             pline("The further you roam, the deadlier the land; "
                   "the compass points home.  (Press ? for more.)");
         }

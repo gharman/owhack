@@ -2875,9 +2875,17 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
         {
             struct monst *mtmp;
 
+            struct obj *otmp;
+
             for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
                 if (!DEADMONSTER(mtmp) && mtmp->data->msound == MS_LEADER)
                     fprintf(fp, "leader %d,%d\n", mtmp->mx, mtmp->my);
+                else if (!DEADMONSTER(mtmp)
+                         && mtmp->data->msound == MS_NEMESIS)
+                    fprintf(fp, "nemesis %d,%d\n", mtmp->mx, mtmp->my);
+            for (otmp = fobj; otmp; otmp = otmp->nobj)
+                if (is_quest_artifact(otmp))
+                    fprintf(fp, "questart %d,%d\n", otmp->ox, otmp->oy);
         }
         fclose(fp);
         return;

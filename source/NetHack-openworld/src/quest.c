@@ -238,7 +238,11 @@ finish_quest(struct obj *obj) /* quest artifact or thrown unique item or faux
         /* update_inventory() is not necessary or helpful here because item
            was thrown, so isn't currently in inventory anyway */
         if (obj->otyp == AMULET_OF_YENDOR) {
-            qt_pager("hasamulet");
+            /* (an Infidel's leader warns against one of the gods) */
+            if (Role_if(PM_INFIDEL))
+                qt_pager_as_god("hasamulet", inf_align(2));
+            else
+                qt_pager("hasamulet");
         } else if (obj->otyp == FAKE_AMULET_OF_YENDOR) {
             verbalize(
       "Sorry to say, this is a mere imitation of the true Amulet of Yendor.");

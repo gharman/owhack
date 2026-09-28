@@ -86,6 +86,16 @@ agate*
 	solution is slowly deposited into cavities and veins in older
 	rock.
 		[ The Columbia Encyclopedia, Sixth Edition ]
+agent
+agent of *
+	It was part of his profession to kill people.  He had never liked
+	doing it and when he had to kill he did it as well as he knew how
+	and forgot about it.  As a secret agent who held the rare double-O
+	prefix -- the licence to kill in the Secret Service -- it was his
+	duty to be as cool about death as a surgeon.  If it happened,
+	it happened.  Regret was unprofessional -- worse, it was
+	death-watch beetle in the soul.
+		[ Goldfinger, by Ian Fleming ]
 alchemy
 	By and large, the only skill the alchemists of Ankh-Morpork had
 	discovered so far was the ability to turn gold into less gold.
@@ -272,6 +282,16 @@ archeolog*
 	"That is a rather cynical view," I said.
 		[ the brightonomicon, by Robert Rankin ]
 #		[title & author: same situation as with "bad luck" entry]
+archbishop of moloch
+	The Archbishop of Moloch presides over the Hidden Temple, the
+	secret sanctuary of the Cult of Moloch in a cave behind a sparsely
+	wooded cliffside.  There the Archbishop teaches the glory of Moloch
+	to the faithful and schools the Cult's infidels in the black arts.
+	When the Amulet of Yendor was taken from one of the fools the gods
+	of heaven had sent after it, the Archbishop entrusted it to a
+	chosen infidel, who is to return it to its rightful owner in
+	Moloch's Sanctum.
+		[]
 archon
 	Archons are the predominant inhabitants of the heavens.
 	However unusual their appearance, they are not generally
@@ -452,6 +472,8 @@ banshee
 	Irish _beansidhe_, a woman of the fairies.
 		[ Brewer's Concise Dictionary of Phrase and Fable ]
 barbarian
+champion
+champion of *
 * barbarian
 	They dressed alike -- in buckskin boots, leathern breeks and
 	deerskin shirts, with broad girdles that held axes and short
@@ -543,6 +565,25 @@ bell of opening
 	    Bells, bells, bells --
 	From the jingling and the tinkling of the bells.
 		[ The Bells, by Edgar Allan Poe ]
+blackbeard's ghost
+	Captain Teach assumed the cognomen of Black-beard, from that
+	large quantity of hair, which, like a frightful meteor, covered
+	his whole face, and frightened America more than any comet that
+	has appeared there a long time.  [...]  In time of action, he
+	wore a sling over his shoulders, with three brace of pistols,
+	hanging in holsters like bandoliers; and stuck lighted matches
+	under his hat, which appearing on each side of his face, his
+	eyes naturally looking fierce and wild, made him altogether such
+	a figure, that imagination cannot form an idea of a fury, from
+	hell, to look more frightful.  [...]
+	The night before he was killed, he sat up and drank till the
+	morning, with some of his own men, and the master of a
+	merchant-man; [...] one of his men asked him, in case anything
+	should happen to him in the engagement with the sloops, whether
+	his wife knew where he had buried his money?  He answered, that
+	nobody but himself and the Devil knew where it was, and the
+	longest liver should take all.
+		[ A General History of the Pyrates, by Captain Charles Johnson ]
 blindfold
 	The blindfolding was performed by binding a piece of the
 	yellowish linen whereof those of the Amahagger who condescended
@@ -731,6 +772,13 @@ bugle
 	His blast is heard at merry morn,
 	And mine at dead of night.'
 		[ Brignall Banks, by Sir Walter Scott ]
+bullet
+	A ball of lead, cast in a bullet mould, to be rammed down the
+	barrel of a firearm on top of a charge of black powder.  A
+	flintlock holds but a single shot and must be reloaded after
+	every one, and a bullet once fired is spent whether it strikes
+	home or not; so a wise buccaneer carries a good pouchful of
+	them, and keeps his powder dry.
 bullwhip
 	"Good," he said and, unbelievably, smiled at me, a smirk like
 	a round of rotted cheese.  "What did your keeper use on you?
@@ -1069,6 +1117,11 @@ conical hat
 	was a witch. People paid attention to a pointy hat.
 		[ Wintersmith, by Terry Pratchett ]
 # not "*cope" because that would match "stethoscope"
+convict
+	In the darkest region of the political field, the condemned man
+	represents the symmetrical, inverted figure of the king.
+	   [ Discipline and Punish: The Birth of the Prison,
+		by Michel Foucault, translated by Alan Sheridan ]
 cope
 * cope
 	The cope is a liturgical vestment which may be worn by any
@@ -1251,6 +1304,22 @@ cyclops
 	I see thee yet, in form as palpable
 	As this which now I draw.
 		[ Macbeth, by William Shakespeare ]
+damned pirate
+	The loud wind never reached the ship,
+	Yet now the ship moved on!
+	Beneath the lightning and the Moon
+	The dead men gave a groan.
+	They groaned, they stirred, they all uprose,
+	Nor spake, nor moved their eyes;
+	It had been strange, even in a dream,
+	To have seen those dead men rise.
+	The helmsman steered, the ship moved on;
+	Yet never a breeze up-blew;
+	The mariners all 'gan work the ropes,
+	Where they were wont to do;
+	They raised their limbs like lifeless tools--
+	We were a ghastly crew.
+		[ The Rime of the Ancient Mariner, by Samuel Taylor Coleridge ]
 dark one
 	... But he ruled rather by force and fear, if they might
 	avail; and those who perceived his shadow spreading over the
@@ -1867,6 +1936,21 @@ flesh golem
 	which they were set, his shrivelled complexion and straight
 	black lips.
 		[ Frankenstein, by Mary Wollstonecraft Shelley ]
+flintlock
+	Flintlock is a general term for any firearm that uses a flint-
+	striking ignition mechanism, the first of which appeared in
+	Western Europe in the early 16th century. The term may also apply
+	to a particular form of the mechanism itself, also known as the
+	true flintlock, that was introduced in the early 17th century, and
+	gradually replaced earlier firearm-ignition technologies, such as
+	the matchlock, the wheellock, and the earlier flintlock mechanisms
+	such as snaplock and snaphaunce.
+	The true flintlock continued to be in common use for over two
+	centuries, replaced by percussion cap and, later, the cartridge-
+	based systems in the early-to-mid 19th century. Although long
+	superseded by modern firearms, flintlock weapons enjoy continuing
+	popularity with black-powder shooting enthusiasts.
+		[ Wikipedia, the free encyclopedia ]
 flint*
 	An emerald is as green as grass;
 	A ruby red as blood;
@@ -2520,6 +2604,7 @@ holy water
 	"Yet," corrected Crowley.
 		[ Good Omens, by Neil Gaiman and Terry Pratchett ]
 hom*nculus
+* hom*nculus
 	A homunculus is a creature summoned by a mage to perform some
 	particular task.  They are particularly good at spying.  They
 	are smallish creatures, but very agile.  They can put their
@@ -2717,6 +2802,11 @@ idefix
 	uprooted tree).
 		[ Wikipedia, the free encyclopedia ]
 # takes "imp or minor demon" when specifying 'i'
+*idol of moloch
+	One of the rare few artifacts able to exert Moloch's influence
+	aboveground.  By drawing on Moloch's power, the faithful are able
+	to summon demons, defile shrines, and replenish their magical
+	energy.  The Idol also protects its holder from hostile magics.
 imp
 imp or minor demon
 	 ... imps ... little creatures of two feet high that could
@@ -2776,6 +2866,23 @@ amorous demon
 	heavy and as long as this, seven Christmas Eves ago.  You
 	have laboured on it, since.  It is a ponderous chain!"
 		[ A Christmas Carol, by Charles Dickens ]
+infidel
+* infidel
+cultist
+malefic*
+	We must especially observe that this heresy, witchcraft, not only
+	differs from all other heresy in this, that not merely by a tacit
+	compact, but by a compact which is exactly defined and expressed
+	it blasphemes the Creator and endeavours to the utmost to profane Him
+	and to harm His creatures, for all other simple heresies have made
+	no open compact with the devil, no compact, that is, either tacit
+	or exactly expressed, although their errors and misbelief are directly
+	to be attributed to the Father of errors and lies.  Moreover,
+	maleficium (witchcraft) differs from all other harmful and mysterious
+	arts in this point, that of all superstition it is essentially
+	the vilest, the most evil and the worst, wherefore it derives its name
+	from doing evil, and from blaspheming the true faith.
+		[ The Malleus Maleficarum, translated by Montague Summers ]
 iron bars
 	Stone walls do not a prison make,
 	  Nor iron bars a cage;
@@ -2786,6 +2893,15 @@ iron bars
 	Angels alone that soar above
 	  Enjoy such liberty.
 		[ To Althea from Prison, by Richard Lovelace ]
+iron spoon of liberation
+	Robert the Lifer spent long years scraping at the walls of his
+	cell with an ordinary iron spoon, and longer still pouring his
+	hopes of escape into it, until it became the Iron Spoon of
+	Liberation.  No shackle stays locked on whoever carries it; it
+	bites through rock like a pick-axe and engraves like an athame;
+	and its bearer can call upon it to pass through the very walls
+	of a prison.
+		[]
 ishtar
 	Ishtar (the star of heaven) is the Mesopotamian goddess of
 	fertility and war.  She is usually depicted with wings and
@@ -3158,6 +3274,7 @@ land mine
 		[ Adventure 770, by Mike Arnautov ]
 # citation is a descriptive passage from the original text adventure game
 lava
+lava demon
 * lava
 	You are on the edge of a breath-taking view.  Far below you
 	is an active volcano, from which great gouts of molten lava
@@ -3387,6 +3504,13 @@ lurker*
 	These dungeon scavengers are very adept at blending into the
 	surrounding walls and ceilings of the dungeon due to the
 	stone-like coloring of their skin.
+luck blade
+	A luck blade is a sword with a sliver of fortune forged into
+	its steel.  Whoever carries one finds that chance tends to fall
+	their way, much as it does for the bearer of a luckstone, and
+	the faithful of Tymora hold such blades to be signs of her
+	favour.
+		[]
 lycanthrope
 were*
 human were*
@@ -3473,6 +3597,21 @@ manes
 
 	The gnats of the dungeon, these swarming monsters are rarely
 	seen alone.
+marauder's map
+	The doctor opened the seals with great care, and there fell out
+	the map of an island, with latitude and longitude, soundings,
+	names of hills and bays and inlets, and every particular that
+	would be needed to bring a ship to a safe anchorage upon its
+	shores.  It was about nine miles long and five across, shaped,
+	you might say, like a fat dragon standing up, and had two fine
+	land-locked harbours, and a hill in the centre part marked "The
+	Spy-glass."  There were several additions of a later date, but
+	above all, three crosses of red ink--two on the north part of
+	the island, one in the southwest--and beside this last, in the
+	same red ink, and in a small, neat hand, very different from the
+	captain's tottery characters, these words: "Bulk of treasure
+	here."
+		[ Treasure Island, by Robert Louis Stevenson ]
 marduk
 	First insisting on recognition as supreme commander, Marduk
 	defeated the Dragon, cut her body in two, and from it created
@@ -3574,6 +3713,14 @@ huge chunk of meat
 # indicates that they are quite different; since the first paragraph is
 # a made-up introduction to an excerpt from that work, the contradictory
 # mention of Graeae has been removed
+mayor cummerbund
+	"I am not the Dread Pirate Roberts," he said.  "My name is
+	Ryan; I inherited the ship from the previous Dread Pirate
+	Roberts, just as you will inherit it from me.  The man I
+	inherited it from is not the real Dread Pirate Roberts either.
+	His name was Cummerbund.  The real Roberts has been retired
+	15 years and living like a king in Patagonia."
+		[ The Princess Bride, by William Goldman ]
 medusa
 perseus
 shield of reflection
@@ -3629,6 +3776,13 @@ mercury
 	especially humans.  If they hit their victim with a tentacle,
 	the mind flayer will slowly drain it of all intelligence,
 	eventually killing its victim.
+miner
+	Miners are hired labourers who drive tunnels and quarry stone
+	by the light of a brass lantern, pick-axe in hand.  The crews
+	that dig out the unfinished lower levels of a prison dungeon
+	are usually peaceful folk, more interested in their wages than
+	in prisoners or guards.
+		[]
 mine*
 gnomish mines
 	Made by Dwarfs.  The Rule here is that the Mine is either long
@@ -4162,6 +4316,17 @@ page
 	Greeks called themselves _gens palliata,_ and the Romans
 	called themselves _gens togata._
 		[ Brewer's Concise Dictionary of Phrase and Fable ]
+*paladin
+*paladin of *
+	The paladin is a noble and heroic warrior, the symbol of all
+	that is right and true in the world.  As such, he has high ideals
+	that he must maintain at all times.  Throughout legend and history
+	there are many heroes who could be called paladins: Roland and
+	the 12 Peers of Charlemagne, Sir Lancelot, Sir Gawain, and Sir Galahad
+	are all examples of the class.  However, many brave and
+	heroic soldiers have tried and failed to live up to the ideals of
+	the paladin.  It is not an easy task!
+		[ AD&D Player's Handbook, 2nd Edition ]
 panther
 	And lo! almost where the ascent began,
 	A panther light and swift exceedingly,
@@ -4186,6 +4351,8 @@ panther
 	Such players may use Paper to assert their superiority and dignity.
 		[ The Official Rock Paper Scissors Strategy Guide,
 			by Douglas and Graham Walker ]
+parrot
+	Polly desires a compressed edible concoction of wheat!
 pelias
 	Conan cried out sharply and recoiled, thrusting his companion
 	back.  Before them rose the great shimmering white form of Satha,
@@ -4230,6 +4397,41 @@ piranha
 	vice-like bite... Piranhas are attracted to any disturbance
 	in the water.
 		[ http://www.animalsoftherainforest.com ]
+pirate
+	I remember him as if it were yesterday, as he came plodding to
+	the inn door, his sea-chest following behind him in a hand-barrow--
+	a tall, strong, heavy, nut-brown man, his tarry pigtail falling
+	over the shoulder of his soiled blue coat, his hands ragged and
+	scarred, with black, broken nails, and the sabre cut across one
+	cheek, a dirty, livid white.  I remember him looking round the
+	cove and whistling to himself as he did so, and then breaking out
+	in that old sea-song that he sang so often afterwards:
+	    "Fifteen men on the dead man's chest--
+	      Yo-ho-ho, and a bottle of rum!"
+	in the high, old tottering voice that seemed to have been tuned
+	and broken at the capstan bars.
+		[ Treasure Island, by Robert Louis Stevenson ]
+pirate brother
+pirate crewmate
+pirate sister
+	The Brethren or Brethren of the Coast were a loose
+	coalition of pirates and privateers commonly known as
+	buccaneers and active in the seventeenth and eighteenth
+	centuries in the Atlantic Ocean, Caribbean Sea and
+	Gulf of Mexico.
+	Based primarily on the island of Tortuga off the coast
+	of Haiti and in the city of Port Royal on the island of
+	Jamaica, the original Brethren were mostly French
+	Huguenot and British Protestants, but their ranks were
+	joined by other adventurers of various nationalities
+	including Spaniards, and even African sailors, as well
+	as escaped slaves and outlaws of various sovereigns.
+	In keeping with their Protestant and mostly Common
+	Law heritage the Brethren were governed by codes of
+	conduct that favored legislative decision-making,
+	hierarchical command authority, individual rights,
+	and equitable division of revenues.
+		[ Brethren of the Coast, Wikipedia ]
 pit
 spiked pit
 	Amid the thought of the fiery destruction that impended, the
@@ -4420,7 +4622,12 @@ paddle cactus
 	nopalli for the pads, or nostle, from the Nahuatl word nochtli
 	for the fruit; or paddle cactus.
 		[ Wikipedia, the free encyclopedia ]
+prison guard
+	The Panopticon is a marvelous machine which, whatever use one
+	may wish to put it to, produces homogeneous effects of power.
+		[ Discipline and Punish, by Michel Foucault ]
 prisoner
+inmate
 	Where am I?
 		In the Village.
 	What do you want?
@@ -4607,6 +4814,19 @@ ring of *
 	One Ring to bring them all and in the darkness bind them
 	In the Land of Mordor where the Shadows lie.
 		[ The Fellowship of the Ring, by J.R.R. Tolkien ]
+reaver
+	When I sally forth to seek my prey
+	I help myself in a royal way.
+	I sink a few more ships, it's true,
+	Than a well-bred monarch ought to do;
+	But many a king on a first-class throne,
+	If he wants to call his crown his own,
+	Must manage somehow to get through
+	More dirty work than ever I do,
+	For I am a Pirate King!
+	And it is, it is a glorious thing
+	To be a Pirate King!
+		[ The Pirates of Penzance, by W. S. Gilbert ]
 ring of invisibility
 	"When time came for the shepherds to hold their customary
 	assembly in order to prepare their monthly report to the king
@@ -4638,6 +4858,11 @@ robe
 	2.  For Kings.  The OMT here is _falling in stately folds_.
 	3.  As the garb of Desert Nomads.  [...]
 	    [ The Tough Guide to Fantasyland, by Diana Wynne Jones ]
+robert the lifer
+	They send you here for life, that's exactly what they take.
+	The part that counts, anyways.
+	   [ The Shawshank Redemption, directed by Frank Darabont,
+		written by Stephen King and Frank Darabont ]
 rock
 large rock
 	Bilbo saw that the moment had come when he must do something.
@@ -4913,6 +5138,14 @@ scroll *
 	I read these words, and read again, and tried
 	My eyes against the heavens, and read again.
 		[ Endymion, by John Keats ]
+secespita
+	The secespita is a long iron sacrificial knife, made of brass
+	and copper from Cyprus, with a solid and rounded ivory handle,
+	which is secured to the hilt by a ring of silver or gold.
+	The flamens and their wives, the flaminicae, who were priests
+	and priestesses of the Ancient Rome, the virgins and the pontiffs
+	made use of it for sacrifices.
+		[ Wikipedia, the free encyclopedia ]
 set
 seth
 	The ancient Egyptian god of chaos (Set), the embodiment of
@@ -5029,6 +5262,10 @@ shrieker
 	its fetid bulk looming overhead... The monster was some kind of
 	great dark worm, but that was about all they were sure of.
 		[ The Adventurers, Epic IV, by Thomas A. Miller ]
+skeletal pirate
+	You best start believing in ghost stories, Miss Turner...
+	you're in one!
+		[ Pirates of the Caribbean: The Curse of the Black Pearl ]
 throwing star
 shuriken
 	You know, that's what I hate most about fighting against magic:
@@ -5321,6 +5558,15 @@ television
 #tricorder
 #phaser
 	Not invented yet.
+spoon
+	Spoon boy:  Do not try and bend the spoon.  That's impossible.
+	            Instead, only try to realize the truth.
+	      Neo:  What truth?
+	Spoon boy:  There is no spoon.
+	      Neo:  There is no spoon?
+	Spoon boy:  Then you'll see that it is not the spoon that
+	            bends, it is only yourself.
+		[ The Matrix, written and directed by the Wachowskis ]
 sting
 	There was the usual dim grey light of the forest-day about
 	him when he came to his senses.  The spider lay dead beside
@@ -5374,6 +5620,13 @@ straw golem
 	figure was raised above the stalks of corn by means of the
 	pole stuck up its back.
 		[ The Wonderful Wizard of Oz, by L. Frank Baum ]
+striped shirt
+	After about one hour's ride, we arrived at the so-called
+	penitentiary.  [...] Here I was put into a suit of "stripes"
+	--no underwear or socks-- just a two-piece suit of cotton
+	"stripes."
+	   [ I Am a Fugitive from a Georgia Chain Gang!,
+		by Robert Elliott Burns ]
 sunsword
 	What you seek is a blade of light,
 	a weapon for vengeance.
@@ -5388,6 +5641,20 @@ susano*o
 		[ Encyclopedia of Gods, by Michael Jordan ]
 tanko
 	Samurai plate armor of the Yamato period (AD 300 - 710).
+templar
+templar of *
+	Above all things, whosoever would be a knight of Christ,
+	choosing such holy orders, you in your profession of faith
+	must unite pure diligence and firm perseverence, which is so worthy
+	and so holy, and is known to be so noble, that if it is preserved
+	untainted for ever, you will deserve to keep company with the martyrs
+	who gave their souls for Jesus Christ.  In this religious order
+	has flourished and is revitalised the order of knighthood. [...]
+	God works well with us and our saviour Jesus Christ; He has sent
+	his friends from the Holy City of Jerusalem to the marches of France
+	and Burgundy, who for our salvation and the spread of the true faith
+	do not cease to offer their souls to God, a welcome sacrifice.
+		[ Rule of the Knights Templar, translated by J. M. Upton-Ward ]
 tengu
 	The tengu was the most troublesome creature of Japanese
 	legend.  Part bird and part man, with red beak for a nose
@@ -5588,6 +5855,19 @@ trapper or lurker above
 	its prey by remaining very still and blending into the
 	surrounding dungeon features, until an unsuspecting creature
 	passes by.  It wraps itself around its prey and digests it.
+treasury of proteus
+	"There is an old immortal who lives under the sea hereabouts
+	and whose name is Proteus.  He is an Egyptian, and people say he
+	is my father; he is Neptune's head man and knows every inch of
+	ground all over the bottom of the sea."  [...]
+	We rushed upon him with a shout and seized him; on which he at
+	once began at his old tricks, and changed himself first into a
+	lion with a great mane; then all of a sudden he became a dragon,
+	a leopard, a wild boar; the next moment he was running water, and
+	then again directly he was a tree, but we stuck to him and never
+	lost hold, till at last the cunning old creature became
+	distressed [...]
+		[ The Odyssey, by Homer, translated by Samuel Butler ]
 tree
 	I think that I shall never see
 	A poem lovely as a tree.
@@ -5839,6 +6119,12 @@ wand *
 	fell down at Gandalf's feet.  'Go!' said Gandalf.  With a cry
 	Saruman fell back and crawled away.
 		[ The Two Towers, by J.R.R. Tolkien ]
+warden arianna
+	I believe in two things: discipline and the Bible.  Here you'll
+	receive both.  Put your trust in the Lord.  [...]  Welcome to
+	Shawshank.
+	   [ The Shawshank Redemption, directed by Frank Darabont,
+		written by Stephen King and Frank Darabont ]
 warg
 	Suddenly Aragorn leapt to his feet.  "How the wind howls!"
 	he cried.  "It is howling with wolf-voices.  The Wargs have
@@ -6228,6 +6514,28 @@ pioneer
 	Nomad            22 to 25
 	Rover            26 to 29
 	Pioneer             30
+con* ranks
+convict
+detainee
+inmate
+jail-bird
+prisoner
+outlaw
+crook
+desperado
+felon
+fugitive
+	Convict ranks
+	  title            level
+	Detainee          1 to 2
+	Inmate            3 to 5
+	Jail-bird         6 to 9
+	Prisoner         10 to 13
+	Outlaw           14 to 17
+	Crook            18 to 21
+	Desperado        22 to 25
+	Felon            26 to 29
+	Fugitive            30
 hea* ranks
 healer
 rhizotomist
@@ -6253,6 +6561,30 @@ chirurgeon
 	 Magistra        22 to 25
 	Physician        26 to 29
 	Chirurgeon          30
+inf* ranks
+infidel
+apostate
+heathen
+heretic
+idolat*
+cultist
+splanchomancer
+malefic*
+demonologist
+heresiarch
+	Infidel ranks
+	  title            level
+	Apostate          1 to 2
+	Heathen           3 to 5
+	Heretic           6 to 9
+	Idolater,
+	 Idolatress      10 to 13
+	Cultist          14 to 17
+	Splanchomancer   18 to 21
+	Maleficus,
+	 Malefica        22 to 25
+	Demonologist     26 to 29
+	Heresiarch          30
 kni* ranks
 knight
 gallant
@@ -6301,6 +6633,30 @@ master
 	  of Winds       22 to 25
 	  of Fire        26 to 29
 	Master              30
+pir* ranks
+pirate
+landlubber
+swabbie
+cutthroat
+bosun
+second mate
+first mate
+captain
+pirate lord
+pirate lady
+dread pirate
+	Pirate ranks
+	  title            level
+	Landlubber        1 to 2
+	Swabbie           3 to 5
+	Cutthroat         6 to 9
+	Bosun            10 to 13
+	Second Mate      14 to 17
+	First Mate       18 to 21
+	Captain          22 to 25
+	Pirate Lord,
+	 Pirate Lady     26 to 29
+	Dread Pirate        30
 pri* ranks
 priest*
 aspirant
