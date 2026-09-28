@@ -249,6 +249,10 @@ monmulti(
             || (is_gnome(mtmp->data) && otmp->otyp == CROSSBOW_BOLT
                 && mwep && mwep->otyp == CROSSBOW))
             multishot++;
+        /* a firearm's rate of fire is intrinsic to it, as for the hero
+           (a flintlock must be reloaded after every shot) */
+        if (mwep && is_firearm(mwep) && ammo_and_launcher(otmp, mwep))
+            multishot += firearm_rof(mwep->otyp) - 1;
     }
 
     if (otmp->quan < multishot)

@@ -1328,6 +1328,9 @@ cancel_item(struct obj *obj)
         }
         switch (obj->oclass) {
         case SCROLL_CLASS:
+            /* have to check because of the Marauder's Map (Hack'EM) */
+            if (obj->oartifact)
+                break;
             costly_alteration(obj, COST_CANCEL);
             obj->otyp = SCR_BLANK_PAPER;
             obj->spe = 0;

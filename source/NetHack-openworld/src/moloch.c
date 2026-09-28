@@ -149,25 +149,6 @@ moloch_offering(int value)
         u.umoloch_due = new_due;
 }
 
-/* enlightenment: when is the next sacrifice due? */
-void
-moloch_offering_status(char *buf)
-{
-    long due = svm.moves - u.umoloch_due;
-
-    if (due < 0) {
-        if (wizard)
-            Sprintf(buf, "%ld turns until your next mandatory sacrifice to ",
-                    -due);
-        else
-            *buf = '\0';
-    } else if (wizard && due > 0) {
-        Sprintf(buf, "%ld turns late for your next sacrifice to ", due);
-    } else {
-        Strcpy(buf, "due for a sacrifice to ");
-    }
-}
-
 /* Infidels can't rest or heal without the Amulet of Yendor until Moloch
    has imbued the Idol of Moloch with its power */
 boolean

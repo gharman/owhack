@@ -1792,7 +1792,6 @@ extern aligntyp inf_align(int);
 extern boolean moloch_hears_prayer(void);
 extern void moloch_demands(void);
 extern void moloch_offering(int);
-extern void moloch_offering_status(char *) NONNULLARG1;
 extern boolean infidel_no_amulet(void);
 extern void infidel_demonize(void);
 extern void check_wings(boolean);

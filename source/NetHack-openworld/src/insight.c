@@ -1186,6 +1186,26 @@ status_enlightenment(int mode, int final)
             enl_msg("You ", "fall", "fell", " asleep uncontrollably", buf);
         }
     }
+    /* in case the player missed the "urge to perform a sacrifice",
+       put a reminder here (EvilHack) */
+    if (u.ualign.type == A_NONE) {
+        long due = svm.moves - u.umoloch_due;
+
+        if (due < 0) {
+            if (wizard) {
+                Sprintf(buf, "%ld turns until your next mandatory "
+                             "sacrifice to ", -due);
+                you_have(buf, u_gname());
+            }
+        } else {
+            if (wizard && due > 0)
+                Sprintf(buf, "%ld turns late for your next sacrifice to ",
+                        due);
+            else
+                Strcpy(buf, "due for a sacrifice to ");
+            you_are(buf, u_gname());
+        }
+    }
     /* hunger/nutrition */
     if (Hunger) {
         if (magic || cause_known(HUNGER))

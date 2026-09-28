@@ -643,7 +643,9 @@ doread(void)
         /* a few scroll feedback messages describe something happening
            to the scroll itself, so avoid "it disappears" for those */
         nodisappear = (otyp == SCR_FIRE
-                       || (otyp == SCR_REMOVE_CURSE && scroll->cursed));
+                       || (otyp == SCR_REMOVE_CURSE && scroll->cursed)
+                       /* the Marauder's Map is read again and again */
+                       || scroll->oartifact == ART_MARAUDERS_MAP);
         if (Blind)
             pline(nodisappear
                       ? "You %s the formula on the scroll."
@@ -2152,6 +2154,30 @@ seffect_magic_mapping(struct obj **sobjp)
             else
                 Your("%s spins in bewilderment.", body_part(HEAD));
             make_confused(HConfusion + rnd(30), FALSE);
+            return;
+        }
+        /* the Marauder's Map (Hack'EM) shows the surroundings and isn't
+           used up, but has to rest between readings */
+        if (sobj->oartifact == ART_MARAUDERS_MAP) {
+            gk.known = TRUE;
+            if (sobj->age > svm.moves) {
+                pline_The("map is hard to see.");
+                nomul(-rnd(3));
+                gm.multi_reason = "squinting at a map";
+                gn.nomovemsg = "You look up from the map.";
+                sobj->age += (long) d(3, 10);
+            } else if (sobj->blessed && rnl(8) == 0) {
+                sobj->age = svm.moves + (long) d(3, 10);
+                pline_The("map is clear as day!");
+                notice_mon_off();
+                do_mapping();
+                notice_mon_on();
+            } else {
+                sobj->age = svm.moves + (long) d(3, 10);
+                do_vicinity_map(sobj);
+            }
+            sobj->in_use = FALSE;
+            *sobjp = 0; /* not used up */
             return;
         }
         if (sblessed) {
