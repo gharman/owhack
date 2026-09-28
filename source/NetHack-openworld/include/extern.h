@@ -115,6 +115,7 @@ extern int doapply(void);
 extern int dorub(void);
 extern int dojump(void);
 extern int jump(int);
+extern int use_figurine(struct obj **) NONNULLARG1;
 extern int number_leashed(void);
 extern void o_unleash(struct obj *) NONNULLPTRS;
 extern void m_unleash(struct monst *, boolean) NONNULLPTRS;
@@ -1782,6 +1783,21 @@ extern struct mkroom *search_special(schar);
 extern struct mkroom *search_special_near(schar, coordxy, coordxy);
 extern int cmap_to_type(int);
 
+/* ### moloch.c ### */
+
+extern void set_demon_race(void);
+extern aligntyp inf_align(int);
+extern boolean moloch_hears_prayer(void);
+extern void moloch_demands(void);
+extern void moloch_offering(int);
+extern void moloch_offering_status(char *) NONNULLARG1;
+extern boolean infidel_no_amulet(void);
+extern void infidel_demonize(void);
+extern void check_wings(boolean);
+extern boolean demon_tail_sting(struct monst *) NONNULLARG1;
+extern boolean idol_is_imbued(struct obj *);
+extern void imbue_idol(struct obj *) NONNULLARG1;
+
 /* ### mon.c ### */
 
 extern void dealloc_monst(struct monst *) NONNULLARG1;
@@ -2651,6 +2667,8 @@ extern boolean stuck_in_wall(void);
 extern void desecrate_altar(boolean, aligntyp);
 extern int dosacrifice(void);
 extern boolean can_pray(boolean);
+extern void god_zaps_you(aligntyp);
+extern void godvoice(aligntyp, const char *);
 extern int dopray(void);
 extern const char *u_gname(void);
 extern int doturn(void);
@@ -2714,6 +2732,7 @@ extern struct obj *find_quest_artifact(unsigned);
 extern int stinky_nemesis(struct monst *);
 extern void com_pager(const char *);
 extern void qt_pager(const char *);
+extern void qt_pager_as_god(const char *, aligntyp);
 extern struct permonst *qt_montype(void);
 extern void deliver_splev_message(void);
 

@@ -246,6 +246,7 @@ struct Role {
 };
 
 extern const struct Role roles[]; /* table of available roles */
+extern const struct Race race_demon; /* crowned Infidels (moloch.c) */
 #define Role_if(X) (gu.urole.mnum == (X))
 #define Role_switch (gu.urole.mnum)
 
@@ -513,6 +514,7 @@ struct you {
                               * chosen at game start (see inf_align()) */
     int uprotean;            /* Pirate: turns until the Treasury of Proteus
                               * next changes what is kept inside it */
+    long umoloch_due;        /* turn by which Moloch demands a sacrifice */
     struct monst *umonst;    /* for future conversion of &gy.youmonst to u.umonst */
 }; /* end of `struct you' */
 
@@ -561,6 +563,11 @@ struct _hitmon_data {
 };
 
 #define Upolyd (u.umonnum != u.umonster)
+/* an escaped convict whose face can be recognized from the wanted posters
+   (not while polymorphed or with a blindfold or towel over the face) */
+#define Convict_recognizable \
+    (Role_if(PM_CONVICT) && !Upolyd                                   \
+     && !(ublindf && (ublindf->otyp == TOWEL || ublindf->otyp == BLINDFOLD)))
 #define Ugender ((Upolyd ? u.mfemale : flags.female) ? 1 : 0)
 
 /* point px,py is adjacent to (or same location as) hero */

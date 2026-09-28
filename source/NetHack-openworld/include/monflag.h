@@ -203,6 +203,9 @@ enum ms_sounds {
 #define MH_DOPPEL       0x10000000UL
 #define MH_GHOST        0x20000000UL
 #define MH_RACEMASK     0x3fff0000UL
+/* demons; the race of an Infidel crowned Emissary of Moloch, never
+   available at character creation so not part of MH_RACEMASK */
+#define MH_DEMON        0x40000000UL
 
 /* for mons[].geno (constant during game) */
 #define G_UNIQ          0x1000 /* generated only once */

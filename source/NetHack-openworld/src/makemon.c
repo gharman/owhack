@@ -210,6 +210,14 @@ m_initweap(struct monst *mtmp)
             case PM_WATCH_CAPTAIN:
                 w1 = rn2(2) ? LONG_SWORD : SILVER_SABER;
                 break;
+            case PM_PRISON_GUARD:
+                w1 = rn2(2) ? MACE : BROADSWORD;
+                if (!rn2(3)) { /* the prison armory has a few firearms */
+                    (void) mongets(mtmp, FLINTLOCK);
+                    m_initthrow(mtmp, BULLET, 10);
+                }
+                (void) mongets(mtmp, SKELETON_KEY);
+                break;
             default:
                 if (!rn2(4))
                     w1 = DAGGER;
@@ -270,11 +278,56 @@ m_initweap(struct monst *mtmp)
         } else if (mm == PM_NINJA) { /* extra quest villains */
             (void) mongets(mtmp, rn2(4) ? SHURIKEN : DART);
             (void) mongets(mtmp, rn2(4) ? SHORT_SWORD : AXE);
+        } else if (mm == PM_TEMPLAR) {
+            (void) mongets(mtmp, rn2(2) ? LONG_SWORD : SILVER_SABER);
+            (void) mongets(mtmp, SKELETON_KEY);
+        } else if (mm == PM_CHAMPION) {
+            (void) mongets(mtmp, rn2(2) ? TWO_HANDED_SWORD : BATTLE_AXE);
+            (void) mongets(mtmp, rn2(3) ? RING_MAIL : CHAIN_MAIL);
+        } else if (mm == PM_AGENT) {
+            (void) mongets(mtmp, rn2(4) ? SHORT_SWORD : DAGGER);
+            if (!rn2(3))
+                (void) mongets(mtmp, LEATHER_ARMOR);
+            (void) mongets(mtmp, POT_INVISIBILITY);
+        } else if (mm == PM_MINER) {
+            (void) mongets(mtmp, PICK_AXE);
+            otmp = mksobj(BRASS_LANTERN, TRUE, FALSE);
+            (void) mpickobj(mtmp, otmp);
+            begin_burn(otmp, FALSE);
+        } else if (mm == PM_MAYOR_CUMMERBUND) {
+            otmp = mksobj(SCIMITAR, FALSE, FALSE);
+            curse(otmp);
+            otmp->oerodeproof = TRUE;
+            otmp->spe = max(otmp->spe, d(1, 3));
+            (void) mpickobj(mtmp, otmp);
+            otmp = mksobj(LEATHER_JACKET, FALSE, FALSE);
+            otmp->oerodeproof = TRUE;
+            otmp->spe = max(otmp->spe, d(2, 3));
+            (void) mpickobj(mtmp, otmp);
+            otmp = mksobj(SMALL_SHIELD, FALSE, FALSE);
+            otmp->oerodeproof = TRUE;
+            otmp->spe = max(otmp->spe, d(1, 3));
+            (void) mpickobj(mtmp, otmp);
+            (void) mongets(mtmp, OILSKIN_CLOAK);
+        } else if (mm == PM_ROBERT_THE_LIFER) {
+            (void) mongets(mtmp, HEAVY_IRON_BALL);
+            (void) mongets(mtmp, STRIPED_SHIRT);
+            (void) mongets(mtmp, SKELETON_KEY);
+        } else if (mm == PM_WARDEN_ARIANNA) {
+            otmp = mksobj(HEAVY_IRON_BALL, FALSE, FALSE);
+            otmp->spe = rn1(3, 2);
+            otmp->oerodeproof = TRUE;
+            (void) mpickobj(mtmp, otmp);
+            (void) mongets(mtmp, IRON_CHAIN);
+            (void) mongets(mtmp, PLATE_MAIL);
+            (void) mongets(mtmp, HELMET);
+            (void) mongets(mtmp, SKELETON_KEY);
         } else if (ptr->msound == MS_GUARDIAN) {
             /* quest "guardians" */
             switch (mm) {
             case PM_STUDENT:
             case PM_ATTENDANT:
+            case PM_CULTIST:
             case PM_ABBOT:
             case PM_ACOLYTE:
             case PM_GUIDE:
@@ -323,6 +376,37 @@ m_initweap(struct monst *mtmp)
                 (void) mongets(mtmp, CLUB);
                 (void) mongets(mtmp, LEATHER_ARMOR);
                 break;
+            case PM_INMATE:
+                (void) mongets(mtmp, rn2(2) ? HEAVY_IRON_BALL : SPOON);
+                (void) mongets(mtmp, STRIPED_SHIRT);
+                break;
+            case PM_PIRATE_CREWMATE:
+                (void) mongets(mtmp, SCIMITAR);
+                (void) mongets(mtmp, LEATHER_ARMOR);
+                (void) mongets(mtmp, HIGH_BOOTS);
+                (void) mongets(mtmp, FLINTLOCK);
+                m_initthrow(mtmp, BULLET, 10);
+                break;
+            }
+        }
+        break;
+
+    case S_GHOST:
+        if (mm == PM_BLACKBEARD_S_GHOST) {
+            otmp = mksobj(SCIMITAR, FALSE, FALSE);
+            curse(otmp);
+            otmp->oerodeproof = TRUE;
+            otmp->oeroded = 1;
+            otmp->spe = max(otmp->spe, d(2, 3));
+            (void) mpickobj(mtmp, otmp);
+            /* the pirate quest artifact, if it doesn't exist already */
+            if (!exist_artifact(CHEST, artiname(ART_TREASURY_OF_PROTEUS))) {
+                otmp = mksobj(CHEST, FALSE, FALSE);
+                otmp = oname(otmp, artiname(ART_TREASURY_OF_PROTEUS),
+                             ONAME_RANDOM);
+                curse(otmp);
+                otmp->oerodeproof = TRUE;
+                (void) mpickobj(mtmp, otmp);
             }
         }
         break;
@@ -487,6 +571,19 @@ m_initweap(struct monst *mtmp)
         (void) mongets(mtmp, LONG_SWORD);
         break;
     case S_ZOMBIE:
+        if (mm == PM_SKELETAL_PIRATE) {
+            otmp = mksobj(rn2(2) ? SCIMITAR : KNIFE, FALSE, FALSE);
+            curse(otmp);
+            if (is_flammable(otmp) || is_rustprone(otmp))
+                otmp->oeroded = 1;
+            (void) mpickobj(mtmp, otmp);
+            otmp = mksobj(rn2(2) ? HIGH_BOOTS : LEATHER_JACKET, FALSE, FALSE);
+            curse(otmp);
+            if (is_rottable(otmp))
+                otmp->oeroded2 = 1;
+            (void) mpickobj(mtmp, otmp);
+            break;
+        }
         if (!rn2(4))
             (void) mongets(mtmp, LEATHER_ARMOR);
         if (!rn2(4))
@@ -514,6 +611,18 @@ m_initweap(struct monst *mtmp)
             break;
         case PM_YEENOGHU:
             (void) mongets(mtmp, FLAIL);
+            break;
+        case PM_DAMNED_PIRATE:
+            otmp = mksobj(SCIMITAR, FALSE, FALSE);
+            curse(otmp);
+            (void) mpickobj(mtmp, otmp);
+            otmp = mksobj(LEATHER_ARMOR, FALSE, FALSE);
+            curse(otmp);
+            otmp->oeroded = 1;
+            (void) mpickobj(mtmp, otmp);
+            break;
+        case PM_LAVA_DEMON:
+            (void) mongets(mtmp, rn2(2) ? TRIDENT : SCIMITAR);
             break;
         }
         /* prevent djinn and mail daemons from leaving objects when
@@ -625,6 +734,9 @@ m_initinv(struct monst *mtmp)
             case PM_WATCH_CAPTAIN:
                 mac = -2;
                 break;
+            case PM_PRISON_GUARD:
+                mac = -2;
+                break;
             default:
                 impossible("odd mercenary %d?", monsndx(ptr));
                 mac = 0;
@@ -727,6 +839,29 @@ m_initinv(struct monst *mtmp)
             mkmonmoney(mtmp, (long) rn1(10, 20));
         } else if (quest_mon_represents_role(ptr, PM_MONK)) {
             (void) mongets(mtmp, rn2(11) ? ROBE : CLOAK_OF_MAGIC_RESISTANCE);
+        } else if (ptr == &mons[PM_TEMPLAR]) {
+            (void) mongets(mtmp, rn2(3) ? PLATE_MAIL : SPLINT_MAIL);
+            (void) mongets(mtmp, HELMET);
+            (void) mongets(mtmp, LARGE_SHIELD);
+            if (rn2(3)) /* being in a holy order has its benefits */
+                (void) mongets(mtmp, rn2(4) ? POT_HEALING
+                                            : POT_EXTRA_HEALING);
+        } else if (ptr == &mons[PM_ARCHBISHOP_OF_MOLOCH]) {
+            (void) mongets(mtmp, QUARTERSTAFF);
+            (void) mongets(mtmp, rn2(3) ? ROBE : CLOAK_OF_PROTECTION);
+        } else if (ptr == &mons[PM_PALADIN]) {
+            otmp = mksobj(MORNING_STAR, FALSE, FALSE);
+            otmp->blessed = otmp->oerodeproof = 1;
+            otmp->spe = rn1(3, 3);
+            (void) mpickobj(mtmp, otmp);
+            /* the Paladin wears no helmet, because she looks cooler
+               without a helmet */
+            (void) mongets(mtmp, LEATHER_GLOVES);
+            (void) mongets(mtmp, SHIELD_OF_REFLECTION);
+            (void) mongets(mtmp, LEATHER_CLOAK);
+            (void) mongets(mtmp, CRYSTAL_PLATE_MAIL);
+            (void) mongets(mtmp, HIGH_BOOTS);
+            (void) mongets(mtmp, POT_SPEED);
         }
         break;
     case S_NYMPH:
@@ -1431,6 +1566,14 @@ makemon(
                               ? !eminp->renegade
                               : eminp->renegade;
     }
+    /* these monsters are normally affiliated with a deity, so appear as
+       "the templar of <god>" and so on (EvilHack) */
+    if ((mndx == PM_PALADIN || mndx == PM_TEMPLAR || mndx == PM_CHAMPION
+         || mndx == PM_AGENT) && !(mmflags & MM_EMIN)) {
+        newemin(mtmp);
+        mtmp->isminion = 1;
+        EMIN(mtmp)->min_align = sgn(ptr->maligntyp);
+    }
     set_malign(mtmp); /* having finished peaceful changes */
     if (anymon && !(mmflags & MM_NOGRP)) {
         if ((ptr->geno & G_SGROUP) && rn2(2)) {
@@ -1598,6 +1741,9 @@ staticfn boolean
 uncommon(int mndx)
 {
     if (mons[mndx].geno & (G_NOGEN | G_UNIQ))
+        return TRUE;
+    /* the gods only send their champions and agents after Infidels */
+    if ((mndx == PM_AGENT || mndx == PM_CHAMPION) && !Role_if(PM_INFIDEL))
         return TRUE;
     if (svm.mvitals[mndx].mvflags & G_GONE)
         return TRUE;
@@ -2276,8 +2422,14 @@ peace_minded(struct permonst *ptr)
 
     if (always_peaceful(ptr))
         return TRUE;
-    if (always_hostile(ptr))
+    if (always_hostile(ptr)) {
+        /* major demons are sometimes peaceful to Moloch's cultists, and
+           always to one crowned the Emissary of Moloch (EvilHack) */
+        if (Role_if(PM_INFIDEL) && is_demon(ptr)
+            && (u.uevent.uhand_of_elbereth || rn2(2)))
+            return TRUE;
         return FALSE;
+    }
     if (ptr->msound == MS_LEADER || ptr->msound == MS_GUARDIAN)
         return TRUE;
     if (ptr->msound == MS_NEMESIS)
@@ -2285,18 +2437,29 @@ peace_minded(struct permonst *ptr)
     if (ptr == &mons[PM_ERINYS])
         return !u.ualign.abuse;
 
-    if (race_peaceful(ptr))
+    /* monsters of the same race as the hero tend to be peaceful;
+       followers of Moloch and convicts are the exception (Hack'EM) */
+    if (race_peaceful(ptr) && ual != A_NONE && !Role_if(PM_CONVICT))
         return TRUE;
     if (race_hostile(ptr))
         return FALSE;
 
+    /* lawful angelic beings are hostile to Infidels */
+    if (Role_if(PM_INFIDEL) && ptr->mlet == S_ANGEL && mal > 0)
+        return FALSE;
+
     /* the monster is hostile if its alignment is different from the
-     * player's */
+     * player's (Moloch's worshippers count as chaotic here) */
     if (sgn(mal) != sgn(ual))
         return FALSE;
 
-    /* Negative monster hostile to player with Amulet. */
-    if (mal < A_NEUTRAL && u.uhave.amulet)
+    /* not all chaotics support Moloch; this goes especially for elves */
+    if (ual == A_NONE && (is_elf(ptr) || rn2(2)))
+        return FALSE;
+
+    /* Negative monster hostile to player with Amulet, except to the
+       Infidel who carries it for Moloch */
+    if (mal < A_NEUTRAL && u.uhave.amulet && ual != A_NONE)
         return FALSE;
 
     /* minions are hostile to players that have strayed at all */
@@ -2340,19 +2503,31 @@ set_malign(struct monst *mtmp)
             mal *= 5;
     }
 
-    coaligned = (sgn(mal) == sgn(u.ualign.type));
+    /* nobody is coaligned with Moloch's worshippers */
+    coaligned = (u.ualign.type != A_NONE && sgn(mal) == sgn(u.ualign.type));
     if (mtmp->data->msound == MS_LEADER) {
-        mtmp->malign = -20;
+        /* Moloch is indifferent to the fate of his servants */
+        mtmp->malign = (u.ualign.type == A_NONE) ? 0 : -20;
     } else if (mal == A_NONE) {
         if (mtmp->mpeaceful)
             mtmp->malign = 0;
         else
             mtmp->malign = 20; /* really hostile */
+        if (u.ualign.type == A_NONE)
+            mtmp->malign = 0; /* no gain for killing one's own */
     } else if (always_peaceful(mtmp->data)) {
         int absmal = abs(mal);
-        if (mtmp->mpeaceful)
-            mtmp->malign = -3 * max(5, absmal);
-        else
+        if (mtmp->mpeaceful) {
+            if (u.ualign.type == A_NONE)
+                mtmp->malign = 1; /* Moloch's will */
+            else if (Role_if(PM_CONVICT))
+                /* several 'always peaceful' types become hostile once they
+                   see a convict; still an alignment hit, but not nearly as
+                   bad as it is for other roles */
+                mtmp->malign = -1 * max(1, absmal);
+            else
+                mtmp->malign = -3 * max(5, absmal);
+        } else
             mtmp->malign = 3 * max(5, absmal); /* renegade */
     } else if (always_hostile(mtmp->data)) {
         int absmal = abs(mal);

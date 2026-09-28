@@ -3165,6 +3165,16 @@
             | M2_GREEDY | M2_COLLECT | M2_NASTY,
         M3_INFRAVISION,
         13, CLR_WHITE, DAMNED_PIRATE),
+    /* racial monster for crowned Infidels (the Emissary of Moloch) */
+    MON(NAM("demon"), S_DEMON,
+        LVL(10, 12, 10, 10, A_NONE), (G_NOGEN | G_NOCORPSE),
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 8), ATTK(AT_STNG, AD_DRST, 2, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_GRUNT, MZ_HUMAN), MR_FIRE | MR_POISON, 0,
+        M1_HUMANOID | M1_FLY | M1_SEE_INVIS | M1_POIS,
+        M2_NOPOLY | M2_DEMON | M2_STALK | M2_HOSTILE | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        13, CLR_RED, DEMON),
     /* Named demon lords & princes plus Arch-Devils.
      * (their order matters; see minion.c)
      */

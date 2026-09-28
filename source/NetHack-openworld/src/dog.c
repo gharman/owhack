@@ -92,6 +92,10 @@ pet_type(void)
 {
     if (gu.urole.petnum != NON_PM)
         return  gu.urole.petnum;
+    else if (Role_if(PM_PIRATE)) /* a parrot or a monkey (SLASH'EM) */
+        return (gp.preferred_pet == 'B') ? PM_PARROT
+               : (gp.preferred_pet == 'Y') ? PM_MONKEY
+                 : rn2(2) ? PM_PARROT : PM_MONKEY;
     else if (gp.preferred_pet == 'c')
         return  PM_KITTEN;
     else if (gp.preferred_pet == 'd')
@@ -105,7 +109,17 @@ pick_familiar_pm(struct obj *otmp, boolean quietly)
 {
     struct permonst *pm = (struct permonst *) 0;
 
-    if (otmp) { /* figurine; otherwise spell */
+    if (otmp && otmp->oartifact == ART_IDOL_OF_MOLOCH) {
+        /* the Idol of Moloch calls forth a demon of Moloch */
+        int mndx = ndemon(A_NONE);
+
+        if (mndx == NON_PM) {
+            if (!quietly && !Blind)
+                pline_The("cloud disperses.");
+            return (struct permonst *) 0;
+        }
+        pm = &mons[mndx];
+    } else if (otmp) { /* figurine; otherwise spell */
         int mndx = otmp->corpsenm;
 
         assert(ismnum(mndx));
@@ -140,7 +154,8 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
     struct permonst *pm;
     struct monst *mtmp = 0;
     int chance, trycnt = 100;
-    boolean reallytame = TRUE;
+    boolean reallytame = TRUE,
+            idol = (otmp && otmp->oartifact == ART_IDOL_OF_MOLOCH);
 
     do {
         mmflags_nht mmflags;
@@ -149,7 +164,9 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
         if (!(pm = pick_familiar_pm(otmp, quietly)))
             break;
 
-        mmflags = MM_EDOG | MM_IGNOREWATER | NO_MINVENT | MM_NOMSG;
+        mmflags = MM_EDOG | MM_IGNOREWATER | MM_NOMSG;
+        if (!idol) /* demons of Moloch come armed */
+            mmflags |= NO_MINVENT;
         cgend = otmp ? (otmp->spe & CORPSTAT_GENDER) : 0;
         mmflags |= ((cgend == CORPSTAT_FEMALE) ? MM_FEMALE
                     : (cgend == CORPSTAT_MALE) ? MM_MALE : 0L);
@@ -158,9 +175,13 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
         if (otmp) { /* figurine */
             if (!mtmp) {
                 /* monster has been genocided or target spot is occupied */
-                if (!quietly)
-                    pline_The(
+                if (!quietly) {
+                    if (!idol)
+                        pline_The(
                            "figurine writhes and then shatters into pieces!");
+                    else if (!Blind)
+                        pline_The("cloud disperses.");
+                }
                 break;
             } else if (mtmp->isminion) {
                 /* Fixup for figurine of an Angel:  makemon() is willing to
@@ -179,6 +200,13 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
     if (!mtmp)
         return (struct monst *) 0;
 
+    if (idol && !quietly && !Blind)
+        pline_The("mist coagulates into the shape of %s%s.",
+                  x_monnam(mtmp, ARTICLE_A, (char *) 0,
+                           SUPPRESS_IT | SUPPRESS_INVISIBLE | SUPPRESS_SADDLE
+                               | SUPPRESS_NAME, FALSE),
+                  canspotmon(mtmp) ? "" : " and vanishes");
+
     if (is_pool(mtmp->mx, mtmp->my) && minliquid(mtmp))
         return (struct monst *) 0;
 
@@ -187,6 +215,10 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
         if (chance > 2)
             chance = otmp->blessed ? 0 : !otmp->cursed ? 1 : 2;
         /* 0,1,2:  b=80%,10,10; nc=10%,80,10; c=10%,10,80 */
+        /* lawful angelic beings won't serve an Infidel */
+        if (Role_if(PM_INFIDEL) && mtmp->data->mlet == S_ANGEL
+            && mon_aligntyp(mtmp) > 0)
+            chance = 2;
         if (chance > 0) {
             reallytame = FALSE; /* not tame after all */
             if (chance == 2) {  /* hostile (cursed figurine) */
@@ -197,7 +229,7 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
             }
         }
         /* if figurine has been named, give same name to the monster */
-        if (has_oname(otmp))
+        if (has_oname(otmp) && !idol)
             mtmp = christen_monst(mtmp, ONAME(otmp));
     }
     if (reallytame)
@@ -245,6 +277,15 @@ makedog(void)
             petname = "Idefix"; /* Obelix */
         if (Role_if(PM_RANGER))
             petname = "Sirius"; /* Orion's dog */
+    } else if (!*petname && pettype == PM_SEWER_RAT) {
+        if (Role_if(PM_CONVICT))
+            petname = "Nicodemus"; /* Rats of NIMH */
+    } else if (!*petname && pettype == PM_LESSER_HOMUNCULUS) {
+        if (Role_if(PM_INFIDEL))
+            petname = "Hecubus"; /* The Kids in the Hall */
+    } else if (!*petname && pettype == PM_PARROT) {
+        if (Role_if(PM_PIRATE))
+            petname = "Polly";
     }
 
     /* specifying NO_MINVENT prevents makemon() from having a 1% chance
@@ -1180,6 +1221,13 @@ tamedog(
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj
         && mtmp->data->mlet == S_DOG)
         return FALSE;
+    /* domestic animals are wary of convicts (EvilHack) */
+    if (Role_if(PM_CONVICT) && is_domestic(mtmp->data) && !mtmp->mtame
+        && obj) {
+        if (canspotmon(mtmp))
+            pline("%s still looks wary of you.", Monnam(mtmp));
+        return FALSE;
+    }
 
     /* If we cannot tame it, at least it's no longer afraid. */
     mtmp->mflee = 0;
@@ -1247,7 +1295,7 @@ tamedog(
            with each other anymore] */
         || mtmp->isshk || mtmp->isgd || mtmp->ispriest || mtmp->isminion
         || is_covetous(mtmp->data) || is_human(mtmp->data)
-        || (is_demon(mtmp->data) && !is_demon(gy.youmonst.data))
+        || (is_demon(mtmp->data) && !is_demon(raceptr(&gy.youmonst)))
         || (obj && dogfood(mtmp, obj) >= MANFOOD))
         return FALSE;
 

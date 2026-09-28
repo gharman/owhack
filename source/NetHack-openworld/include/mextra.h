@@ -132,6 +132,7 @@ struct eshk {
     boolean following;    /* following customer since he owes us sth */
     boolean surcharge;    /* angry shk inflates prices */
     boolean dismiss_kops; /* pacified shk sends kops away */
+    boolean pbanned;      /* hero (a convict in prison garb) is banned */
     coord shk;            /* usual position shopkeeper */
     coord shd;            /* position shop door */
     d_level shoplevel;    /* level (& dungeon) of his shop */

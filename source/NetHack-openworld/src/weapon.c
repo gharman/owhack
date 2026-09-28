@@ -171,6 +171,13 @@ hitval(struct obj *otmp, struct monst *mon)
     if (Is_weapon && otmp->blessed && mon_hates_blessings(mon))
         tmp += 2;
 
+    /* Infidels get a slight bonus against lawful or neutral monsters when
+       using cursed weapons (EvilHack) */
+    if (Is_weapon && otmp->cursed && Role_if(PM_INFIDEL) && carried(otmp)
+        && mon != &gy.youmonst
+        && (mon_aligntyp(mon) == A_LAWFUL || mon_aligntyp(mon) == A_NEUTRAL))
+        tmp += 1;
+
     if (is_spear(otmp) && strchr(kebabable, ptr->mlet))
         tmp += 2;
 
@@ -333,6 +340,11 @@ dmgval(struct obj *otmp, struct monst *mon)
 
         if (otmp->blessed && mon_hates_blessings(mon))
             bonus += rnd(4);
+        if (otmp->cursed && Role_if(PM_INFIDEL) && carried(otmp)
+            && mon != &gy.youmonst
+            && (mon_aligntyp(mon) == A_LAWFUL
+                || mon_aligntyp(mon) == A_NEUTRAL))
+            bonus += rnd(2);
         if (is_axe(otmp) && is_wooden(ptr))
             bonus += rnd(4);
         if (objects[otyp].oc_material == SILVER && mon_hates_silver(mon))
@@ -1583,6 +1595,9 @@ weapon_type(struct obj *obj)
 
     if (!obj)
         return P_BARE_HANDED_COMBAT; /* Not using a weapon */
+    /* convicts know how to fight with their ball and chain */
+    if (obj->otyp == HEAVY_IRON_BALL && Role_if(PM_CONVICT))
+        return P_FLAIL;
     if (obj->oclass != WEAPON_CLASS && obj->oclass != TOOL_CLASS
         && obj->oclass != GEM_CLASS)
         return P_NONE; /* Not a weapon, weapon-tool, or ammo */

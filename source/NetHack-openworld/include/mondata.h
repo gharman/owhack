@@ -165,7 +165,8 @@
    PM_DWARF and PM_GNOME are normal monsters, not placeholders */
 #define is_placeholder(ptr)                             \
     ((ptr) == &mons[PM_ORC] || (ptr) == &mons[PM_GIANT] \
-     || (ptr) == &mons[PM_ELF] || (ptr) == &mons[PM_HUMAN])
+     || (ptr) == &mons[PM_ELF] || (ptr) == &mons[PM_HUMAN] \
+     || (ptr) == &mons[PM_DEMON])
 /* return TRUE if the monster tends to revive */
 #define is_reviver(ptr) (is_rider(ptr) || (ptr)->mlet == S_TROLL)
 /* monsters whose corpses and statues need special handling;
@@ -252,10 +253,17 @@
    pacified by any other food;
    horses can be tamed by always-veggy food or lichen corpses but
    not tamed or pacified by other corpses or tins of veggy critters */
+/* rats, which convicts get along with (EvilHack) */
+#define is_rat(ptr) \
+    ((ptr) == &mons[PM_SEWER_RAT] || (ptr) == &mons[PM_GIANT_RAT]        \
+     || (ptr) == &mons[PM_RABID_RAT])
 #define befriend_with_obj(ptr, obj) \
     (((ptr) == &mons[PM_MONKEY] || (ptr) == &mons[PM_APE])               \
      ? (obj)->otyp == BANANA                                             \
-     : (is_domestic(ptr) && (obj)->oclass == FOOD_CLASS                  \
+     : ((is_domestic(ptr)                                                \
+         || ((ptr) == &mons[PM_PARROT] && Role_if(PM_PIRATE))            \
+         || (is_rat(ptr) && Role_if(PM_CONVICT)))                        \
+        && (obj)->oclass == FOOD_CLASS                                   \
         && ((ptr)->mlet != S_UNICORN                                     \
             || objects[(obj)->otyp].oc_material == VEGGY                 \
             || ((obj)->otyp == CORPSE && (obj)->corpsenm == PM_LICHEN))))

@@ -1706,6 +1706,8 @@ init_mhflags(void)
             f |= MH_DOPPEL;
         if (i == PM_GHOST)
             f |= MH_GHOST;
+        if (ptr->mflags2 & M2_DEMON)
+            f |= MH_DEMON;
         ptr->mhflags = f;
     }
 }

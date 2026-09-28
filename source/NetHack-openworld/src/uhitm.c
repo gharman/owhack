@@ -811,6 +811,11 @@ hitum(struct monst *mon, struct attack *uattk)
                            secondwep && !uswapwep);
     }
     gt.twohits = 0;
+    /* a crowned Infidel also lashes out with a barbed tail */
+    if (!Upolyd && Race_if(PM_DEMON)
+        && !(go.override_confirmation || gm.multi < 0
+             || u.umortality > oldumort || !malive || m_at(x, y) != mon))
+        malive = demon_tail_sting(mon);
     return malive;
 }
 
@@ -957,7 +962,10 @@ hmon_hitmon_weapon_melee(
            let it also hit from behind or shatter foes' weapons */
         || (hmd->hand_to_hand && is_art(obj, ART_CLEAVER))) {
         ; /* no special bonuses */
-    } else if (Role_if(PM_ROGUE) && backstabbable(mon) && !Upolyd
+    } else if ((Role_if(PM_ROGUE)
+                /* convicts can make sneak attacks with a spoon */
+                || (Role_if(PM_CONVICT) && obj->otyp == SPOON))
+               && backstabbable(mon) && !Upolyd
                /* multi-shot throwing is too powerful here */
                && hmd->hand_to_hand) {
         You("strike %s from behind!", mon_nam(mon));
@@ -1919,6 +1927,18 @@ hmon_hitmon(
     if (hmd.unpoisonmsg)
         Your("%s %s no longer poisoned.", hmd.saved_oname,
              vtense(hmd.saved_oname, "are"));
+
+    /* Secespita captures the life force of those it kills (EvilHack) */
+    if (hmd.destroyed && obj && (obj == uwep || (u.twoweap && obj == uswapwep))
+        && is_art(obj, ART_SECESPITA) && !nonliving(hmd.mdat)
+        && u.uen < u.uenmax) {
+        int energy = (int) mon->m_lev + 1;
+
+        energy += rn2(energy);
+        pline_The("ritual knife captures the evanescent life force.");
+        u.uen = min(u.uen + energy, u.uenmax);
+        disp.botl = TRUE;
+    }
 
     if (!hmd.destroyed && !hmd.offmap) {
         int hitflags = M_ATTK_HIT;

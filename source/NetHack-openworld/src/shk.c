@@ -711,7 +711,9 @@ rob_shop(struct monst *shkp)
                    total, currency(total), s_suffix(shkname(shkp)),
                    shtypes[eshkp->shoptype - SHOPBASE].name);
 
-    if (!Role_if(PM_ROGUE)) /* stealing is unlawful */
+    /* stealing is unlawful; rogues, convicts and Infidels feel no guilt */
+    if (!(Role_if(PM_ROGUE) || Role_if(PM_CONVICT))
+        && u.ualign.type != A_NONE)
         adjalign(-sgn(u.ualign.type));
 
     hot_pursuit(shkp);
@@ -808,6 +810,10 @@ u_entered_shop(char *enterstring)
         return;
     }
 
+    /* a visible striped prison shirt gets its wearer banned (EvilHack) */
+    if (uarmu && uarmu->otyp == STRIPED_SHIRT && !uarm && !uarmc)
+        eshkp->pbanned = TRUE;
+
     rt = svr.rooms[*enterstring - ROOMOFFSET].rtype;
 
     if (ANGRY(shkp)) {
@@ -839,7 +845,7 @@ u_entered_shop(char *enterstring)
                   Shknam(shkp), noit_mhis(shkp));
         }
     } else {
-        if (!Deaf && !muteshk(shkp)) {
+        if (!Deaf && !muteshk(shkp) && !eshkp->pbanned) {
             set_voice(shkp, 0, 80, 0);
             verbalize("%s, %s!  Welcome%s to %s %s!", Hello(shkp), svp.plname,
                       eshkp->visitct++ ? " again" : "",
@@ -890,6 +896,14 @@ u_entered_shop(char *enterstring)
                       Shknam(shkp),
                       not_upset ? "is hesitant" : "refuses",
                       tool, plur(cnt));
+            }
+            should_block = TRUE;
+        } else if (eshkp->pbanned && !ANGRY(shkp)) {
+            if (!Deaf && !muteshk(shkp)) {
+                SetVoice(shkp, 0, 80, 0);
+                verbalize("I don't sell to your kind here.");
+            } else {
+                pline("%s refuses to let you in.", Shknam(shkp));
             }
             should_block = TRUE;
         } else if (u.usteed) {
@@ -1412,7 +1426,10 @@ make_happy_shk(struct monst *shkp, boolean silentkops)
     pacify_shk(shkp, FALSE);
     eshkp->following = 0;
     eshkp->robbed = 0L;
-    if (!Role_if(PM_ROGUE))
+    /* convicts, rogues and Infidels don't feel any better about
+       resolving their issues with shopkeepers */
+    if (!(Role_if(PM_ROGUE) || Role_if(PM_CONVICT))
+        && u.ualign.type != A_NONE)
         adjalign(sgn(u.ualign.type));
     if (!inhishop(shkp)) {
         char shk_nam[BUFSZ];
@@ -2583,6 +2600,7 @@ paybill(
             numsk++;
             taken |= inherits(mtmp, numsk, croaked, silently);
         }
+        eshkp->pbanned = FALSE; /* un-ban for bones levels */
         /* for bones: we don't want a shopless shk around */
         if (!local)
             mongone(mtmp);
@@ -4984,6 +5002,7 @@ shk_move(struct monst *shkp)
             uondoor = u_at(eshkp->shd.x, eshkp->shd.y);
             if (uondoor) {
                 badinv = (carrying(PICK_AXE) || carrying(DWARVISH_MATTOCK)
+                          || eshkp->pbanned
                           || (Fast && (sobj_at(PICK_AXE, u.ux, u.uy)
                                   || sobj_at(DWARVISH_MATTOCK, u.ux, u.uy))));
                 if (satdoor && badinv)

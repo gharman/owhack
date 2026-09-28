@@ -1638,8 +1638,9 @@ throwit(
         endmultishot(FALSE);
         return;
     }
-    /* a flintlock often misfires, like cursed or greased ammunition */
-    if ((obj->cursed || obj->greased
+    /* a flintlock often misfires, like cursed or greased ammunition;
+       Infidels are immune to curses */
+    if (((obj->cursed && u.ualign.type != A_NONE) || obj->greased
          || (gunning && uwep->otyp == FLINTLOCK))
         && (u.dx || u.dy) && !rn2(7)) {
         boolean slipok = TRUE;

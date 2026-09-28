@@ -1898,8 +1898,10 @@ cursed(struct obj *otmp)
         impossible("cursed without otmp");
         return 0;
     }
-    /* Curses, like chickens, come home to roost. */
-    if ((otmp == uwep) ? welded(otmp) : (int) otmp->cursed) {
+    /* Curses, like chickens, come home to roost; but Infidels are immune
+       to curses */
+    if ((otmp == uwep) ? welded(otmp)
+                       : (int) (otmp->cursed && !Role_if(PM_INFIDEL))) {
         boolean use_plural = (is_boots(otmp) || is_gloves(otmp)
                               || otmp->otyp == LENSES || otmp->quan > 1L);
 

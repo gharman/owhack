@@ -1146,6 +1146,10 @@ u_init_misc(void)
 
     u.umoved = FALSE;
     u.umortality = 0;
+    /* Infidels: which god is which in Moloch's plans, and the grace
+       period before Moloch demands the first sacrifice */
+    u.uinf_aligns = (xint16) rn2(6);
+    u.umoloch_due = 6000L;
     /* dead pirates rise again as skeletal pirates */
     u.ugrave_arise = Role_if(PM_PIRATE) ? PM_SKELETAL_PIRATE : NON_PM;
 

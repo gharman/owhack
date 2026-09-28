@@ -24,7 +24,6 @@ staticfn void light_cocktail(struct obj **);
 staticfn int rub_ok(struct obj *);
 staticfn void display_jump_positions(boolean);
 staticfn void use_tinning_kit(struct obj *);
-staticfn int use_figurine(struct obj **);
 staticfn int grease_ok(struct obj *);
 staticfn int use_grease(struct obj *);
 staticfn void use_trap(struct obj *);
@@ -865,7 +864,7 @@ use_leash_core(struct obj *obj, struct monst *mtmp, coord *cc, int spotmon)
         /* applying a leash which is currently in use */
         if (obj->leashmon != (int) mtmp->m_id) {
             pline("This leash is not attached to that creature.");
-        } else if (obj->cursed) {
+        } else if (obj->cursed && !Role_if(PM_INFIDEL)) {
             pline_The("leash would not come off!");
             set_bknown(obj, 1);
         } else {
@@ -2543,12 +2542,22 @@ figurine_location_checks(struct obj *obj, coord *cc, boolean quietly)
     return TRUE;
 }
 
-staticfn int
+int
 use_figurine(struct obj **optr)
 {
     struct obj *obj = *optr;
     coordxy x, y;
     coord cc;
+    boolean idol = (obj->oartifact == ART_IDOL_OF_MOLOCH);
+    const char *release_figurine;
+
+    /* the Idol of Moloch can only call forth a demon now and then */
+    if (idol && obj->age > svm.moves) {
+        You_feel("that %s %s ignoring you.", the(xname(obj)),
+                 otense(obj, "are"));
+        obj->age += (long) d(3, 10);
+        return ECMD_TIME;
+    }
 
     if (u.uswallow) {
         /* can't activate a figurine while swallowed */
@@ -2566,13 +2575,31 @@ use_figurine(struct obj **optr)
     /* Passing FALSE arg here will result in messages displayed */
     if (!figurine_location_checks(obj, &cc, FALSE))
         return ECMD_TIME;
-    You("%s and it %stransforms.",
-        (u.dx || u.dy) ? "set the figurine beside you"
+    release_figurine = (u.dx || u.dy) ? "set the figurine beside you"
                        : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
                           || is_pool(cc.x, cc.y))
                              ? "release the figurine"
                              : (u.dz < 0 ? "toss the figurine into the air"
-                                         : "set the figurine on the ground"),
+                                         : "set the figurine on the ground");
+    if (idol) {
+        /* the Idol isn't consumed; a demon arises from the mist */
+        if (Blind)
+            You("%s and feel an unholy aura emanate from it.",
+                release_figurine);
+        else
+            You("%s and a cloud of %s mist arises from it.",
+                release_figurine, hcolor("crimson"));
+        (void) make_familiar(obj, cc.x, cc.y, FALSE);
+        obj->age = svm.moves + rnz(100);
+        freeinv(obj);
+        place_object(obj, cc.x, cc.y);
+        newsym(cc.x, cc.y);
+        if (Blind)
+            map_invisible(cc.x, cc.y);
+        *optr = 0;
+        return ECMD_TIME;
+    }
+    You("%s and it %stransforms.", release_figurine,
         Blind ? "supposedly " : "");
     (void) make_familiar(obj, cc.x, cc.y, FALSE);
     (void) stop_timer(FIG_TRANSFORM, obj_to_any(obj));
