@@ -154,6 +154,7 @@ vpline(const char *line, va_list the_args)
 {
     static int in_pline = 0;
     char pbuf[BIGBUFSZ]; /* will get chopped down to BUFSZ-1 if longer */
+    char pirbuf[BUFSZ];  /* pirate speech */
     int ln;
     int msgtyp;
     boolean no_repeat;
@@ -223,9 +224,12 @@ vpline(const char *line, va_list the_args)
         pbuf[BUFSZ - 1] = '\0';
         line = pbuf;
     }
-    /* Pirates hear everything in the speech of the sea */
-    if (Role_if(PM_PIRATE))
-        line = piratesay(line);
+    /* Pirates hear everything in the speech of the sea; copy the result
+       since piratesay() uses static buffers and pline can nest */
+    if (Role_if(PM_PIRATE)) {
+        Strcpy(pirbuf, piratesay(line));
+        line = pirbuf;
+    }
     msgtyp = MSGTYP_NORMAL;
 
 #ifdef DUMPLOG_CORE

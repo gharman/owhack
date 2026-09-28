@@ -3382,7 +3382,7 @@ come back when you're a proper %R."]],
          "\"%iC is plagued by werewolves.  If you can wield silver weapons, do so.\"",
          "\"If you know how to evoke fireballs, it will be your greatest aid.  %nC may be well-armored, but that won't protect %ni from burning alive!\"",
          "\"%oC protects %oj holder from many harmful magics.  Unfortunately, %oj current holder is %n.  If you can somehow steal %oh, it will aid you greatly.\"",
-         "\"When you obtain %o, you may call for %ds aid at any time.  Even at the surface, you will be answered.\"",
+         "\"When you obtain %o, you may call for %ds aid at any time.  Even far from Gehennom, you will be answered.\"",
          "\"Watch where you aim your wands: %n of %D has a magical reflective shield.\"",
          "\"The church of %D wouldn't risk %O if they weren't sure %n can defeat you in a fair fight.  So don't fight fair!\"",
          "\"%nC of %D is immune to mundane poisons, but a paralyzing venom will work wonders on %ni.\"",
@@ -3508,7 +3508,7 @@ find someone else to finish your quest."]],
     the final confrontation.
 
 Many fools were sent by the gods of heaven after the Amulet,
-only to die in the underground mazes.  By pure luck, one of
+only to die in the wastes of Gehennom.  By pure luck, one of
 them has succeeded; thankfully, %lh was ambushed on the way
 back and the Amulet was recovered by %ds Cult.
 
@@ -3667,7 +3667,7 @@ You wonder if you'll be allowed to return here yet again.]],
     the final confrontation.
 
 Many fools were sent by the gods of heaven after the Amulet,
-only to die in the underground mazes.  By pure luck, one of
+only to die in the wastes of Gehennom.  By pure luck, one of
 them has succeeded; thankfully, %lh was ambushed on the way
 back and the Amulet was recovered by %ds Cult.
 

@@ -2458,7 +2458,7 @@ prayer_done(void) /* M. Stephenson (1.0.3b) */
             return 1;
         } /* else use regular Inhell result below */
     } else if (gp.p_type == -3) {
-        pline("Unfortunately, this close to the surface %s can't hear you.",
+        pline("Unfortunately, this far from Gehennom %s can't hear you.",
               align_gname(alignment));
         /* no further effects */
         return 0;
