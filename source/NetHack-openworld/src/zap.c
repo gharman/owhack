@@ -1283,7 +1283,7 @@ unturn_you(void)
 {
     (void) unturn_dead(&gy.youmonst); /* hit carried corpses and eggs */
 
-    if (is_undead(gy.youmonst.data)) {
+    if (u_undead()) {
         You_feel("frightened and %sstunned.", Stunned ? "even more " : "");
         make_stunned((HStun & TIMEOUT) + (long) rnd(30), FALSE);
     } else {
@@ -2958,6 +2958,12 @@ zapyourself(struct obj *obj, boolean ordinary)
 
     case WAN_DEATH:
     case SPE_FINGER_OF_DEATH:
+        if (u_undead() && !is_demon(gy.youmonst.data)) {
+            /* death magic restores the undead (EvilHack) */
+            learn_it = TRUE;
+            undead_death_heal();
+            break;
+        }
         if (nonliving(gy.youmonst.data) || is_demon(gy.youmonst.data)) {
             pline((obj->otyp == WAN_DEATH)
                       ? "The wand shoots an apparently harmless beam at you."
@@ -4565,6 +4571,11 @@ zhitu(
                 (void) disintegrate_arm(uarmc);
             if (uarmu)
                 (void) disintegrate_arm(uarmu);
+        } else if (u_undead() && !is_demon(gy.youmonst.data)) {
+            /* death magic restores the undead (EvilHack) */
+            shieldeff(sx, sy);
+            undead_death_heal();
+            break;
         } else if (nonliving(gy.youmonst.data) || is_demon(gy.youmonst.data)) {
             shieldeff(sx, sy);
             You("seem unaffected.");

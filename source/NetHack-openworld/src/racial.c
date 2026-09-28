@@ -204,6 +204,41 @@ u_fire_vuln(int dmg)
     return dmg;
 }
 
+/* a death ray or finger of death restores an undead hero like a potion of
+   full healing, the more so in the Valley of the Dead (EvilHack) */
+void
+undead_death_heal(void)
+{
+    int *hp = Upolyd ? &u.mh : &u.uhp, *hpmax = Upolyd ? &u.mhmax : &u.uhpmax;
+
+    if (Is_valley(&u.uz) && *hpmax < 200) {
+        *hpmax += *hpmax / 6;
+        if (*hpmax > 200)
+            *hpmax = 200;
+    }
+    *hp = *hpmax;
+    disp.botl = TRUE;
+    You_feel("restored.");
+}
+
+/* draugr and vampires are "destroyed" rather than killed (EvilHack) */
+boolean
+u_destroyed_not_killed(void)
+{
+    return (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE));
+}
+
+/* the "You die..." message, adjusted for the undead races */
+const char *
+u_death_msg(void)
+{
+    if (u_ghost())
+        return "You fade away...";
+    if (u_destroyed_not_killed())
+        return "You have been destroyed...";
+    return "You die...";
+}
+
 /* set while a draugr's bite is being resolved, so that the victim can rise
    as a zombie if it dies of it */
 static boolean racial_bite;
@@ -466,6 +501,18 @@ race_timeouts(void)
     if (u.uvampireshape > 0) {
         if (--u.uvampireshape == 20 && Race_if(PM_VAMPIRE))
             You_feel("your shapechanging ability start to return.");
+    }
+    /* a draugr senses corpses rotting; keep the inventory display of
+       carried corpses current (EvilHack) */
+    if (Race_if(PM_DRAUGR) && !Upolyd && iflags.perm_invent
+        && !(svm.moves % 10L)) {
+        struct obj *otmp;
+
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+            if (otmp->otyp == CORPSE) {
+                update_inventory();
+                break;
+            }
     }
 }
 

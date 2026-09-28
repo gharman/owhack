@@ -2276,8 +2276,14 @@ peace_minded(struct permonst *ptr)
 
     if (always_peaceful(ptr))
         return TRUE;
-    if (always_hostile(ptr))
+    if (always_hostile(ptr)) {
+        /* ordinary undead are peaceful towards draugr and vampires more
+           often than not (EvilHack) */
+        if ((Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)) && !Upolyd
+            && is_undead(ptr) && !unique_corpstat(ptr) && rn2(3))
+            return TRUE;
         return FALSE;
+    }
     if (ptr->msound == MS_LEADER || ptr->msound == MS_GUARDIAN)
         return TRUE;
     if (ptr->msound == MS_NEMESIS)

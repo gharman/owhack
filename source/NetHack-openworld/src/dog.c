@@ -1181,6 +1181,14 @@ tamedog(
         && mtmp->data->mlet == S_DOG)
         return FALSE;
 
+    /* domestic animals are wary of the walking dead (EvilHack) */
+    if (Race_if(PM_DRAUGR) && !Upolyd && obj && !mtmp->mtame
+        && is_domestic(mtmp->data)) {
+        if (canspotmon(mtmp))
+            pline("%s still looks wary of you.", Monnam(mtmp));
+        return FALSE;
+    }
+
     /* If we cannot tame it, at least it's no longer afraid. */
     mtmp->mflee = 0;
     mtmp->mfleetim = 0;

@@ -219,7 +219,8 @@ in_trouble(void)
         return TROUBLE_REGION;
     if ((!Upolyd || Unchanging) && critically_low_hp(FALSE))
         return TROUBLE_HIT;
-    if (ismnum(u.ulycn))
+    /* a werewolf by race doesn't consider its nature a trouble */
+    if (ismnum(u.ulycn) && !Race_if(PM_HUMAN_WEREWOLF))
         return TROUBLE_LYCANTHROPE;
     if (near_capacity() >= EXT_ENCUMBER && AMAX(A_STR) - ABASE(A_STR) > 3)
         return TROUBLE_COLLAPSING;
@@ -1702,7 +1703,8 @@ sacrifice_your_race(
 {
     int pm;
 
-    if (is_demon(gy.youmonst.data)) {
+    if (is_demon(gy.youmonst.data) || Race_if(PM_HUMAN_WEREWOLF)) {
+        /* werewolves too (Slash'EM) */
         You("find the idea very satisfying.");
         exercise(A_WIS, TRUE);
     } else if (u.ualign.type != A_CHAOTIC) {
@@ -1716,7 +1718,14 @@ sacrifice_your_race(
         return;
     } else if (altaralign != A_CHAOTIC && altaralign != A_NONE) {
         /* curse the lawful/neutral altar */
-        pline_The("altar is stained with %s blood.", gu.urace.adj);
+        if (otmp->odrained)
+            pline_The("bloodless %s corpse is consumed in flames!",
+                      is_human(&mons[otmp->corpsenm]) ? "human"
+                                                      : gu.urace.adj);
+        else
+            pline_The("altar is stained with %s blood.",
+                      is_human(&mons[otmp->corpsenm]) ? "human"
+                                                      : gu.urace.adj);
         levl[u.ux][u.uy].altarmask = AM_CHAOTIC;
         newsym(u.ux, u.uy); /* in case Invisible to self */
         angry_priest();
@@ -2007,7 +2016,8 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
 
     /* same race or former pet results apply even if the corpse is
        too old (value==0) */
-    if (your_race(ptr)) {
+    /* to a vampire, humans are close enough kin (EvilHack) */
+    if (your_race(ptr) || (Race_if(PM_VAMPIRE) && is_human(ptr))) {
         sacrifice_your_race(otmp, highaltar, altaralign);
         return;
     }
@@ -2178,7 +2188,7 @@ can_pray(boolean praying) /* false means no messages should be given */
             gp.p_type = 3;
     }
 
-    if (is_undead(gy.youmonst.data) && !Inhell
+    if (u_undead() && !Inhell
         && (gp.p_aligntyp == A_LAWFUL
             || (gp.p_aligntyp == A_NEUTRAL && !rn2(10))))
         gp.p_type = -1;
@@ -2460,8 +2470,7 @@ doturn(void)
         return (u.uconduct.gnostic == 1) ? ECMD_TIME : ECMD_OK;
     }
     if ((u.ualign.type != A_CHAOTIC
-         && (is_demon(gy.youmonst.data)
-             || is_undead(gy.youmonst.data) || is_vampshifter(&gy.youmonst)))
+         && (is_demon(gy.youmonst.data) || u_undead()))
         || u.ugangr > 6) { /* "Die, mortal!" */
         pline("For some reason, %s seems to ignore you.", Gname);
         aggravate();

@@ -119,7 +119,11 @@ formatkiller(
         FALLTHROUGH;
         /*FALLTHRU*/
     case KILLED_BY:
-        (void) strncat(buf, killed_by_prefix[how], siz - 1);
+        /* the undead races are "destroyed by", not "killed by" */
+        if (u_destroyed_not_killed() && (how == DIED || how == GENOCIDED))
+            (void) strncat(buf, "destroyed by ", siz - 1);
+        else
+            (void) strncat(buf, killed_by_prefix[how], siz - 1);
         l = Strlen(buf);
         buf += l, siz -= l;
         break;

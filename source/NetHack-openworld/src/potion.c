@@ -733,15 +733,17 @@ peffect_water(struct obj *otmp)
         if (otmp->blessed) {
             pline("This burns like %s!", hliquid("acid"));
             exercise(A_CON, FALSE);
-            if (ismnum(u.ulycn)) {
+            /* a werewolf by race can't be cured of its nature (Slash'EM) */
+            if (ismnum(u.ulycn) && !Race_if(PM_HUMAN_WEREWOLF)) {
                 Your("affinity to %s disappears!",
                      makeplural(mons[u.ulycn].pmnames[NEUTRAL]));
                 if (gy.youmonst.data == &mons[u.ulycn])
                     you_unwere(FALSE);
                 set_ulycn(NON_PM); /* cure lycanthropy */
             }
-            losehp(Maybe_Half_Phys(d(2, 6)), "potion of holy water",
-                   KILLED_BY_AN);
+            /* the undead races burn more (EvilHack) */
+            losehp(Maybe_Half_Phys(d((u_undead() && !Upolyd) ? 4 : 2, 6)),
+                   "potion of holy water", KILLED_BY_AN);
         } else if (otmp->cursed) {
             You_feel("quite proud of yourself.");
             healup(d(2, 6), 0, 0, 0);

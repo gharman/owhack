@@ -2194,6 +2194,10 @@ use_tinning_kit(struct obj *obj)
     }
     if (!(corpse = floorfood("tin", 2)))
         return;
+    if (corpse->odrained) {
+        You("cannot tin %s which is drained of its blood.", something);
+        return;
+    }
     if (corpse->oeaten) {
         You("cannot tin %s which is partly eaten.", something);
         return;

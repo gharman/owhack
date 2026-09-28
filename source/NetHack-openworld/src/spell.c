@@ -1584,6 +1584,16 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
     case SPE_CURE_SICKNESS: {
         boolean was_sick = !!Sick, was_slimed = !!Slimed;
 
+        /* a draugr's rot is its very being (EvilHack) */
+        if (u_draugr()) {
+            You("shudder in agony!");
+            losehp(d((role_skill >= P_EXPERT) ? 3
+                     : (role_skill == P_SKILLED) ? 2 : 1, 8),
+                   "curing its own undeath", KILLED_BY);
+            exercise(A_CON, FALSE);
+            break;
+        }
+
         /* cure conditions (which updates status) before feedback */
         healup(0, 0, TRUE, FALSE);
         /*

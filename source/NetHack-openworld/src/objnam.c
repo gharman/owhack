@@ -1504,8 +1504,24 @@ doname_base(
         }
         break;
     case FOOD_CLASS:
-        if (obj->oeaten)
+        if (obj->otyp == CORPSE && obj->odrained) {
+            /* a vampire has drunk its blood (Slash'EM, EvilHack) */
+            if (obj->oeaten > (unsigned) drain_level(obj))
+                Strcat(prefix, "partly drained ");
+            else
+                Strcat(prefix, "drained ");
+        } else if (obj->oeaten) {
             Strcat(prefix, "partly eaten ");
+        }
+        /* a draugr knows exactly how rotten a corpse is (EvilHack) */
+        if (obj->otyp == CORPSE && Race_if(PM_DRAUGR) && !Upolyd) {
+            long rotted = draugr_rot_amount(obj);
+
+            if (rotted > 5L)
+                Strcat(prefix, "very rancid ");
+            else if (rotted > 3L)
+                Strcat(prefix, "rancid ");
+        }
         if (obj->otyp == CORPSE) {
             /* (quan == 1) => want corpse_xname() to supply article,
                (quan != 1) => already have count or "some" as prefix;
@@ -4123,6 +4139,11 @@ readobjnam_preparse(struct _readobjnam_data *d)
                    || !strncmpi(d->bp, "rotted ", l = 7)) {
             d->eroded2 = 1 + d->very;
             d->very = 0;
+        } else if (!strncmpi(d->bp, "partly drained ", l = 15)
+                   || !strncmpi(d->bp, "drained ", l = 8)
+                   || !strncmpi(d->bp, "very rancid ", l = 12)
+                   || !strncmpi(d->bp, "rancid ", l = 7)) {
+            ; /* ignored when wishing */
         } else if (!strncmpi(d->bp, "partly eaten ", l = 13)
                    || !strncmpi(d->bp, "partially eaten ", l = 16)) {
             d->halfeaten = 1;

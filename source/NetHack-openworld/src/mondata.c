@@ -523,6 +523,8 @@ mstrength_ranged_attk(struct permonst *ptr)
 boolean
 mon_hates_silver(struct monst *mon)
 {
+    if (mon == &gy.youmonst)
+        return (boolean) Hate_silver;
     return (boolean) (is_vampshifter(mon) || hates_silver(mon->data));
 }
 
@@ -539,6 +541,10 @@ hates_silver(struct permonst *ptr)
 boolean
 mon_hates_blessings(struct monst *mon)
 {
+    /* the hero's undead races are hurt by blessings in their natural
+       form (see u_undead()) */
+    if (mon == &gy.youmonst)
+        return (boolean) (u_undead() || is_demon(gy.youmonst.data));
     return (boolean) (is_vampshifter(mon) || hates_blessings(mon->data));
 }
 

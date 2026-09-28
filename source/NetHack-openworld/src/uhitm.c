@@ -4501,8 +4501,11 @@ mhitm_ad_heal(
     } else if (mdef == &gy.youmonst) {
         /* mhitu */
         /* a cancelled nurse is just an ordinary monster,
-         * nurses don't heal those that cause petrification */
-        if (magr->mcan || (Upolyd && touch_petrifies(pd))) {
+         * nurses don't heal those that cause petrification,
+         * nor will they heal the undead (EvilHack) */
+        if (magr->mcan || (Upolyd && touch_petrifies(pd)) || u_undead()) {
+            if (u_undead() && !magr->mcan && !Deaf && !(svm.moves % 5))
+                verbalize("I can't heal the undead... you're dead!");
             hitmsg(magr, mattk);
             return;
         }

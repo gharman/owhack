@@ -982,6 +982,22 @@ welcome(boolean new_game) /* false => restoring an old game */
             pline("The further you roam, the deadlier the land; "
                   "the compass points home.  (Press ? for more.)");
         }
+        /* hints for the races with special abilities (EvilHack) */
+        if (Race_if(PM_TORTLE))
+            pline("Use #monster to hide in your shell.");
+        else if (Race_if(PM_ILLITHID))
+            pline("Use #monster to unleash a psychic blast.");
+        else if (Race_if(PM_VAMPIRE))
+            pline("Use #monster to change form, once you are experienced "
+                  "enough.");
+        else if (Race_if(PM_DOPPELGANGER))
+            pline("Use #monster to change into a form you have eaten.");
+        else if (Race_if(PM_HUMAN_WEREWOLF))
+            pline("Use #monster to change form, once you are experienced "
+                  "enough.");
+        else if (Race_if(PM_GHOST))
+            pline("You can drift through solid matter, at the cost of "
+                  "energy.");
     } else {
         /* if restoring in Gehennom, give same hot/smoky message as when
            first entering it */

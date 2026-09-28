@@ -1961,6 +1961,24 @@ rottenfood(struct obj *obj)
     return 0;
 }
 
+/* how rotten a corpse would taste to a draugr, which knows it exactly
+   (corpses rot at a consistent rate for them; see eatcorpse()) */
+long
+draugr_rot_amount(struct obj *otmp)
+{
+    long rotted;
+
+    if (!ismnum(otmp->corpsenm) || nonrotting_corpse(otmp->corpsenm))
+        return 0L;
+    rotted = (svm.moves - peek_at_iced_corpse_age(otmp)) / 10L;
+
+    if (otmp->cursed)
+        rotted += 2L;
+    else if (otmp->blessed)
+        rotted -= 2L;
+    return rotted;
+}
+
 /* called when a corpse is selected as food */
 staticfn int
 eatcorpse(struct obj *otmp)
@@ -2329,7 +2347,7 @@ fprefx(struct obj *otmp)
     case MEAT_RING:
         goto give_feedback;
     case CLOVE_OF_GARLIC:
-        if (is_undead(gy.youmonst.data)) {
+        if (u_undead()) {
             make_vomiting((long) rn1(svc.context.victual.reqtime, 5), FALSE);
             break;
         }
@@ -2372,7 +2390,10 @@ fprefx(struct obj *otmp)
         } else {
  give_feedback:
             pline("This %s is %s", singular(otmp, xname),
-                  otmp->cursed
+                  (otmp->cursed
+                   /* wolfsbane is poison to a werewolf (Slash'EM) */
+                   || (Race_if(PM_HUMAN_WEREWOLF)
+                       && otmp->otyp == SPRIG_OF_WOLFSBANE))
                      ? (Hallucination ? "grody!" : "terrible!")
                      : (otmp->otyp == CRAM_RATION
                         || otmp->otyp == K_RATION
