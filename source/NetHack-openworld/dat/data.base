@@ -6152,6 +6152,65 @@ yumi
 zruty
 	The zruty are wild and gigantic beings, living in the
 	wildernesses of the Tatra mountains.
+#
+# The Cartographer (NetHack: Open World)
+#
+anaximander
+	Anaximander of Miletus, a pupil of Thales, lived in the sixth
+	century before our era.  He is said to have been the first of
+	the Greeks to draw a map of the whole inhabited world, a round
+	world ringed by the Ocean, and to have set up a gnomon to mark
+	the solstices.  In the open world he is Master of the Society of
+	Cartographers, and keeps the Hall of Charts by the western sea.
+asterion
+	Asterion, "the starry one", was the given name of the creature
+	better known as the Minotaur: the son of Pasiphae, shut away by
+	Minos at the heart of the Labyrinth that Daedalus built for him.
+	This Asterion has grown tired of one maze.  With the Celestial
+	Sextant in his keeping he means to fold every road in the world
+	into his Labyrinth, so that all ways lead at last to him.
+*celestial sextant
+	The Celestial Sextant is the treasure of the Society of
+	Cartographers: the instrument with which the first of them took
+	the sightings that fixed the roads of the world in their places.
+	It gives a true sighting anywhere, even where no star can be
+	seen, protects its bearer from magic, and senses the magic
+	portals that stand nearby.  Invoked, it charts the land all
+	around and the portals of the nearby rings.
+janus
+	Janus was the Roman god of doorways and gates, of beginnings and
+	of journeys.  He was shown with two faces, one looking back
+	along the road and one looking ahead, and the doors of his
+	temple in the Forum stood open whenever Rome was at war.
+*pathfinder
+	Pathfinder is a surveyor's walking staff of great age, worn smooth
+	by the hands of the Cartographers who have carried it to the
+	edges of the world.  It quickens the step of whoever wields it,
+	and can be invoked to carry its bearer across the world in a
+	single stride.  (Pathfinder is also the title of a Cartographer
+	of experience levels 18 to 21.)
+sextant
+	A sextant is an instrument for measuring the angle between a
+	heavenly body, such as the sun or a star, and the horizon.  With
+	a sextant, a good clock and a table of the heavens a navigator
+	can fix the place of a ship far out of sight of land; a surveyor
+	can do the same for a camp at the edge of the known world.
+	Taking a sighting needs a clear view of the sky.
+surveyor
+	The surveyors of the Society of Cartographers measure out the
+	land, pace by pace and angle by angle, so that the charts drawn
+	in the Hall of Charts are true.
+terminus
+	Terminus was the Roman god of boundaries, who lived in the
+	boundary stones set up between one field and the next.  When the
+	temple of Jupiter was built on the Capitoline, it is said, the
+	stone of Terminus alone refused to be moved, and so it was left
+	standing inside the temple, under an opening in the roof.
+trivia
+	Trivia, "she of the three ways", was a Roman name for the
+	goddess who watched over crossroads, where travellers must choose
+	their road; she was identified with Diana and with Hecate, and
+	offerings were left for her where three roads met.
 ##
 # Rank titles for the various roles.  Some of these keys won't reach here
 # because they'll have matched entries above.  The usual three letter role
@@ -6204,6 +6263,29 @@ conquer*
 	 Chieftainess    26 to 29
 	Conqueror,
 	 Conqueress         30
+car* ranks
+cartographer
+scribbler
+draughts*
+wayfinder
+explorer
+chartmaker
+pathfinder
+geographer
+cosmographer
+master cartographer
+	Cartographer ranks
+	  title            level
+	Scribbler         1 to 2
+	Draughtsman,
+	 Draughtswoman    3 to 5
+	Wayfinder         6 to 9
+	Explorer         10 to 13
+	Chartmaker       14 to 17
+	Pathfinder       18 to 21
+	Geographer       22 to 25
+	Cosmographer     26 to 29
+	Master Cartographer  30
 cav* ranks
 caveman
 cavewoman

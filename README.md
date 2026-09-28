@@ -103,6 +103,55 @@ are still in Gehennom the "mysterious force" may push you back outward when
 you cross into a shallower ring (the open-world version of being pushed back
 down the stairs).
 
+## New roles
+
+### The Cartographer
+
+A mapmaker and explorer, made for a world of compass, rings and portals
+(filecode `Car`; any alignment; human, elf, dwarf, gnome, centaur,
+tortle or ghost; gods Janus, Terminus and Trivia).  Cartographers start
+with a +1 quarterstaff, a sling and flint stones, leather armor and low
+boots, an oil lamp, a magic marker with three sheets of blank paper, two
+scrolls of magic mapping, a spellbook of light, food, a **sextant** and a
+saddled pony.  They reach expert in quarterstaff, sling, riding and
+divination spells (their special spell is magic mapping), and cast
+moderately well, using Intelligence.
+
+* **Surveyor's eye:** from the first level, the lie of the land within
+  2 + XL/6 squares goes onto the Cartographer's map as they travel, even
+  in the dark or on the far side of a wall (not while blind or
+  hallucinating).  Later levels bring automatic searching (3), speed (7),
+  clairvoyance (11) and warning (15).
+* **The sextant** (a new tool that anyone can find or buy): apply it
+  outdoors to take a sighting of the sun or stars.  It tells you your
+  ring (depth), how far away and in which direction the centre of the
+  world lies, and the distance and bearing of the nearest portal of each
+  ring of portals you know about.  It needs a clear sky: not while blind,
+  not under a roof, and in a branch it can only tell you your level and
+  depth.  Cartographers read it exactly; anyone else with negative Luck
+  gets a reading that is somewhat off.
+* **Techniques** (`#technique`): *survey* (XL 1) maps the terrain for
+  eight or more squares around; *triangulate* (XL 3) finds the nearest
+  magic portal and the nearest town (in a branch, the nearest way out);
+  *waymark* (XL 8) fixes a spot in memory and later steps straight back
+  to it.
+* **The quest:** Asterion, the Minotaur of the Labyrinth, has stolen the
+  Society of Cartographers' Celestial Sextant, the instrument that fixes
+  the roads of the world in place, and is folding the roads into his
+  maze.  Anaximander, Master of the Society, calls from the Hall of
+  Charts, a library and observatory by the sea; beyond lie the Edge of
+  the Map, where the land breaks into rifts and mazes, and the Labyrinth
+  itself.  Like every minotaur, Asterion ignores Elbereth.
+* **The Celestial Sextant** (quest artifact) is a perfect sextant that
+  works anywhere, even underground (in a branch it shows where in the
+  world the branch's way out lies).  Carried, it gives magic resistance
+  and marks nearby magic portals on your map; invoked, it maps the
+  neighbourhood and marks every portal of your ring and of the rings on
+  either side.
+* **Pathfinder** (gift artifact, a quarterstaff): +d5 to hit, +d6
+  damage, and makes its wielder fast; invoked, a controlled level
+  teleport (in the open world, pick a ring) with the usual limits.
+
 ## What changed, and why
 
 Everything not listed here plays as it does in NetHack 5.0.

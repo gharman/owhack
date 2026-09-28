@@ -93,6 +93,13 @@
      tle.  They begin their quests with naught  but  uncommon  strength,  a
      trusty hauberk, and a great two-handed sword.
 
+          Cartographers  are  the mapmakers and explorers of the Society of
+     Cartographers.  Their surveyor's eye puts the lie of the  land  around
+     them  on  their  map as they travel, and with a sextant they can take a
+     sighting of the sky to fix their place in the world.  They set out with
+     a staff and a sling, a lamp, pen and paper, and a pony to carry them to
+     the edge of the map.
+
           Cavemen and Cavewomen start with exceptional strength but, unfor-
      tunately, with neolithic weapons.
 
