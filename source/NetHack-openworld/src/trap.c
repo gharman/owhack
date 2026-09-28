@@ -4302,6 +4302,7 @@ dofiretrap(
             u.uhp = u.uhpmax, disp.botl = TRUE;
         monstunseesu(M_SEEN_FIRE);
     }
+    num = elem_vulnerable_dmg(AD_FIRE, num);
     if (!num)
         You("are uninjured.");
     else

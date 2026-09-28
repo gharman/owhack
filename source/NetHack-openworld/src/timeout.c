@@ -110,6 +110,8 @@ static const struct propname {
     { FREE_ACTION, "free action" },
     { FIXED_ABIL, "fixed abilities" },
     { LIFESAVED, "life will be saved" },
+    { VULN_FIRE, "vulnerable to fire" },
+    { VULN_COLD, "vulnerable to cold" },
     {  0, 0 },
 };
 

@@ -386,6 +386,14 @@
 
 #define Lifesaved u.uprops[LIFESAVED].extrinsic
 
+/* elemental weaknesses (Slash'EM/Hack'EM flame and ice mages) */
+#define HVulnerable_fire u.uprops[VULN_FIRE].intrinsic
+#define EVulnerable_fire u.uprops[VULN_FIRE].extrinsic
+#define Vulnerable_fire (HVulnerable_fire || EVulnerable_fire)
+#define HVulnerable_cold u.uprops[VULN_COLD].intrinsic
+#define EVulnerable_cold u.uprops[VULN_COLD].extrinsic
+#define Vulnerable_cold (HVulnerable_cold || EVulnerable_cold)
+
 /*
  * Some pseudo-properties.
  */

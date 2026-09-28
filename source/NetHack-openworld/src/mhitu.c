@@ -1510,6 +1510,7 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
             } else {
                 You("are freezing to death!");
                 monstunseesu(M_SEEN_COLD);
+                tmp = elem_vulnerable_dmg(AD_COLD, tmp);
             }
         } else
             tmp = 0;
@@ -1525,6 +1526,7 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
             } else {
                 You("are burning to a crisp!");
                 monstunseesu(M_SEEN_FIRE);
+                tmp = elem_vulnerable_dmg(AD_FIRE, tmp);
             }
             burn_away_slime();
         } else
@@ -1839,6 +1841,7 @@ gazemu(struct monst *mtmp, struct attack *mattk)
                     dmg = 0;
                 } else {
                     monstunseesu(M_SEEN_FIRE);
+                    dmg = elem_vulnerable_dmg(AD_FIRE, dmg);
                 }
                 burn_away_slime();
                 if (lev > rn2(20))

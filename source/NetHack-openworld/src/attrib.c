@@ -38,8 +38,27 @@ static const struct innate {
                  { 15, &(HWarning), "sensitive", "" },
                  { 0, 0, 0, 0 } },
 
+  fla_abil[] = { { 1, &(HFire_resistance), "", "" },
+                 { 5, &(HVulnerable_cold), "sensitive to cold",
+                   "less sensitive to cold" },
+                 { 0, 0, 0, 0 } },
+
   hea_abil[] = { { 1, &(HPoison_resistance), "", "" },
                  { 15, &(HWarning), "sensitive", "" },
+                 { 0, 0, 0, 0 } },
+
+  ice_abil[] = { { 1, &(HCold_resistance), "", "" },
+                 { 5, &(HVulnerable_fire), "sensitive to heat",
+                   "less sensitive to heat" },
+                 { 15, &(HWwalking), "unsinkable", "like you might sink" },
+                 { 0, 0, 0, 0 } },
+
+  jed_abil[] = { { 1, &(HStealth), "", "" },
+                 { 3, &(HTelepat), "disturbances in the force",
+                   "your grip on the force lessen" },
+                 { 5, &(HSee_invisible), "your vision sharpen",
+                   "your vision blurring" },
+                 { 7, &(HFast), "quick", "slow" },
                  { 0, 0, 0, 0 } },
 
   kni_abil[] = { { 7, &(HFast), "quick", "slow" }, { 0, 0, 0, 0 } },
@@ -55,6 +74,11 @@ static const struct innate {
                  { 13, &(HCold_resistance), "warm", "cooler" },
                  { 15, &(HShock_resistance), "insulated", "conductive" },
                  { 17, &(HTeleport_control), "controlled", "uncontrolled" },
+                 { 0, 0, 0, 0 } },
+
+  nec_abil[] = { { 1, &(HDrain_resistance), "", "" },
+                 { 1, &(HSick_resistance), "hale", "" },
+                 { 3, &(HUndead_warning), "sensitive", "" },
                  { 0, 0, 0, 0 } },
 
   pri_abil[] = { { 15, &(HWarning), "sensitive", "" },
@@ -781,8 +805,20 @@ postadjabil(long *ability)
 {
     if (!u.ulevel) /* initializing hero; don't attempt screen update yet */
         return;
-    if (ability == &(HWarning) || ability == &(HSee_invisible))
+    if (ability == &(HWarning) || ability == &(HSee_invisible)
+        || ability == &(HUndead_warning) || ability == &(HTelepat))
         see_monsters();
+}
+
+/* Slash'EM elemental mages are weak against the opposing element:
+   unresisted damage from it is increased by half */
+int
+elem_vulnerable_dmg(int adtyp, int dmg)
+{
+    if ((adtyp == AD_FIRE && Vulnerable_fire && !Fire_resistance)
+        || (adtyp == AD_COLD && Vulnerable_cold && !Cold_resistance))
+        dmg += (dmg + 1) / 2;
+    return dmg;
 }
 
 staticfn const struct innate *
@@ -795,9 +831,13 @@ role_abil(int r)
         { PM_ARCHEOLOGIST, arc_abil },
         { PM_BARBARIAN, bar_abil },
         { PM_CAVE_DWELLER, cav_abil },
+        { PM_FLAME_MAGE, fla_abil },
         { PM_HEALER, hea_abil },
+        { PM_ICE_MAGE, ice_abil },
+        { PM_JEDI, jed_abil },
         { PM_KNIGHT, kni_abil },
         { PM_MONK, mon_abil },
+        { PM_NECROMANCER, nec_abil },
         { PM_CLERIC, pri_abil },
         { PM_RANGER, ran_abil },
         { PM_ROGUE, rog_abil },

@@ -73,6 +73,20 @@ static const struct trobj Cave_man[] = {
     { LEATHER_ARMOR, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
     { 0, 0, 0, 0, 0, 0 }
 };
+static const struct trobj Flame_Mage[] = {
+    { QUARTERSTAFF, 1, WEAPON_CLASS, 1, 1, 1 },
+    { ROBE, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { FOOD_RATION, 0, FOOD_CLASS, 2, 2, 0 },
+    { POT_OIL, UNDEF_SPE, POTION_CLASS, 2, 2, UNDEF_BLESS },
+    { SCR_FIRE, UNDEF_SPE, SCROLL_CLASS, 1, 1, 0 },
+    { WAN_FIRE, UNDEF_SPE, WAND_CLASS, 1, 1, UNDEF_BLESS },
+    { UNDEF_TYP, UNDEF_SPE, RING_CLASS, 1, 1, UNDEF_BLESS },
+    { SPE_FIRE_BOLT, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+    { SPE_FIREBALL, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+    /* plus one of Fla_spell[] */
+    { FIRE_BOMB, 0, WEAPON_CLASS, 1, 1, 0 },
+    { 0, 0, 0, 0, 0, 0 }
+};
 static const struct trobj Healer[] = {
     { SCALPEL, 0, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
     { LEATHER_GLOVES, 1, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
@@ -85,6 +99,26 @@ static const struct trobj Healer[] = {
     { SPE_EXTRA_HEALING, 0, SPBOOK_CLASS, 1, 1, 1 },
     { SPE_STONE_TO_FLESH, 0, SPBOOK_CLASS, 1, 1, 1 },
     { APPLE, 0, FOOD_CLASS, 5, 5, 0 },
+    { 0, 0, 0, 0, 0, 0 }
+};
+static const struct trobj Ice_Mage[] = {
+    { QUARTERSTAFF, 1, WEAPON_CLASS, 1, 1, 1 },
+    { ROBE, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { FOOD_RATION, 0, FOOD_CLASS, 2, 2, 0 },
+    { UNDEF_TYP, UNDEF_SPE, SCROLL_CLASS, 1, 1, UNDEF_BLESS },
+    { SCR_ICE, UNDEF_SPE, SCROLL_CLASS, 2, 2, 1 },
+    { WAN_COLD, UNDEF_SPE, WAND_CLASS, 1, 1, UNDEF_BLESS },
+    { FROST_HORN, UNDEF_SPE, TOOL_CLASS, 1, 1, 1 },
+    { UNDEF_TYP, UNDEF_SPE, RING_CLASS, 1, 1, UNDEF_BLESS },
+    { SPE_FREEZE_SPHERE, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+    { SPE_CONE_OF_COLD, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+    /* plus one of Ice_spell[] */
+    { 0, 0, 0, 0, 0, 0 }
+};
+/* the Jedi's lightsaber (one of Jedi_saber[]) comes first, as item 'a' */
+static const struct trobj Jedi[] = {
+    { ROBE, 1, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { LEATHER_GLOVES, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
     { 0, 0, 0, 0, 0, 0 }
 };
 static const struct trobj Knight[] = {
@@ -109,6 +143,20 @@ static const struct trobj Monk[] = {
     /* Yes, we know fortune cookies aren't really from China.  They were
        invented by George Jung in Los Angeles, California, USA in 1916. */
     { FORTUNE_COOKIE, 0, FOOD_CLASS, 3, 3, UNDEF_BLESS },
+    { 0, 0, 0, 0, 0, 0 }
+};
+static const struct trobj Necromancer[] = {
+    { DAGGER, 0, WEAPON_CLASS, 2, 2, UNDEF_BLESS },
+    { UNDEF_TYP, UNDEF_SPE, RING_CLASS, 2, 2, UNDEF_BLESS },
+    { UNDEF_TYP, UNDEF_SPE, POTION_CLASS, 3, 3, UNDEF_BLESS },
+    { UNDEF_TYP, UNDEF_SPE, SCROLL_CLASS, 3, 3, UNDEF_BLESS },
+    { SPE_SUMMON_UNDEAD, 0, SPBOOK_CLASS, 1, 1, 1 },
+    { SPE_COMMAND_UNDEAD, 0, SPBOOK_CLASS, 1, 1, 1 },
+    { SPE_DRAIN_LIFE, 0, SPBOOK_CLASS, 1, 1, 1 },
+    /* plus one of Nec_spell[] */
+    { WAN_DRAINING, UNDEF_SPE, WAND_CLASS, 1, 1, UNDEF_BLESS },
+    { WAN_FEAR, UNDEF_SPE, WAND_CLASS, 1, 1, UNDEF_BLESS },
+    { PICK_AXE, 1, TOOL_CLASS, 1, 1, 1 }, /* for digging up graves */
     { 0, 0, 0, 0, 0, 0 }
 };
 static const struct trobj Priest[] = {
@@ -189,6 +237,39 @@ static const struct trobj Protection_book[] =
       { 0, 0, 0, 0, 0, 0 } };
 static const struct trobj Confuse_monster_book[] =
     { { SPE_CONFUSE_MONSTER, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_detect_monsters[] =
+    { { SPE_DETECT_MONSTERS, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_light[] =
+    { { SPE_LIGHT, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_slow_monster[] =
+    { { SPE_SLOW_MONSTER, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_force_bolt[] =
+    { { SPE_FORCE_BOLT, 0, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_knock[] =
+    { { SPE_KNOCK, 0, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_magic_missile[] =
+    { { SPE_MAGIC_MISSILE, 0, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_create_monster[] =
+    { { SPE_CREATE_MONSTER, 0, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Book_wizard_lock[] =
+    { { SPE_WIZARD_LOCK, 0, SPBOOK_CLASS, 1, 1, 1 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Green_saber[] =
+    { { GREEN_LIGHTSABER, 1, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Blue_saber[] =
+    { { BLUE_LIGHTSABER, 1, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Red_saber[] =
+    { { RED_LIGHTSABER, 1, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
       { 0, 0, 0, 0, 0, 0 } };
 static const struct trobj Tinopener[] =
     { { TIN_OPENER, 0, TOOL_CLASS, 1, 1, 0 },
@@ -324,6 +405,25 @@ static const struct def_skill Skill_C[] = {
     { P_BARE_HANDED_COMBAT, P_MASTER },
     { P_NONE, 0 }
 };
+static const struct def_skill Skill_F[] = {
+    /* style: small-med edged weapons, blunt weapons */
+    { P_AXE, P_SKILLED },          /* for chopping wood */
+    { P_PICK_AXE, P_SKILLED },     /* for digging up coal */
+    { P_SHORT_SWORD, P_SKILLED },
+    { P_MACE, P_BASIC },
+    { P_CLUB, P_EXPERT },          /* because clubs/torches can be lit */
+    { P_HAMMER, P_SKILLED },
+    { P_QUARTERSTAFF, P_EXPERT },  /* sacrifice gift is Firewall */
+    { P_BOW, P_BASIC },
+    { P_SLING, P_SKILLED },        /* familiar with flint stones */
+    { P_WHIP, P_SKILLED },
+    { P_UNICORN_HORN, P_SKILLED },
+    { P_ATTACK_SPELL, P_SKILLED },
+    { P_DIVINATION_SPELL, P_EXPERT },
+    { P_MATTER_SPELL, P_EXPERT },
+    { P_BARE_HANDED_COMBAT, P_SKILLED },
+    { P_NONE, 0 }
+};
 static const struct def_skill Skill_H[] = {
     { P_DAGGER, P_SKILLED },
     { P_KNIFE, P_EXPERT },
@@ -341,6 +441,46 @@ static const struct def_skill Skill_H[] = {
     { P_UNICORN_HORN, P_EXPERT },
     { P_HEALING_SPELL, P_EXPERT },
     { P_BARE_HANDED_COMBAT, P_BASIC },
+    { P_NONE, 0 }
+};
+static const struct def_skill Skill_I[] = {
+    /* resorts mostly to stabbing weapons */
+    { P_DAGGER, P_EXPERT },
+    { P_KNIFE, P_EXPERT },
+    { P_AXE, P_BASIC },
+    { P_PICK_AXE, P_BASIC },
+    { P_SHORT_SWORD, P_EXPERT },
+    { P_BROAD_SWORD, P_BASIC },
+    { P_LONG_SWORD, P_BASIC },
+    { P_FLAIL, P_BASIC },
+    { P_QUARTERSTAFF, P_EXPERT },  /* sacrifice gift is Deep Freeze */
+    { P_SPEAR, P_BASIC },
+    { P_TRIDENT, P_BASIC },
+    { P_BOW, P_BASIC },
+    { P_SLING, P_SKILLED },
+    { P_CROSSBOW, P_BASIC },
+    { P_DART, P_BASIC },
+    { P_UNICORN_HORN, P_SKILLED },
+    { P_ATTACK_SPELL, P_BASIC },
+    { P_DIVINATION_SPELL, P_BASIC },
+    { P_ENCHANTMENT_SPELL, P_EXPERT },
+    { P_ESCAPE_SPELL, P_BASIC },
+    { P_MATTER_SPELL, P_EXPERT },
+    { P_RIDING, P_EXPERT },
+    { P_BARE_HANDED_COMBAT, P_SKILLED },
+    { P_NONE, 0 }
+};
+static const struct def_skill Skill_J[] = {
+    { P_LIGHTSABER, P_EXPERT },
+    { P_SHORT_SWORD, P_BASIC },
+    { P_BROAD_SWORD, P_BASIC },
+    { P_LONG_SWORD, P_SKILLED },
+    { P_SABER, P_SKILLED },
+    { P_HEALING_SPELL, P_BASIC },
+    { P_ENCHANTMENT_SPELL, P_SKILLED }, /* special spell is charm monster */
+    { P_RIDING, P_SKILLED },
+    { P_TWO_WEAPON_COMBAT, P_BASIC },
+    { P_BARE_HANDED_COMBAT, P_EXPERT },
     { P_NONE, 0 }
 };
 static const struct def_skill Skill_K[] = {
@@ -385,6 +525,21 @@ static const struct def_skill Skill_Mon[] = {
     { P_ESCAPE_SPELL, P_SKILLED },
     { P_MATTER_SPELL, P_BASIC },
     { P_MARTIAL_ARTS, P_GRAND_MASTER },
+    { P_NONE, 0 }
+};
+static const struct def_skill Skill_N[] = {
+    { P_DAGGER, P_EXPERT },        /* sacrifice gift and quest artifact */
+    { P_AXE, P_BASIC },            /* for chopping up bodies */
+    { P_PICK_AXE, P_EXPERT },      /* for digging up graves */
+    { P_MACE, P_BASIC },
+    { P_QUARTERSTAFF, P_EXPERT },
+    { P_POLEARMS, P_BASIC },       /* for scythes */
+    { P_CROSSBOW, P_BASIC },
+    { P_UNICORN_HORN, P_BASIC },
+    /* Hack'EM's necromancy school (drain life, summon and command undead)
+       is part of the attack school here */
+    { P_ATTACK_SPELL, P_EXPERT },
+    { P_BARE_HANDED_COMBAT, P_BASIC },
     { P_NONE, 0 }
 };
 static const struct def_skill Skill_P[] = {
@@ -676,6 +831,19 @@ u_init_role(void)
     case PM_CAVE_DWELLER:
         ini_inv(Cave_man);
         break;
+    case PM_FLAME_MAGE: {
+        static const struct trobj *Fla_spell[] = {
+            Book_detect_monsters, Book_light
+        };
+
+        ini_inv(Flame_Mage);
+        ini_inv(Fla_spell[rn2(2)]);
+        if (!rn2(5))
+            ini_inv(Lamp);
+        else if (!rn2(5))
+            ini_inv(Blindfold);
+        break;
+    }
     case PM_HEALER:
         u.umoney0 = rn1(1000, 1001);
         ini_inv(Healer);
@@ -683,6 +851,36 @@ u_init_role(void)
             ini_inv(Lamp);
         knows_object(POT_FULL_HEALING, FALSE);
         break;
+    case PM_ICE_MAGE: {
+        static const struct trobj *Ice_spell[] = {
+            Confuse_monster_book, Book_slow_monster
+        };
+
+        ini_inv(Ice_Mage);
+        ini_inv(Ice_spell[rn2(2)]);
+        break;
+    }
+    case PM_JEDI: {
+        static const struct trobj *Jedi_saber[] = {
+            Red_saber, Blue_saber, Green_saber
+        };
+
+        ini_inv(Jedi_saber[rn2(3)]);
+        ini_inv(Jedi);
+        if (!rn2(2))
+            ini_inv(Blindfold);
+        knows_class(WEAPON_CLASS);
+        /* Jedi know their enemy (and their own weapons) */
+        knows_object(PLASTEEL_HELM, FALSE);
+        knows_object(PLASTEEL_ARMOR, FALSE);
+        knows_object(PLASTEEL_GLOVES, FALSE);
+        knows_object(PLASTEEL_BOOTS, FALSE);
+        knows_object(GREEN_LIGHTSABER, FALSE);
+        knows_object(BLUE_LIGHTSABER, FALSE);
+        knows_object(RED_LIGHTSABER, FALSE);
+        knows_object(RED_DOUBLE_LIGHTSABER, FALSE);
+        break;
+    }
     case PM_KNIGHT:
         ini_inv(Knight);
         knows_class(WEAPON_CLASS); /* all weapons */
@@ -704,6 +902,19 @@ u_init_role(void)
         knows_class(ARMOR_CLASS);
         /* sufficiently martial-arts oriented item to ignore language issue */
         knows_object(SHURIKEN, FALSE);
+        break;
+    }
+    case PM_NECROMANCER: {
+        static const struct trobj *Nec_spell[] = {
+            Book_force_bolt, Book_knock, Book_magic_missile,
+            Book_create_monster, Book_wizard_lock
+        };
+
+        ini_inv(Necromancer);
+        ini_inv(Nec_spell[rn2(5)]);
+        knows_class(SPBOOK_CLASS);
+        if (!rn2(5))
+            ini_inv(Blindfold);
         break;
     }
     case PM_CLERIC: /* priest/priestess */
@@ -842,7 +1053,8 @@ u_init_race(void)
 
     case PM_ORC:
         /* compensate for generally inferior equipment */
-        if (!Role_if(PM_WIZARD))
+        if (!Role_if(PM_WIZARD) && !Role_if(PM_FLAME_MAGE)
+            && !Role_if(PM_ICE_MAGE) && !Role_if(PM_NECROMANCER))
             ini_inv(Xtra_food);
         /* Orcs can recognize all orcish objects */
         knows_object(ORCISH_SHORT_SWORD, FALSE);
@@ -898,6 +1110,22 @@ pauper_reinit(void)
         break;
     case PM_WIZARD:
         preknown = SPE_FORCE_BOLT;
+        break;
+    case PM_FLAME_MAGE:
+        preknown = SPE_FIRE_BOLT;
+        break;
+    case PM_ICE_MAGE:
+        preknown = SPE_FREEZE_SPHERE;
+        break;
+    case PM_NECROMANCER:
+        preknown = SPE_SUMMON_UNDEAD;
+        break;
+    case PM_JEDI:
+        /* a Jedi always recognizes a lightsaber */
+        knows_object(GREEN_LIGHTSABER, TRUE);
+        knows_object(BLUE_LIGHTSABER, TRUE);
+        knows_object(RED_LIGHTSABER, TRUE);
+        preknown = RED_DOUBLE_LIGHTSABER;
         break;
     case PM_ARCHEOLOGIST:
         preknown = TOUCHSTONE;
@@ -1051,14 +1279,26 @@ skills_for_role(void)
     case PM_CAVE_DWELLER:
         skills = Skill_C;
         break;
+    case PM_FLAME_MAGE:
+        skills = Skill_F;
+        break;
     case PM_HEALER:
         skills = Skill_H;
+        break;
+    case PM_ICE_MAGE:
+        skills = Skill_I;
+        break;
+    case PM_JEDI:
+        skills = Skill_J;
         break;
     case PM_KNIGHT:
         skills = Skill_K;
         break;
     case PM_MONK:
         skills = Skill_Mon;
+        break;
+    case PM_NECROMANCER:
+        skills = Skill_N;
         break;
     case PM_CLERIC:
         skills = Skill_P;
@@ -1141,6 +1381,7 @@ ini_inv_mkobj_filter(int oclass, boolean got_level1_spellbook)
            || otyp == POT_ACID
            || otyp == SCR_AMNESIA
            || otyp == SCR_FIRE
+           || otyp == SCR_ICE
            || otyp == SCR_BLANK_PAPER
            || otyp == SPE_BLANK_PAPER
            || otyp == RIN_AGGRAVATE_MONSTER
@@ -1148,6 +1389,10 @@ ini_inv_mkobj_filter(int oclass, boolean got_level1_spellbook)
            || otyp == WAN_NOTHING
            /* orcs start with poison resistance */
            || (otyp == RIN_POISON_RESISTANCE && Race_if(PM_ORC))
+           /* elemental mages have their own resistance */
+           || ((Role_if(PM_FLAME_MAGE) || Role_if(PM_ICE_MAGE))
+               && (otyp == RIN_FIRE_RESISTANCE
+                   || otyp == RIN_COLD_RESISTANCE))
            /* Monks don't use weapons */
            || (otyp == SCR_ENCHANT_WEAPON && Role_if(PM_MONK))
            /* wizard patch -- they already have one */
@@ -1223,6 +1468,10 @@ ini_inv_adjust_obj(const struct trobj *trop, struct obj *obj)
         obj->cursed = 0;
         if (obj->opoisoned && u.ualign.type != A_CHAOTIC)
             obj->opoisoned = 0;
+        /* flame mages are used to playing with fire */
+        if (Role_if(PM_FLAME_MAGE)
+            && (obj->oclass == ARMOR_CLASS || obj->otyp == QUARTERSTAFF))
+            obj->oerodeproof = 1;
         if (obj->oclass == WEAPON_CLASS || obj->oclass == TOOL_CLASS) {
             obj->quan = trquan(trop);
             stop = TRUE;

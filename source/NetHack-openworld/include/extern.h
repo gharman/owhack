@@ -210,6 +210,7 @@ extern void init_attr(int);
 extern void redist_attr(void);
 extern void vary_init_attr(void);
 extern void adjabil(int, int);
+extern int elem_vulnerable_dmg(int, int);
 extern int newhp(void);
 extern int minuhpmax(int);
 extern void setuhpmax(int, boolean);

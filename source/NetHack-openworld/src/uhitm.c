@@ -2575,6 +2575,7 @@ mhitm_ad_fire(
                 mhm->damage = 0;
             } else {
                 monstunseesu(M_SEEN_FIRE);
+                mhm->damage = elem_vulnerable_dmg(AD_FIRE, mhm->damage);
             }
             if ((int) magr->m_lev > rn2(20)) {
                 (void) destroy_items(&gy.youmonst, AD_FIRE, orig_dmg);
@@ -2656,6 +2657,7 @@ mhitm_ad_cold(
                 mhm->damage = 0;
             } else {
                 monstunseesu(M_SEEN_COLD);
+                mhm->damage = elem_vulnerable_dmg(AD_COLD, mhm->damage);
             }
             if ((int) magr->m_lev > rn2(20))
                 (void) destroy_items(&gy.youmonst, AD_COLD, orig_dmg);
@@ -6074,6 +6076,7 @@ passive(
                 }
                 monstunseesu(M_SEEN_COLD);
                 You("are suddenly very cold!");
+                tmp = elem_vulnerable_dmg(AD_COLD, tmp);
                 mdamageu(mon, tmp);
                 /* monster gets stronger with your heat! */
                 healmon(mon, (tmp + rn2(2)) / 2, (tmp + 1) / 2);
@@ -6097,6 +6100,7 @@ passive(
                 }
                 monstunseesu(M_SEEN_FIRE);
                 You("are suddenly very hot!");
+                tmp = elem_vulnerable_dmg(AD_FIRE, tmp);
                 mdamageu(mon, tmp); /* fire damage */
             }
             break;

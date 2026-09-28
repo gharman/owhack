@@ -2774,7 +2774,7 @@ zapyourself(struct obj *obj, boolean ordinary)
             ugolemeffects(AD_FIRE, orig_dmg);
         } else {
             pline("You've set yourself afire!");
-            damage = orig_dmg;
+            damage = elem_vulnerable_dmg(AD_FIRE, orig_dmg);
             monstunseesu(M_SEEN_FIRE);
         }
         burn_away_slime();
@@ -2795,7 +2795,7 @@ zapyourself(struct obj *obj, boolean ordinary)
             ugolemeffects(AD_COLD, orig_dmg);
         } else {
             You("imitate a popsicle!");
-            damage = orig_dmg;
+            damage = elem_vulnerable_dmg(AD_COLD, orig_dmg);
             monstunseesu(M_SEEN_COLD);
         }
         (void) destroy_items(&gy.youmonst, AD_COLD, orig_dmg);
@@ -4440,7 +4440,7 @@ zhitu(
             monstseesu(M_SEEN_FIRE);
             ugolemeffects(AD_FIRE, orig_dam);
         } else {
-            dam = orig_dam;
+            dam = elem_vulnerable_dmg(AD_FIRE, orig_dam);
             monstunseesu(M_SEEN_FIRE);
         }
         burn_away_slime();
@@ -4459,7 +4459,7 @@ zhitu(
             monstseesu(M_SEEN_COLD);
             ugolemeffects(AD_COLD, orig_dam);
         } else {
-            dam = orig_dam;
+            dam = elem_vulnerable_dmg(AD_COLD, orig_dam);
             monstunseesu(M_SEEN_COLD);
         }
         if (!rn2(3))
@@ -5700,6 +5700,14 @@ u_adtyp_resistance_obj(int dmgtyp)
        carried give 99% protection to your items */
     if ((u.uprops[prop].extrinsic & (W_ARMOR | W_ACCESSORY | W_WEP | W_ART))
         != 0L)
+        return 99;
+
+    /* the innate resistance of Slash'EM's elemental mages works like an
+       extrinsic one (as in Hack'EM): it protects their items as well */
+    if ((dmgtyp == AD_FIRE && Role_if(PM_FLAME_MAGE)
+         && (HFire_resistance & FROMEXPER) != 0L)
+        || (dmgtyp == AD_COLD && Role_if(PM_ICE_MAGE)
+            && (HCold_resistance & FROMEXPER) != 0L))
         return 99;
 
     /* worn dwarvish cloaks give 90% protection against heat and cold to

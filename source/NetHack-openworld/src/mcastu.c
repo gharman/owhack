@@ -259,6 +259,7 @@ castmu(
             dmg = 0;
         } else {
             monstunseesu(M_SEEN_FIRE);
+            dmg = elem_vulnerable_dmg(AD_FIRE, dmg);
         }
         burn_away_slime();
         /* burn up flammable items on the floor, melt ice terrain */
@@ -273,6 +274,7 @@ castmu(
             dmg = 0;
         } else {
             monstunseesu(M_SEEN_COLD);
+            dmg = elem_vulnerable_dmg(AD_COLD, dmg);
         }
         /* freeze water or lava terrain */
         /* FIXME: mon_spell_hits_spot() uses zap_over_floor(); unlike with

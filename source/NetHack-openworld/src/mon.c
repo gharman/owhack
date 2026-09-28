@@ -886,6 +886,17 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_PAGE: case PM_ABBOT: case PM_ACOLYTE: case PM_HUNTER:
     case PM_THUG: case PM_NINJA: case PM_ROSHI: case PM_GUIDE:
     case PM_WARRIOR: case PM_APPRENTICE:
+
+    /* Slash'EM roles and their quests (roles-a) */
+    case PM_LAVA_BLOB: case PM_NUPPERIBO: case PM_BLOOD_IMP:
+    case PM_ICE_NYMPH: case PM_DEMON_ORC: case PM_MONGBAT:
+    case PM_ICE_ELEMENTAL: case PM_MAGMA_ELEMENTAL: case PM_WATER_HULK:
+    case PM_FIRE_VAMPIRE: case PM_DROID: case PM_STORMTROOPER:
+    case PM_FLAME_MAGE: case PM_ICE_MAGE: case PM_JEDI: case PM_NECROMANCER:
+    case PM_HIGH_FLAME_MAGE: case PM_HIGH_ICE_MAGE: case PM_JEDI_MASTER:
+    case PM_DARK_LORD: case PM_WATER_MAGE: case PM_RAGNAROS:
+    case PM_LORD_SIDIOUS: case PM_MAUGNESHAAGAR: case PM_IGNITER:
+    case PM_FROSTER: case PM_PADAWAN: case PM_JEDI_TRAINER: case PM_EMBALMER:
 #else
     default:
 #endif

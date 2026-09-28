@@ -241,7 +241,10 @@ explode(
         }
         switch (Role_switch) {
         case PM_CLERIC:
+        case PM_FLAME_MAGE:
+        case PM_ICE_MAGE:
         case PM_MONK:
+        case PM_NECROMANCER:
         case PM_WIZARD:
             damu /= 5;
             break;
@@ -618,6 +621,8 @@ explode(
 
         ugolemeffects((int) adtyp, damu);
         if (uhurt == 2) {
+            /* elemental mages' weakness */
+            damu = elem_vulnerable_dmg((int) adtyp, damu);
             /* if poly'd hero is grabbing another victim, hero takes
                double damage (note: don't rely on u.ustuck here because
                that victim might have been killed when hit by the blast) */

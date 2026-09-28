@@ -767,7 +767,7 @@ struct rogueroom {
     int nroom; /* Only meaningful for "real" rooms */
 };
 
-#define NUM_ROLES (13)
+#define NUM_ROLES (17)
 struct role_filter {
     boolean roles[NUM_ROLES + 1];
     unsigned long mask;
@@ -1150,11 +1150,13 @@ typedef struct nh_file NHFILE;
     }
 
 #define MATCH_WARN_OF_MON(mon) \
-    (Warn_of_mon                                                        \
-     && ((svc.context.warntype.obj & (mon)->data->mflags2) != 0           \
-         || (svc.context.warntype.polyd & (mon)->data->mflags2) != 0      \
-         || (svc.context.warntype.species                                 \
-             && (svc.context.warntype.species == (mon)->data))))
+    ((Warn_of_mon                                                       \
+      && ((svc.context.warntype.obj & (mon)->data->mflags2) != 0          \
+          || (svc.context.warntype.polyd & (mon)->data->mflags2) != 0     \
+          || (svc.context.warntype.species                                \
+              && (svc.context.warntype.species == (mon)->data))))         \
+     /* Slash'EM: necromancers' innate warning of undead */              \
+     || (Undead_warning && is_undead((mon)->data)))
 
 typedef uint32_t mmflags_nht;     /* makemon MM_ flags */
 

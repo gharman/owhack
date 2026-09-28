@@ -74,7 +74,10 @@ enum invoke_prop_types {
     FLING_POISON,
     FIRESTORM,
     SNOWSTORM,
-    BLINDING_RAY
+    BLINDING_RAY,
+    SUMMON_FIRE_ELEMENTAL,  /* Candle of Eternal Flame */
+    SUMMON_WATER_ELEMENTAL, /* Storm Whistle: a creature of the storm */
+    CONJURE_SPHERE          /* Firewall, Deep Freeze: elemental spheres */
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items

@@ -212,6 +212,31 @@ static NEARDATA struct artifact artilist[] = {
       0, 6, 1500L, NO_COLOR, SUNSWORD),
 
     /*
+     *      Role gifts for the Slash'EM roles (as Hack'EM assigns them).
+     *      Serpent's Tongue poisons whatever it hits (artifact.c);
+     *      Firewall and Deep Freeze are Hack'EM's elemental staves: they
+     *      burn or freeze on hit, protect from their element when
+     *      wielded, and conjure elemental spheres when invoked.
+     */
+    A("Serpent's Tongue", DAGGER, SPFX_RESTR, 0, 0, PHYS(5, 0), NO_DFNS,
+      NO_CARY, 0, A_CHAOTIC, PM_NECROMANCER, NON_PM,
+      2, 5, 400L, NO_COLOR, SERPENTS_TONGUE),
+
+    A("Firewall", QUARTERSTAFF, (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
+      FIRE(4, 4), FIRE(0, 0), NO_CARY, CONJURE_SPHERE, A_LAWFUL,
+      PM_FLAME_MAGE, NON_PM,
+      1, 5, 400L, CLR_RED, FIREWALL),
+
+    A("Deep Freeze", QUARTERSTAFF, (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN),
+      0, 0, COLD(4, 4), COLD(0, 0), NO_CARY, CONJURE_SPHERE, A_CHAOTIC,
+      PM_ICE_MAGE, NON_PM,
+      1, 5, 400L, CLR_BLUE, DEEP_FREEZE),
+
+    A("Deluder", CLOAK_OF_DISPLACEMENT, (SPFX_RESTR | SPFX_STLTH),
+      SPFX_LUCK, 0, NO_ATTK, NO_DFNS, NO_CARY, 0, A_NEUTRAL, PM_JEDI, NON_PM,
+      0, 6, 5000L, NO_COLOR, DELUDER),
+
+    /*
      *      The artifacts for the quest dungeon, all self-willed.
      *      gen_spe should be 0; gift_value irrelevant and set to 12.
      */
@@ -305,6 +330,32 @@ static NEARDATA struct artifact artilist[] = {
       NO_ATTK, DFNS(AD_MAGM), NO_CARY, CREATE_PORTAL, A_NEUTRAL, PM_WIZARD,
       NON_PM,
       0, 12, 4000L, NO_COLOR, EYE_OF_THE_AETHIOPICA),
+
+    /* Slash'EM quest artifacts (as in Hack'EM) */
+    A("The Candle of Eternal Flame", MAGIC_CANDLE,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), (SPFX_WARN | SPFX_TCTRL), 0,
+      NO_ATTK, NO_DFNS, CARY(AD_COLD), SUMMON_FIRE_ELEMENTAL, A_LAWFUL,
+      PM_FLAME_MAGE, NON_PM,
+      0, 12, 5000L, NO_COLOR, CANDLE_OF_ETERNAL_FLAME),
+
+    A("The Storm Whistle", MAGIC_WHISTLE,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL),
+      (SPFX_WARN | SPFX_TCTRL | SPFX_SEARCH), 0,
+      NO_ATTK, NO_DFNS, CARY(AD_ELEC), SUMMON_WATER_ELEMENTAL, A_NEUTRAL,
+      PM_ICE_MAGE, NON_PM,
+      0, 12, 1000L, NO_COLOR, STORM_WHISTLE),
+
+    A("The Lightsaber Prototype", RED_LIGHTSABER,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_REFLECT), 0, 0,
+      PHYS(5, 10), NO_DFNS, NO_CARY, ENERGY_BOOST, A_LAWFUL, PM_JEDI, NON_PM,
+      0, 12, 3500L, NO_COLOR, LIGHTSABER_PROTOTYPE),
+
+    A("The Great Dagger of Glaurgnaa", GREAT_DAGGER,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_ATTK | SPFX_INTEL | SPFX_DRLI
+       | SPFX_DALIGN),
+      0, 0, DRLI(8, 4), NO_DFNS, CARY(AD_MAGM), ENERGY_BOOST, A_CHAOTIC,
+      PM_NECROMANCER, NON_PM,
+      0, 12, 5000L, NO_COLOR, GREAT_DAGGER_OF_GLAURGNAA),
 
 #if !defined(ARTI_ENUM) && !defined(DUMP_ARTI_ENUM)
     /*
