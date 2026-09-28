@@ -48,6 +48,7 @@ staticfn void cast_protection(void);
 staticfn void cast_chain_lightning(void);
 staticfn void spell_backfire(int);
 staticfn boolean spelleffects_check(int, int *, int *);
+staticfn int blood_magic_cost(int, int);
 staticfn const char *spelltypemnemonic(int);
 staticfn boolean can_center_spell_location(coordxy, coordxy);
 staticfn void display_spell_target_positions(boolean);
@@ -782,6 +783,18 @@ getspell(int *spell_no)
                        spell_no);
 }
 
+/* hit points that the blood magic technique takes to make up for
+   missing energy when casting spell 'otyp' */
+staticfn int
+blood_magic_cost(int otyp, int energy)
+{
+    int cost = energy - u.uen;
+
+    if (otyp == SPE_HEALING || otyp == SPE_EXTRA_HEALING)
+        cost *= 4; /* no healing yourself for free */
+    return cost;
+}
+
 /* the reinforce memory technique: refresh the memory of a known spell;
    TRUE if a spell was reinforced */
 boolean
@@ -1346,6 +1359,13 @@ spelleffects_check(int spell, int *res, int *energy)
             : (*energy > u.uenpeak) ? " yet" /* haven't ever had enough */
               : " anymore"); /* once had enough but have lost some since */
         return TRUE;
+    } else if (*energy > u.uen
+               && blood_magic_cost(spellid(spell), *energy)
+                      >= (Upolyd ? u.mh : u.uhp)
+               && y_n("Drawing on so much of your own life force would kill "
+                      "you.  Cast anyway?") != 'y') {
+        /* blood magic would be fatal; no time passes */
+        return TRUE;
     } else {
         if (spellid(spell) != SPE_DETECT_FOOD) {
             int hungr = *energy * 2;
@@ -1427,15 +1447,12 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
 
     if (energy > u.uen && tech_inuse(T_BLOOD_MAGIC)) {
         /* blood magic: draw on your own life force for the rest */
-        energy -= u.uen;
-        u.uen = 0;
+        int cost = blood_magic_cost(spellid(spell), energy);
+
+        u.uen = energy = 0;
         disp.botl = TRUE;
         pline("You draw upon your own life force to cast the spell.");
-        if (spellid(spell) == SPE_HEALING
-            || spellid(spell) == SPE_EXTRA_HEALING)
-            energy *= 4; /* no healing yourself for free */
-        losehp(energy, "reckless use of blood magic", KILLED_BY);
-        energy = 0;
+        losehp(cost, "reckless use of blood magic", KILLED_BY);
     }
     u.uen -= energy;
     disp.botl = TRUE;
