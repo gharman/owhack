@@ -1384,12 +1384,14 @@ cancel_item(struct obj *obj)
         case SCROLL_CLASS:
             costly_alteration(obj, COST_CANCEL);
             obj->otyp = SCR_BLANK_PAPER;
+            fixup_obj_material(obj);
             obj->spe = 0;
             break;
         case SPBOOK_CLASS:
             if (otyp != SPE_CANCELLATION && otyp != SPE_BOOK_OF_THE_DEAD) {
                 costly_alteration(obj, COST_CANCEL);
                 obj->otyp = SPE_BLANK_PAPER;
+                fixup_obj_material(obj);
                 /* cancelling a novel is more involved than a spellbook */
                 if (otyp == SPE_NOVEL) /* old type */
                     blank_novel(obj);
@@ -1408,6 +1410,7 @@ cancel_item(struct obj *obj)
                 obj->otyp = POT_WATER;
                 obj->odiluted = 0; /* same as any other water */
             }
+            fixup_obj_material(obj);
             break;
         }
     }
@@ -1587,7 +1590,7 @@ polyuse(struct obj *objhdr, int mat, int minwt)
             continue;
 #endif
 
-        if (((int) objects[otmp->otyp].oc_material == mat)
+        if (((int) otmp->material == mat)
             == (rn2(minwt + 1) != 0)) {
             /* appropriately add damage to bill */
             if (costly_spot(otmp->ox, otmp->oy)) {
@@ -1716,7 +1719,7 @@ do_osshock(struct obj *obj)
         /* some may metamorphose */
         for (i = obj->quan; i; i--)
             if (!rn2(Luck + 45)) {
-                gp.poly_zapped = objects[obj->otyp].oc_material;
+                gp.poly_zapped = obj->material;
                 break;
             }
     }
@@ -1950,13 +1953,20 @@ poly_obj(struct obj *obj, int id)
 
     case GEM_CLASS:
         if (otmp->quan > (long) rnd(4)
-            && objects[obj->otyp].oc_material == MINERAL
-            && objects[otmp->otyp].oc_material != MINERAL) {
+            && obj->material == MINERAL
+            && otmp->material != MINERAL) {
             otmp->otyp = ROCK; /* transmutation backfired */
             otmp->quan /= 2L;  /* some material has been lost */
         }
         break;
     }
+
+    /* the new object is made of whatever a newly generated object of its
+       type would be made of; if its type was changed above (crocodile
+       corpse to boots, wand of wishing to another wand...), make sure
+       that its material is still one it can have */
+    if (!valid_obj_material(otmp, otmp->material))
+        set_material(otmp, objects[otmp->otyp].oc_material);
 
     /* update the weight */
     otmp->owt = weight(otmp);
@@ -2067,8 +2077,8 @@ stone_to_flesh_obj(struct obj *obj) /* nonnull */
     boolean smell = FALSE, golem_xform = FALSE;
     int res = 1; /* affected object by default */
 
-    if (objects[obj->otyp].oc_material != MINERAL
-        && objects[obj->otyp].oc_material != GEMSTONE)
+    if (obj->material != MINERAL
+        && obj->material != GEMSTONE)
         return 0;
     /* Heart of Ahriman usually resists; ordinary items rarely do */
     if (obj_resists(obj, 2, 98))
@@ -5700,6 +5710,7 @@ fracture_rock(struct obj *obj) /* no texts here! */
         sokoban_guilt();
 
     obj->otyp = ROCK;
+    obj->material = MINERAL; /* rocks are stone whatever this was */
     obj->oclass = GEM_CLASS;
     obj->quan = (long) rn1(60, 7);
     obj->owt = weight(obj);
@@ -5733,6 +5744,12 @@ break_statue(struct obj *obj)
     if (trap && trap->ttyp == STATUE_TRAP
         && activate_statue_trap(trap, obj->ox, obj->oy, TRUE))
         return FALSE;
+    /* copper and gold statues don't shatter into rocks */
+    if (is_metallic(obj)) {
+        if (!Deaf)
+            pline("Clang!");
+        return FALSE;
+    }
     /* drop any objects contained inside the statue */
     while ((item = obj->cobj) != 0) {
         obj_extract_self(item);
@@ -6322,7 +6339,7 @@ wishcmdassist(int triesleft)
   "Wish details:",
   "",
   "Enter the name of an object, such as \"potion of monster detection\",",
-  "\"scroll labeled README\", \"elven mithril-coat\", or \"Grimtooth\"",
+  "\"scroll labeled README\", \"mithril chain mail\", or \"Grimtooth\"",
   "(without the quotes).",
   "",
   "For object types which come in stacks, you may specify a plural name",
@@ -6331,7 +6348,9 @@ wishcmdassist(int triesleft)
   "",
   "You may also specify various prefix values which might be used to",
   "modify the item, such as \"uncursed\" or \"rustproof\" or \"+1\".",
-  "Most modifiers shown when viewing your inventory can be specified.",
+  "Most modifiers shown when viewing your inventory can be specified,",
+  "including what the object is made of (\"silver\", \"mithril\", \"wooden\"),",
+  "as long as that kind of object can be made of it.",
   "",
   "You may specify 'nothing' to explicitly decline this wish.",
   0,

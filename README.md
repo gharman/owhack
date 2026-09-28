@@ -11,6 +11,17 @@ lords, Vlad's Tower, the Wizard's Tower, the invocation, Moloch's Sanctum and
 the Amulet of Yendor.  The full command set (including every `#` extended
 command) works as it does in NetHack.
 
+On top of that, the world holds the extra special levels of Slash'EM,
+Hack'EM and EvilHack: One-eyed Sam's black market, Grund's Stronghold, the
+lairs of the Rat King and the Kobold King, the Wyrm Caves, the Spider
+Caves, the Sunless Sea, the Lost Tomb, the Giant Caverns, the Temple of
+Moloch, the Guild of Disgruntled Adventurers, the Mall, the Storerooms,
+the nymphs' garden, Goblin Town, Slash'EM's three alignment key quests,
+the Gnome King's level at the bottom of the Mines, the dungeon beneath
+Fort Ludios, Frankenstein's Lab and lairs for Yeenoghu, Demogorgon, Geryon
+and Dispater, with the monsters and artifacts that belong to them (see
+[Extra special levels](#extra-special-levels)).
+
 ## Playing
 
     ./play.sh              start (or resume) a game
@@ -69,16 +80,24 @@ levels:
 
 | Ring (depth) | Portals lead to |
 |---|---|
-| 2-4 | the Gnomish Mines (Minetown, Mines' End) |
+| 2-4 | the Gnomish Mines (Minetown, Mines' End, the Gnome King's level) |
+| 2-3 | Goblin Town (2 levels) |
+| 5-6 | the Mall (only in some games) |
 | 5-9 | the Oracle |
 | Oracle+1 | Sokoban (entered at the bottom, as usual) |
+| 8 to Medusa-1 | Aphrodite's Garden, the nymph level (only in some games) |
+| 10-11 | the Rat King's Lair (only in some games) |
 | 10-12 | the Big Room (only in some games) |
+| 11-12 | the Kobold King's Lair (only in some games) |
+| 12-13 | Grund's Stronghold |
 | Oracle+6 or +7 | your Quest (the leader's call comes when you first reach that ring) |
-| 11 to Medusa-1 | Fort Ludios: a portal inside one of the mountain vaults |
+| 11 to Medusa-1 | Fort Ludios: a portal inside one of the mountain vaults (2 levels) |
+| 15-19 | the Nightmare's, the Beholder's and Vecna's lairs (the alignment key quests) |
+| 14 to Medusa-1 | in about this order: the Storerooms (only in some games), the Wyrm Caves (2 levels), the Lost Tomb, One-eyed Sam's Market, the Spider Caves, the Adventurers' Guild (only in some games), the Sunless Sea, the Temple of Moloch, the Giant Caverns |
 | 21-24 | Medusa's Island; the Castle is below it |
 | Medusa+2 | the Barrier: impassable, undiggable mountains ringing Gehennom |
 | beyond | Gehennom: scorched plains, lava fields, obsidian mazes, caverns |
-| in Gehennom | Asmodeus, Juiblex, Baalzebub, Orcus Town, Vlad's Tower, the Wizard's Tower, the two fake wizard towers, the Gates of Moloch |
+| in Gehennom | Asmodeus, Juiblex, Baalzebub, Orcus Town, Vlad's Tower, the Wizard's Tower, the two fake wizard towers, the Gates of Moloch; Yeenoghu's and Demogorgon's lairs near the Valley, Geryon's and Dispater's deep down, Frankenstein's Lab in between |
 
 **Getting into Gehennom** works as it always has: get past Medusa, then the
 Castle, and drop through the Castle's trap doors into the Valley of the Dead.
@@ -181,6 +200,55 @@ Everything not listed here plays as it does in NetHack 5.0.
   X11, Qt or curses interfaces).
 * **Wizard-mode `#wizmakemap`** regenerates the overworld around you; the
   Fort Ludios portal doesn't come back if it was already placed.
+* **Extra special levels** from Slash'EM, Hack'EM and EvilHack are added
+  (below).  Slash'EM places many of them deeper than our Medusa, which is
+  at depth 21-24 with Gehennom beyond it, so they are squeezed, in their
+  Slash'EM order, into the rings between depth 14 and Medusa's; Slash'EM's
+  Gehennom levels are spread over our Gehennom rings.
+
+## Extra special levels
+
+Each is a branch behind its own ring of portals, like the vanilla special
+levels; leaving it (by its up stairs or its portal) brings you back to the
+portal you used.  Those marked "(some games)" exist only in some games, as
+in their home variants.  The levels are faithful conversions of the
+originals to NetHack 5.0's Lua level format; features 5.0 lacks (Hack'EM
+grass, sewage and dead trees, EvilHack forges, Slash'EM "killer coins") are
+replaced by the nearest thing 5.0 has.
+
+* **One-eyed Sam's Market** (Slash'EM): Sam's black market, the biggest
+  shop in the game, stocked with every kind of object, laid out class by
+  class, at 25 times the usual price (50 times for anything magical).  Sam
+  is a formidable fighter (Thiefbane, reflection, speed, life saving); he
+  welcomes invisible customers but not ones who have polymorphed into
+  something inhuman.  Pets and steeds
+  can't enter, taming and Conflict don't work, and you can't level
+  teleport out.  Shoplift and his assistants (the named monsters of the
+  market) turn on you, while soldiers gather at the way out.
+* **Grund's Stronghold** (Slash'EM, 3 versions): Grund the Orc King's
+  fortress, full of orcs and ogres.
+* **The Rat King's Lair** (Slash'EM, and Hack'EM's sewer; some games),
+  **the Kobold King's Lair** (Kroo; Slash'EM, 2 versions; some games),
+  **Aphrodite's Garden** (the nymph level; some games), **the Storerooms**
+  (3 versions; some games), **the Mall** (a town of shops; 2 versions; some
+  games) and **the Adventurers' Guild** (the Guild of Disgruntled
+  Adventurers: hostile player monsters of every role; some games).
+* **The Wyrm Caves** (Hack'EM, 2 levels): an orc-guarded entrance and a
+  dragon pit with a hoard.  **The Spider Caves** (Shelob and Girtab),
+  **the Sunless Sea** (sharks, crabs and treasure island), **the Lost
+  Tomb**, **the Giant Caverns** (the Largest Giant) and **the Temple of
+  Moloch** (Slash'EM).
+* **Goblin Town** (EvilHack, 2 levels): the Goblin King's town under the
+  mountains, with his prisoners; a trap door leads down to Gollum's cave.
+* **The Nightmare's Lair, the Beholder's Lair and Vecna's Lair**:
+  Slash'EM's alignment key quests.  Their masters leave the artifacts
+  Nighthorn, the Eye of the Beholder and the Hand of Vecna.
+* **The Gnome King's level** (Slash'EM / Hack'EM, 2 versions) is now the
+  bottom of the Gnomish Mines, below Mines' End; **Fort Ludios** has
+  Hack'EM's dungeon beneath the fort.
+* In Gehennom: **Frankenstein's Lab** (Doctor Frankenstein and his
+  Monster) and Slash'EM's lairs for **Yeenoghu, Demogorgon, Geryon and
+  Dispater**, the demon lords that vanilla NetHack gives no lair.
 
 ## Files
 
@@ -222,6 +290,13 @@ The rest is spread across about 60 NetHack source files, mainly
 * Several hours of NetHack's built-in `--debug:fuzzer` random-input play,
   in normal and wizard mode, including AddressSanitizer builds.  Every
   crash or sanity-check failure found was fixed.
+* The extra special levels: wizard-mode tours into and out of every new
+  branch through its portal (and down to the lower levels of the
+  two-level branches, the Gnome King's level and the dungeon beneath
+  Fort Ludios), checking the monsters of each level; every level file
+  regenerated repeatedly with sanity checking; buying, selling and
+  shoplifting in One-eyed Sam's market; save and restore inside the new
+  branches; and fuzzing with games that start inside them.
 * Performance: roughly 60 ms per move in a 200x60 terminal, world generation
   a few milliseconds per 32x32 area as you explore; save files are around
   0.5 MB early on and grow as you explore.

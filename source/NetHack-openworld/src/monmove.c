@@ -883,7 +883,9 @@ dochug(struct monst *mtmp)
         || (mtmp->minvis && !rn2(3))
         || (mdat->mlet == S_LEPRECHAUN && !findgold(gi.invent)
             && (findgold(mtmp->minvent) || rn2(2)))
-        || (is_wanderer(mdat) && !rn2(4)) || (Conflict && !mtmp->iswiz)
+        || (is_wanderer(mdat) && !rn2(4))
+        /* Slash'EM: Conflict has no hold in One-eyed Sam's market */
+        || (Conflict && !mtmp->iswiz && !Is_blackmarket(&u.uz))
         || (!mtmp->mcansee && !rn2(4)) || mtmp->mpeaceful) {
 
         /* Possibly cast an undirected spell if not attacking you */
@@ -964,7 +966,8 @@ dochug(struct monst *mtmp)
 
     /* Now, attack the player if possible - one attack set per monst */
     if (status != MMOVE_DONE && (!mtmp->mpeaceful
-                                 || (Conflict && !resist_conflict(mtmp)))) {
+                                 || (Conflict && !Is_blackmarket(&u.uz)
+                                     && !resist_conflict(mtmp)))) {
         if (((inrange && !scared) || panicattk) && !noattacks(mdat)
             /* [is this hp check really needed?] */
             && (Upolyd ? u.mh : u.uhp) > 0) {
@@ -1004,7 +1007,7 @@ mon_would_take_item(struct monst *mtmp, struct obj *otmp)
         return FALSE;
     if (mtmp->mtame && otmp->cursed)
         return FALSE; /* note: will get overridden if mtmp will eat otmp */
-    if (is_unicorn(mtmp->data) && objects[otmp->otyp].oc_material != GEMSTONE)
+    if (is_unicorn(mtmp->data) && otmp->material != GEMSTONE)
         return FALSE;
     if (!mindless(mtmp->data) && !is_animal(mtmp->data) && pctload < 75
         && searches_for_item(mtmp, otmp))
@@ -1012,7 +1015,7 @@ mon_would_take_item(struct monst *mtmp, struct obj *otmp)
     if (likes_gold(mtmp->data) && otmp->otyp == GOLD_PIECE && pctload < 95)
         return TRUE;
     if (likes_gems(mtmp->data) && otmp->oclass == GEM_CLASS
-        && objects[otmp->otyp].oc_material != MINERAL && pctload < 85)
+        && otmp->material != MINERAL && pctload < 85)
         return TRUE;
     if (likes_objs(mtmp->data) && strchr(practical, otmp->oclass)
         && pctload < 75)

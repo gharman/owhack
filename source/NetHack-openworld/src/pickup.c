@@ -2151,6 +2151,18 @@ do_loot_cont(
     }
     cobj->lknown = 1; /* floor container, so no need for update_inventory() */
 
+    /* opening a silver (or cold iron) box with bare hands */
+    if (Hate_material(cobj->material) && !uarmg) {
+        char kbuf[BUFSZ];
+
+        pline_The("%s lid %s!", materialnm[cobj->material],
+                  (cobj->material == SILVER) ? "sears your flesh"
+                                             : "hurts to touch");
+        Sprintf(kbuf, "opening %s container",
+                an(materialnm[cobj->material]));
+        losehp(rnd(sear_damage(cobj->material)), kbuf, KILLED_BY);
+    }
+
     if (cobj->otyp == BAG_OF_TRICKS) {
         int tmp;
 

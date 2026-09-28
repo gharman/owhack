@@ -573,7 +573,10 @@ hard_helmet(struct obj *obj)
 {
     if (!obj || !is_helmet(obj))
         return FALSE;
-    return (is_metallic(obj) || is_crackable(obj)) ? TRUE : FALSE;
+    return (is_metallic(obj) || is_crackable(obj)
+            || obj->material == WOOD || obj->material == BONE
+            || obj->material == MINERAL || obj->material == GEMSTONE)
+               ? TRUE : FALSE;
 }
 
 staticfn int
@@ -688,6 +691,10 @@ Gloves_off(void)
     if (Glib)
         make_glib(0); /* for update_inventory() */
 
+    /* you may now be touching some material you hate (silver while in
+       demon form, or cold iron as an elf) */
+    if (uwep && Hate_material(uwep->material))
+        (void) retouch_object(&uwep, FALSE);
     /* prevent wielding cockatrice when not wearing gloves */
     if (uwep && uwep->otyp == CORPSE)
         wielding_corpse(uwep, gloves, on_purpose);
@@ -2211,6 +2218,21 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
     return !err;
 }
 
+/* would an object worn or wielded in slot 'mask' touch the hero's skin?
+   (gloves cover the hands for weapons, a cloak goes over body armor or a
+   shirt, body armor over a shirt); for hated materials like silver */
+boolean
+will_touch_skin(long mask)
+{
+    if ((mask == W_WEP || mask == W_SWAPWEP) && uarmg)
+        return FALSE;
+    if (mask == W_ARMC && (uarm || uarmu))
+        return FALSE;
+    else if (mask == W_ARM && uarmu)
+        return FALSE;
+    return TRUE;
+}
+
 staticfn int
 accessory_or_armor_on(struct obj *obj)
 {
@@ -2358,7 +2380,8 @@ accessory_or_armor_on(struct obj *obj)
         }
     }
 
-    if (!retouch_object(&obj, FALSE))
+    /* no material damage if the hero's skin is covered where obj goes */
+    if (!retouch_object_prot(&obj, FALSE, !will_touch_skin(mask)))
         return ECMD_TIME; /* costs a turn even though it didn't get worn */
 
     if (armor) {

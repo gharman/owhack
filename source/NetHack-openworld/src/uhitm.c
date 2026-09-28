@@ -821,8 +821,11 @@ hitum(struct monst *mon, struct attack *uattk)
                              dieroll);
         /* second passive counter-attack only occurs if second attack hits */
         if (mhit)
-            (void) passive(mon, secondwep, mhit, malive, AT_WEAP,
-                           secondwep && !uswapwep);
+            (void) passive(mon,
+                           /* a glass off-hand weapon might have shattered */
+                           (secondwep && secondwep == uswapwep)
+                               ? secondwep : (struct obj *) 0,
+                           mhit, malive, AT_WEAP, secondwep && !uswapwep);
     }
     gt.twohits = 0;
     return malive;
@@ -851,7 +854,7 @@ hmon(struct monst *mon,
 staticfn void
 hmon_hitmon_barehands(struct _hitmon_data *hmd, struct monst *mon)
 {
-    long spcdmgflg, silverhit = 0L; /* worn masks */
+    long spcdmgflg; /* worn masks */
 
     if (hmd->mdat == &mons[PM_SHADE]) {
         hmd->dmg = 0;
@@ -864,35 +867,21 @@ hmon_hitmon_barehands(struct _hitmon_data *hmd, struct monst *mon)
     }
 
     /* Blessed gloves give bonuses when fighting 'bare-handed'.  So do
-       silver rings.  Note:  rings are worn under gloves, so you don't
-       get both bonuses, and two silver rings don't give double bonus.
-       When making only one hit, both rings are checked (backwards
+       rings or gloves made of a material the target hates (silver vs
+       demons, cold iron vs elves...), or the hero's own body if poly'd
+       into an iron golem, say.  Note:  rings are worn under gloves, so
+       you don't get both bonuses, and two silver rings don't give double
+       bonus.  When making only one hit, both rings are checked (backwards
        compatibility => playability), but when making two hits, only the
-       ring on the hand making the attack is checked. */
-    spcdmgflg = uarmg ? W_ARMG
-              : (((hmd->twohits == 0 || hmd->twohits == 1) ? W_RINGR : 0L)
-                 | ((hmd->twohits == 0 || hmd->twohits == 2) ? W_RINGL : 0L));
-    hmd->dmg += special_dmgval(&gy.youmonst, mon, spcdmgflg, &silverhit);
-
-    /* copy silverhit info back into struct _hitmon_data *hmd */
-    switch (hmd->twohits) {
-    case 0: /* only one hit being attempted; a silver ring on either hand
-             * applies but having silver rings on both is same as just one */
-        hmd->barehand_silver_rings = (silverhit & (W_RINGR | W_RINGL)) ? 1 : 0;
-        break;
-    case 1: /* first of two or more hit attempts; right ring applies */
-        hmd->barehand_silver_rings = (silverhit & W_RINGR) ? 1 : 0;
-        break;
-    case 2: /* second of two or more hit attempts; left ring applies */
-        hmd->barehand_silver_rings = (silverhit & W_RINGL) ? 1 : 0;
-        break;
-    default: /* third or later of more than two hit attempts (poly'd hero);
-              * rings were applied on first and second hits */
-        hmd->barehand_silver_rings = 0;
-        break;
-    }
-    if (hmd->barehand_silver_rings > 0)
-        hmd->silvermsg = TRUE;
+       ring on the hand making the attack is checked; third and later
+       hits of a poly'd hero don't use rings at all. */
+    spcdmgflg = W_ARMG
+                | ((hmd->twohits == 0 || hmd->twohits == 1) ? W_RINGR : 0L)
+                | ((hmd->twohits == 0 || hmd->twohits == 2) ? W_RINGL : 0L);
+    hmd->dmg += special_dmgval(&gy.youmonst, mon, spcdmgflg,
+                               &hmd->hated_obj);
+    if (hmd->hated_obj)
+        hmd->hatedmsg = TRUE;
 }
 
 staticfn void
@@ -907,10 +896,12 @@ hmon_hitmon_weapon_ranged(
         hmd->dmg = 0;
     else
         hmd->dmg = rnd(2);
-    if (hmd->material == SILVER && mon_hates_silver(mon)) {
-        hmd->silvermsg = hmd->silverobj = TRUE;
+    if (mon_hates_material(mon, hmd->material)) {
+        int searmax = sear_damage(hmd->material);
+
+        hmd->hatedmsg = hmd->hatedobj = TRUE;
         /* if it will already inflict dmg, make it worse */
-        hmd->dmg += rnd((hmd->dmg) ? 20 : 10);
+        hmd->dmg += rnd((hmd->dmg) ? searmax : (searmax + 1) / 2);
     }
     if (!hmd->thrown && obj == uwep && obj->otyp == BOOMERANG
         && rnl(4) == 4 - 1) {
@@ -1084,8 +1075,9 @@ hmon_hitmon_weapon_melee(
         }
         hmd->hittxt = TRUE;
     }
-    if (hmd->material == SILVER && mon_hates_silver(mon)) {
-        hmd->silvermsg = hmd->silverobj = TRUE;
+    /* dmgval() has already added damage for silver, cold iron, &c */
+    if (mon_hates_material(mon, hmd->material)) {
+        hmd->hatedmsg = hmd->hatedobj = TRUE;
     }
     if (artifact_light(obj) && obj->lamplit
         && mon_hates_light(mon))
@@ -1291,6 +1283,7 @@ hmon_hitmon_misc_obj(
                     obj_stop_timers(obj);
                 obj->otyp = ROCK;
                 obj->oclass = GEM_CLASS;
+                fixup_obj_material(obj); /* eggs turn to stone */
                 obj->oartifact = 0;
                 obj->spe = 0;
                 obj->known = obj->dknown = obj->bknown = 0;
@@ -1395,8 +1388,8 @@ hmon_hitmon_misc_obj(
         hmd->get_dmg_bonus = FALSE;
         break;
     default:
-        if ((objects[obj->otyp].oc_material == VEGGY ||
-             objects[obj->otyp].oc_material == PAPER) &&
+        if ((obj->material == VEGGY ||
+             obj->material == PAPER) &&
             obj->oclass != SPBOOK_CLASS) {
             /* vegetables (and similar) do no damage, because they
                aren't rigid enough; paper objects also do no damage,
@@ -1427,11 +1420,11 @@ hmon_hitmon_misc_obj(
                until after hit message */
             hmd->dryit = (rn2(obj->spe + 1) > 0);
         }
-        /* things like silver wands can arrive here so we
-           need another silver check; blessed check too */
-        if (hmd->material == SILVER && mon_hates_silver(mon)) {
-            hmd->dmg += rnd(20);
-            hmd->silvermsg = hmd->silverobj = TRUE;
+        /* things like silver wands or iron chains can arrive here so we
+           need another hated material check; blessed check too */
+        if (mon_hates_material(mon, hmd->material)) {
+            hmd->dmg += rnd(sear_damage(hmd->material));
+            hmd->hatedmsg = hmd->hatedobj = TRUE;
         }
         if (obj->blessed && mon_hates_blessings(mon))
             hmd->dmg += rnd(4);
@@ -1670,8 +1663,8 @@ hmon_hitmon_splitmon(
            also allow either or both weapons to cause split when twoweap] */
         && obj && (obj == uwep || (u.twoweap && obj == uswapwep))
         && ((hmd->material == IRON
-             /* allow scalpel and tsurugi to split puddings */
-             || hmd->material == METAL)
+             /* allow steel weapons (scalpel, tsurugi...) to split puddings */
+             || hmd->material == STEEL)
             /* but not bashing with darts, arrows or ya */
             && !(is_ammo(obj) || is_missile(obj)))
         && hmd->hand_to_hand) {
@@ -1715,43 +1708,54 @@ hmon_hitmon_msg_hit(
     }
 }
 
+/* "your silver saber sears <mon's> flesh!" or "<mon> recoils from your
+   iron long sword!" or similar, for silver or another material that mon
+   hates */
 staticfn void
 hmon_hitmon_msg_silver(
     struct _hitmon_data *hmd,
     struct monst *mon,
     struct obj *obj UNUSED)
 {
-    const char *fmt;
+    int mat = hmd->material;
+    const char *whose = "the ";
     char *whom = mon_nam(mon);
-    char silverobjbuf[BUFSZ];
+    char what[BUFSZ];
 
-    if (canspotmon(mon)) {
-        if (hmd->barehand_silver_rings == 1)
-            fmt = "Your silver ring sears %s!";
-        else if (hmd->barehand_silver_rings == 2)
-            fmt = "Your silver rings sear %s!";
-        else if (hmd->silverobj && hmd->saved_oname[0]) {
-            /* guard constructed format string against '%' in
-               saved_oname[] from xname(via cxname()) */
-            Snprintf(silverobjbuf, sizeof(silverobjbuf), "Your %s%s %s",
-                     strstri(hmd->saved_oname, "silver") ? "" : "silver ",
-                     hmd->saved_oname, vtense(hmd->saved_oname, "sear"));
-            (void) strNsubst(silverobjbuf, "%", "%%", 0);
-            strncat(silverobjbuf, " %s!",
-                    sizeof(silverobjbuf) - (strlen(silverobjbuf) + 1));
-            fmt = silverobjbuf;
-        } else
-            fmt = "The silver sears %s!";
-    } else {
-        *whom = highc(*whom); /* "it" -> "It" */
-        fmt = "%s is seared!";
+    if (hmd->hated_obj) {
+        /* gloves, rings or the hero's body; these are still intact */
+        searmsg(&gy.youmonst, mon, hmd->hated_obj, FALSE);
+        return;
     }
-    /* note: s_suffix returns a modifiable buffer */
-    if (!noncorporeal(hmd->mdat) && !amorphous(hmd->mdat))
-        whom = strcat(s_suffix(whom), " flesh");
-    DISABLE_WARNING_FORMAT_NONLITERAL
-    pline(fmt, whom);
-    RESTORE_WARNING_FORMAT_NONLITERAL
+    if (!canspotmon(mon)) {
+        *whom = highc(*whom); /* "it" -> "It" */
+        pline("%s %s!", whom, (mat == SILVER) ? "is seared" : "recoils");
+        return;
+    }
+    /* the weapon might be gone by now, so use its saved name */
+    if (hmd->hatedobj && hmd->saved_oname[0]) {
+        whose = "your ";
+        if (strstri(hmd->saved_oname, materialnm[mat]))
+            Strcpy(what, hmd->saved_oname);
+        else
+            Snprintf(what, sizeof what, "%s %s", materialnm[mat],
+                     hmd->saved_oname);
+    } else if (mat == SILVER) {
+        Strcpy(what, "silver");
+    } else {
+        Snprintf(what, sizeof what, "touch of %s", materialnm[mat]);
+    }
+    if (mat == SILVER) {
+        char subj[BUFSZ + 10];
+
+        /* note: s_suffix returns a modifiable buffer */
+        if (!noncorporeal(hmd->mdat) && !amorphous(hmd->mdat))
+            whom = strcat(s_suffix(whom), " flesh");
+        Snprintf(subj, sizeof subj, "%s%s", whose, what);
+        pline("%s %s %s!", upstart(subj), vtense(what, "sear"), whom);
+    } else {
+        pline("%s recoils from %s%s!", upstart(whom), whose, what);
+    }
 }
 
 staticfn void
@@ -1823,11 +1827,11 @@ hmon_hitmon(
     hmd.mdat = mon->data;
     hmd.use_weapon_skill = FALSE;
     hmd.train_weapon_skill = FALSE;
-    hmd.barehand_silver_rings = 0;
-    hmd.silvermsg = FALSE;
-    hmd.silverobj = FALSE;
+    hmd.hated_obj = (struct obj *) 0;
+    hmd.hatedmsg = FALSE;
+    hmd.hatedobj = FALSE;
     hmd.lightobj = FALSE;
-    hmd.material = obj ? objects[obj->otyp].oc_material
+    hmd.material = obj ? obj->material
                        : NO_MATERIAL;
     hmd.jousting = 0;
     hmd.hittxt = FALSE;
@@ -1933,7 +1937,7 @@ hmon_hitmon(
         dry_a_towel(obj, -1, TRUE);
     }
 
-    if (hmd.silvermsg)
+    if (hmd.hatedmsg)
         hmon_hitmon_msg_silver(&hmd, mon, obj);
 
     if (hmd.lightobj)
@@ -1978,6 +1982,13 @@ hmon_hitmon(
     if (hmd.unpoisonmsg)
         Your("%s %s no longer poisoned.", hmd.saved_oname,
              vtense(hmd.saved_oname, "are"));
+
+    /* a wielded glass weapon might crack (and eventually shatter); only
+       for ordinary melee hits, since callers of hmon() for applied
+       polearms go on to use the weapon (passive_obj()) */
+    if (thrown == HMON_MELEE && obj && (obj == uwep || obj == uswapwep)
+        && is_crackable(obj))
+        (void) crack_glass_obj(obj);
 
     if (!hmd.destroyed && !hmd.offmap) {
         int hitflags = M_ATTK_HIT;
@@ -2064,7 +2075,7 @@ shade_aware(struct obj *obj)
         || obj->otyp == IRON_CHAIN      /* dmgval handles those first three */
         || obj->otyp == MIRROR          /* silver in the reflective surface */
         || obj->otyp == CLOVE_OF_GARLIC /* causes shades to flee */
-        || objects[obj->otyp].oc_material == SILVER)
+        || obj->material == SILVER)
         return TRUE;
     return FALSE;
 }
@@ -4133,9 +4144,9 @@ mhitm_ad_phys(
                 }
                 if (!mhm->damage)
                     return;
-                if (objects[otmp->otyp].oc_material == SILVER
-                    && Hate_silver) {
-                    pline_The("silver sears your flesh!");
+                if (Hate_material(otmp->material)) {
+                    /* dmgval() already added extra damage */
+                    searmsg(magr, &gy.youmonst, otmp, TRUE);
                     exercise(A_CON, FALSE);
                 }
                 /* this redundancy necessary because you have
@@ -4150,9 +4161,9 @@ mhitm_ad_phys(
                     tmp = (tmp + 1) / 2;
 
                 if (u.mh - tmp > 1
-                    && (objects[otmp->otyp].oc_material == IRON
-                        /* relevant 'metal' objects are scalpel and tsurugi */
-                        || objects[otmp->otyp].oc_material == METAL)
+                    && (otmp->material == IRON
+                        /* steel objects include scalpel and tsurugi */
+                        || otmp->material == STEEL)
                     && (u.umonnum == PM_BLACK_PUDDING
                         || u.umonnum == PM_BROWN_PUDDING)) {
                     if (tmp > 1)
@@ -4180,6 +4191,9 @@ mhitm_ad_phys(
                     poisoned(buf, A_STR, pmname(magr->data, Mgender(magr)),
                              10, FALSE);
                 }
+                /* the monster's glass weapon might crack */
+                if (is_crackable(otmp))
+                    (void) crack_glass_obj(otmp);
             } else if (mattk->aatyp != AT_TUCH || mhm->damage != 0
                        || magr != u.ustuck) {
                 hitmsg(magr, mattk);
@@ -4249,6 +4263,9 @@ mhitm_ad_phys(
                  * code, we can just jump straight to the poisoning. */
                 mhitm_really_poison(magr, mattk, mdef, mhm);
             }
+            /* the monster's glass weapon might crack */
+            if (is_crackable(mwep))
+                (void) crack_glass_obj(mwep);
         } else if (pa == &mons[PM_PURPLE_WORM] && pd == &mons[PM_SHRIEKER]) {
             /* hack to enhance mm_aggression(); we don't want purple
                worm's bite attack to kill a shrieker because then it
@@ -5569,8 +5586,7 @@ hmonas(struct monst *mon)
                      || is_missile(uswapwep)) /* dart, shuriken, boomerang */
                 /* and not two-handed and not incapable of being wielded */
                 && !bimanual(uswapwep)
-                && !(objects[uswapwep->otyp].oc_material == SILVER
-                     && Hate_silver))
+                && !Hate_material(uswapwep->material))
                 altwep = !altwep; /* toggle for next attack */
             weapon = *originalweapon;
             if (!weapon) /* no need to go beyond no-gloves to rings; not ...*/
@@ -5633,7 +5649,7 @@ hmonas(struct monst *mon)
             dhit = (tmp > dieroll || u.uswallow);
             if (dhit) {
                 int compat, specialdmg;
-                long silverhit = 0L;
+                struct obj *hated_obj = (struct obj *) 0;
                 const char *verb = 0; /* verb or body part */
 
                 if (!u.uswallow
@@ -5650,7 +5666,7 @@ hmonas(struct monst *mon)
                 }
                 wakeup(mon, TRUE);
 
-                specialdmg = 0; /* blessed and/or silver bonus */
+                specialdmg = 0; /* blessed and/or hated material bonus */
                 switch (mattk->aatyp) {
                 case AT_CLAW:
                 case AT_TUCH:
@@ -5671,7 +5687,7 @@ hmonas(struct monst *mon)
                                                    ? W_RINGL : 0L)
                                                 | ((!odd_claw || !multi_claw)
                                                    ? W_RINGR : 0L),
-                                                &silverhit);
+                                                &hated_obj);
                     break;
                 case AT_TENT:
                     /* assumes mind flayer's tentacles-on-head rather
@@ -5681,7 +5697,7 @@ hmonas(struct monst *mon)
                 case AT_KICK:
                     verb = "kick";
                     specialdmg = special_dmgval(&gy.youmonst, mon, W_ARMF,
-                                                &silverhit);
+                                                &hated_obj);
                     break;
                 case AT_BUTT:
                     verb = "head butt"; /* mbodypart(mon,HEAD)=="head" */
@@ -5689,7 +5705,7 @@ hmonas(struct monst *mon)
                        could wear a helmet, it would hit shades when
                        wearing a blessed (or silver) one */
                     specialdmg = special_dmgval(&gy.youmonst, mon, W_ARMH,
-                                                &silverhit);
+                                                &hated_obj);
                     break;
                 case AT_BITE:
                     verb = "bite";
@@ -5719,8 +5735,8 @@ hmonas(struct monst *mon)
                         if (mattk->aatyp == AT_CLAW)
                             verb = "hit"; /* not "claws" */
                         You("%s %s.", verb, mon_nam(mon));
-                        if (silverhit && flags.verbose)
-                            silver_sears(&gy.youmonst, mon, silverhit);
+                        if (hated_obj && flags.verbose)
+                            searmsg(&gy.youmonst, mon, hated_obj, FALSE);
                     }
                     sum[i] = damageum(mon, mattk, specialdmg);
                 }
@@ -5731,7 +5747,7 @@ hmonas(struct monst *mon)
 
         case AT_HUGS: {
             int specialdmg;
-            long silverhit = 0L;
+            struct obj *hated_obj = (struct obj *) 0;
             boolean byhand = hug_throttles(&mons[u.umonnum]), /* rope golem */
                     unconcerned = (byhand && !can_be_strangled(mon));
 
@@ -5758,7 +5774,7 @@ hmonas(struct monst *mon)
             specialdmg = special_dmgval(&gy.youmonst, mon,
                                         byhand ? (W_ARMG | W_RINGL | W_RINGR)
                                                : (W_ARMC | W_ARM | W_ARMU),
-                                        &silverhit);
+                                        &hated_obj);
             if (unconcerned) {
                 /* strangling something which can't be strangled */
                 if (mattk != &alt_attk) {
@@ -5783,8 +5799,8 @@ hmonas(struct monst *mon)
                    choking hug; deals damage but never grabs hold */
                 if (specialdmg) {
                     You("%s %s%s", verb, mon_nam(mon), exclam(specialdmg));
-                    if (silverhit && flags.verbose)
-                        silver_sears(&gy.youmonst, mon, silverhit);
+                    if (hated_obj && flags.verbose)
+                        searmsg(&gy.youmonst, mon, hated_obj, FALSE);
                     sum[i] = damageum(mon, mattk, specialdmg);
                 } else {
                     Your("%s passes harmlessly through %s.",
@@ -5801,8 +5817,8 @@ hmonas(struct monst *mon)
                       byhand ? "throttled" : "crushed",
                       /* extra feedback for non-breather being choked */
                       unconcerned ? " but doesn't seem concerned" : "");
-                if (silverhit && flags.verbose)
-                    silver_sears(&gy.youmonst, mon, silverhit);
+                if (hated_obj && flags.verbose)
+                    searmsg(&gy.youmonst, mon, hated_obj, FALSE);
                 sum[i] = damageum(mon, mattk, specialdmg);
             } else if (i >= 2 && (sum[i - 1] > M_ATTK_MISS)
                        && (sum[i - 2] > M_ATTK_MISS)) {
@@ -5813,8 +5829,8 @@ hmonas(struct monst *mon)
                     uunstick();
                 You("grab %s!", mon_nam(mon));
                 set_ustuck(mon);
-                if (silverhit && flags.verbose)
-                    silver_sears(&gy.youmonst, mon, silverhit);
+                if (hated_obj && flags.verbose)
+                    searmsg(&gy.youmonst, mon, hated_obj, FALSE);
                 sum[i] = damageum(mon, mattk, specialdmg);
             }
             break; /* AT_HUGS */

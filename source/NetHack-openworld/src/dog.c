@@ -819,6 +819,17 @@ keep_mon_accessible(struct monst *mon)
     return FALSE;
 }
 
+/* destination of the level change that keepdogs() is called for, when
+   goto_level() knows it (Slash'EM: pets can't enter or leave the black
+   market) */
+static d_level *keepdogs_dest = (d_level *) 0;
+
+void
+set_keepdogs_dest(d_level *dest)
+{
+    keepdogs_dest = dest;
+}
+
 /* called when you move to another level */
 void
 keepdogs(
@@ -873,6 +884,16 @@ keepdogs(
                 if (canseemon(mtmp))
                     pline("%s seems very disoriented for a moment.",
                           Monnam(mtmp));
+                stay_behind = TRUE;
+            } else if (mtmp->mtame && !pets_only
+                       && (Is_blackmarket(&u.uz)
+                           || (keepdogs_dest
+                               && Is_blackmarket(keepdogs_dest)))) {
+                /* Slash'EM: "Pets are not allowed in the shop" */
+                if (canseemon(mtmp))
+                    pline("%s can't follow you %s.", Monnam(mtmp),
+                          Is_blackmarket(&u.uz) ? "through the portal"
+                                                : "into the black market");
                 stay_behind = TRUE;
             }
             if (stay_behind) {
@@ -1148,7 +1169,7 @@ dogfood(struct monst *mon, struct obj *obj)
         if (obj->otyp == AMULET_OF_STRANGULATION
             || obj->otyp == RIN_SLOW_DIGESTION)
             return TABU;
-        if (mon_hates_silver(mon) && objects[obj->otyp].oc_material == SILVER)
+        if (mon_hates_material(mon, obj->material))
             return TABU;
         if (mptr == &mons[PM_GELATINOUS_CUBE] && is_organic(obj))
             return ACCFOOD;

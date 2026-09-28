@@ -1101,6 +1101,11 @@ magic_negation(struct monst *mon)
         /* a_can field is only applicable for armor (which must be worn) */
         if ((o->owornmask & W_ARMOR) != 0L) {
             armpro = objects[o->otyp].a_can;
+            /* mithril body armor or cloak grants at least MC 2, as the
+               old elven and dwarvish mithril-coats did */
+            if ((o->owornmask & (W_ARM | W_ARMC)) != 0L
+                && o->material == MITHRIL && armpro < 2)
+                armpro = 2;
             if (armpro > mc)
                 mc = armpro;
         } else if ((o->owornmask & W_AMUL) != 0L) {
@@ -1209,6 +1214,23 @@ hitmu(struct monst *mtmp, struct attack *mattk)
         mhm.damage -= rnd(-u.uac);
         if (mhm.damage < 1)
             mhm.damage = 1;
+    }
+
+    /* touch attacks by a monster wearing (or made of) something the hero
+       hates, such as an iron golem's fists against an elf; this comes
+       after the AC damage reduction */
+    if (!mhm.done && (Upolyd ? u.mh : u.uhp) > 0) {
+        long armask = attack_contact_slots(mtmp, mattk->aatyp);
+        struct obj *hated_obj = (struct obj *) 0;
+
+        if (armask) {
+            mhm.damage += special_dmgval(mtmp, &gy.youmonst, armask,
+                                         &hated_obj);
+            if (hated_obj) {
+                searmsg(mtmp, &gy.youmonst, hated_obj, FALSE);
+                exercise(A_CON, FALSE);
+            }
+        }
     }
 
     if (mhm.damage > 0) {
@@ -1865,7 +1887,6 @@ gazemu(struct monst *mtmp, struct attack *mattk)
             }
         }
         break;
-#ifdef PM_BEHOLDER /* work in progress */
     case AD_SLEE:
         if (mcanseeu && gm.multi >= 0 && !rn2(5) && !Sleep_resistance) {
             if (cancelled) {
@@ -1892,7 +1913,108 @@ gazemu(struct monst *mtmp, struct attack *mattk)
             }
         }
         break;
-#endif /* BEHOLDER */
+    /* the following gazes are Slash'EM's (Beholder, babau, rhaumbusun) */
+    case AD_DETH:
+        if (mcanseeu && !mtmp->mspec_used && rn2(4)) {
+            if (cancelled) {
+                react = 2; /* "puzzled" */
+                break;
+            }
+            if (Displaced && rn2(3)) {
+                pline_mon(mtmp, "%s gazes at your displaced image!",
+                          Monnam(mtmp));
+                break;
+            }
+            if ((Invis && rn2(3)) || rn2(4)) {
+                pline_mon(mtmp, "%s gazes around, but misses you!",
+                          Monnam(mtmp));
+                break;
+            }
+            pline_mon(mtmp, "%s gazes directly at you!", Monnam(mtmp));
+            stop_occupation();
+            if (Reflecting && m_canseeu(mtmp)) {
+                (void) ureflects("%s gaze is reflected by your %s.",
+                                 s_suffix(Monnam(mtmp)));
+                if (mon_reflects(mtmp,
+                                 "The gaze is reflected away by %s %s!"))
+                    break;
+                if (resists_magm(mtmp) || nonliving(mtmp->data)) {
+                    shieldeff(mtmp->mx, mtmp->my);
+                    break;
+                }
+                pline_mon(mtmp, "%s is killed by %s own gaze of death!",
+                          Monnam(mtmp), mhis(mtmp));
+                killed(mtmp);
+                if (!DEADMONSTER(mtmp))
+                    break;
+                return M_ATTK_AGR_DIED;
+            } else if (nonliving(gy.youmonst.data)
+                       || is_demon(gy.youmonst.data)) {
+                pline("Was that the gaze of death?");
+            } else if (Antimagic) {
+                shieldeff(u.ux, u.uy);
+                You("shudder momentarily...");
+                monstseesu(M_SEEN_MAGR);
+            } else {
+                urgent_pline("You die...");
+                svk.killer.format = KILLED_BY_AN;
+                Strcpy(svk.killer.name, "gaze of death");
+                done(DIED);
+            }
+        }
+        break;
+    case AD_PHYS:
+        if (mcanseeu && !mtmp->mspec_used && rn2(3)) {
+            if (cancelled) {
+                react = 4; /* "irritated" */
+                break;
+            }
+            if (Displaced && rn2(3)) {
+                pline_mon(mtmp, "%s gazes at your displaced image!",
+                          Monnam(mtmp));
+                break;
+            }
+            if ((Invis && rn2(3)) || rn2(4)) {
+                pline_mon(mtmp, "%s gazes around, but misses you!",
+                          Monnam(mtmp));
+                break;
+            }
+            pline_mon(mtmp, "%s gazes directly at you!", Monnam(mtmp));
+            You("are wracked with pains!");
+            stop_occupation();
+            mdamageu(mtmp, d((int) mattk->damn, (int) mattk->damd));
+        }
+        break;
+    case AD_DRST:
+        if (mcanseeu && !mtmp->mspec_used && rn2(5)) {
+            if (cancelled) {
+                react = 5; /* "inflamed" */
+                break;
+            }
+            pline_mon(mtmp, "%s stares into your eyes...", Monnam(mtmp));
+            stop_occupation();
+            poisoned("gaze", A_STR, pmname(mtmp->data, Mgender(mtmp)), 30,
+                     FALSE);
+        }
+        break;
+    case AD_PLYS:
+        if (mcanseeu && gm.multi >= 0 && !mtmp->mspec_used && rn2(5)) {
+            if (cancelled) {
+                react = 2; /* "puzzled" */
+                break;
+            }
+            pline_mon(mtmp, "%s stares at you!", Monnam(mtmp));
+            if (Free_action) {
+                You("stiffen momentarily.");
+            } else {
+                You("are frozen by %s!", mon_nam(mtmp));
+                gn.nomovemsg = You_can_move_again;
+                nomul(-rnd(4));
+                dynamic_multi_reason(mtmp, "paralyzed", FALSE);
+                exercise(A_DEX, FALSE);
+            }
+        }
+        break;
     default:
         impossible("Gaze attack %d?", mattk->adtyp);
         break;
@@ -2542,7 +2664,8 @@ passiveum(
         return M_ATTK_HIT;
     }
     case AD_ENCH: /* KMH -- remove enchantment (disenchanter) */
-        if (mon_currwep) {
+        /* the weapon might be gone (a glass one that shattered) */
+        if (mon_currwep && mon_currwep == MON_WEP(mtmp)) {
             /* by_you==True: passive counterattack to hero's action
                is hero's fault */
             (void) drain_item(mon_currwep, TRUE);
@@ -2674,5 +2797,31 @@ cloneu(void)
 }
 
 #undef ld
+
+/* Return the worn-item mask of the slots of magr's equipment that touch
+   the target for an attack of type aatyp: hands (gloves or rings), feet,
+   head or torso.  Used with special_dmgval() for materials that the
+   target hates.  Weapon attacks are handled via dmgval() instead. */
+long
+attack_contact_slots(struct monst *magr, int aatyp)
+{
+    struct obj *mwep = (magr == &gy.youmonst) ? uwep : MON_WEP(magr);
+
+    if (aatyp == AT_CLAW || aatyp == AT_TUCH || (aatyp == AT_WEAP && !mwep)
+        || (aatyp == AT_HUGS && hug_throttles(magr->data))) {
+        /* attack with hands; gloves and rings might touch */
+        return W_ARMG | W_RINGL | W_RINGR;
+    }
+    if (aatyp == AT_HUGS) {
+        /* bear hug which is not a strangling attack; gloves and rings
+           might touch, but also all torso slots */
+        return W_ARMG | W_RINGL | W_RINGR | W_ARMC | W_ARM | W_ARMU;
+    }
+    if (aatyp == AT_KICK)
+        return W_ARMF;
+    if (aatyp == AT_BUTT)
+        return W_ARMH;
+    return 0L;
+}
 
 /*mhitu.c*/

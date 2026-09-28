@@ -215,6 +215,9 @@ breakchestlock(struct obj *box, boolean destroyit)
 staticfn int
 forcelock(void)
 {
+    /* a crystal chest's lock is magical and can't be forced */
+    boolean crystal_chest = (gx.xlock.box->material == GLASS);
+
     if ((gx.xlock.box->ox != u.ux) || (gx.xlock.box->oy != u.uy))
         return ((gx.xlock.usedtime = 0)); /* you or it moved */
 
@@ -222,6 +225,9 @@ forcelock(void)
         You("give up your attempt to force the lock.");
         if (gx.xlock.usedtime >= 50) /* you made the effort */
             exercise((gx.xlock.picktyp) ? A_DEX : A_STR, TRUE);
+        if (crystal_chest)
+            pline_The("lock seems to be magical and immune to mundane "
+                      "damage.");
         return ((gx.xlock.usedtime = 0));
     }
 
@@ -231,11 +237,41 @@ forcelock(void)
             return ((gx.xlock.usedtime = 0));
         }
     } else if (gx.xlock.picktyp) { /* blade */
-        if (rn2(1000 - (int) uwep->spe) > (992 - greatest_erosion(uwep) * 10)
-            && !uwep->cursed && !obj_resists(uwep, 0, 99)) {
-            /* for a +0 weapon, probability that it survives an unsuccessful
-             * attempt to force the lock is (.992)^50 = .67
-             */
+        /* for a +0 iron weapon, probability that it survives an
+         * unsuccessful attempt to force the lock is (.992)^50 = .67;
+         * a metal box is more likely to be tougher than the blade, and
+         * the blade's material matters: mithril is very tough, soft
+         * metals and wood are not, and glass is brittle
+         */
+        int threshold = 992 - greatest_erosion(uwep) * 10
+                        - (is_metallic(gx.xlock.box) ? 40 : 0);
+
+        switch (uwep->material) {
+        case MITHRIL:
+            threshold += 6;
+            break;
+        case COPPER:
+            threshold -= 2;
+            break;
+        case SILVER:
+            threshold -= 4;
+            break;
+        case GOLD:
+        case WOOD:
+        case BONE:
+        case PLASTIC:
+        case MINERAL:
+            threshold -= 10;
+            break;
+        case GLASS:
+            threshold -= 40;
+            break;
+        default: /* iron, steel, &c */
+            break;
+        }
+        if (rn2(1000 - (int) uwep->spe) > threshold
+            && !uwep->cursed && !obj_resists(uwep, 0, 99)
+            && !(uwep->material == GLASS && uwep->oerodeproof)) {
             pline("%sour %s broke!", (uwep->quan > 1L) ? "One of y" : "Y",
                   xname(uwep));
             useup(uwep);
@@ -243,10 +279,19 @@ forcelock(void)
             exercise(A_DEX, TRUE);
             return ((gx.xlock.usedtime = 0));
         }
-    } else             /* blunt */
+    } else {           /* blunt */
         wake_nearby(FALSE); /* due to hammering on the container */
+        /* glass weapons crack when used as a hammer */
+        if (is_crackable(uwep) && !rn2(20) && !obj_resists(uwep, 0, 99)) {
+            if (erode_obj(uwep, cxname(uwep), ERODE_CRACK, EF_VERBOSE)
+                == ER_DESTROYED) {
+                You("stop trying to force the lock.");
+                return ((gx.xlock.usedtime = 0));
+            }
+        }
+    }
 
-    if (rn2(100) >= gx.xlock.chance)
+    if (rn2(100) >= gx.xlock.chance || crystal_chest)
         return 1; /* still busy */
 
     You("succeed in forcing the lock.");
@@ -508,7 +553,14 @@ pick_lock(
                         continue; /* try next box */
                 }
 
-                if (otmp->obroken) {
+                if (otmp->material == MINERAL) {
+                    /* stone boxes are closed by a heavy lid, not a lock */
+                    pline("It has no mechanism for you to lock or unlock.");
+                    return PICKLOCK_LEARNED_SOMETHING;
+                } else if (otmp->material == GLASS) {
+                    pline_The("lock here seems magical, not physical.");
+                    return PICKLOCK_LEARNED_SOMETHING;
+                } else if (otmp->obroken) {
                     You_cant("fix its broken lock with %s.",
                              ansimpleoname(pick));
                     return PICKLOCK_LEARNED_SOMETHING;
@@ -1098,7 +1150,9 @@ boxlock(struct obj *obj, struct obj *otmp) /* obj *is* a box */
     switch (otmp->otyp) {
     case WAN_LOCKING:
     case SPE_WIZARD_LOCK:
-        if (!obj->olocked) { /* lock it; fix if broken */
+        /* a stone box has no lock to lock */
+        if (!obj->olocked && obj->material != MINERAL) { /* lock it; fix
+                                                          * if broken */
             Soundeffect(se_klunk, 50);
             pline("Klunk!");
             obj->olocked = 1;
@@ -1331,7 +1385,7 @@ chest_shatter_msg(struct obj *otmp)
     HBlinded = 1L,  BBlinded = 0L;
     thing = singular(otmp, xname);
     HBlinded = save_HBlinded,  BBlinded = save_BBlinded;
-    switch (objects[otmp->otyp].oc_material) {
+    switch (otmp->material) {
     case PAPER:
         disposition = "is torn to shreds";
         break;

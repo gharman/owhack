@@ -2054,7 +2054,13 @@ domove_fight_ironbars(coordxy x, coordxy y)
         struct obj *obj = uwep;
         unsigned breakflags = (BRK_BY_HERO | BRK_FROM_INV | BRK_MELEE);
 
-        if (breaktest(obj)) {
+        if (is_crackable(obj)) {
+            /* a glass weapon cracks, and might shatter, but stays
+               wielded until then */
+            if (crack_glass_obj(obj))
+                return TRUE; /* erode_obj() said it shattered */
+            breakflags |= BRK_KNOWN2NOTBREAK;
+        } else if (breaktest(obj)) {
             if (obj->quan > 1L)
                 obj = splitobj(obj, 1L);
             else

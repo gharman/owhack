@@ -66,7 +66,9 @@ resetobjs(struct obj *ochain, boolean restore)
                restore; other fixups are done while saving */
             if (otmp->oartifact) {
                 if (exist_artifact(otmp->otyp, safe_oname(otmp))
-                    || is_quest_artifact(otmp)) {
+                    || is_quest_artifact(otmp)
+                    /* Slash'EM: artifacts with a set location */
+                    || placed_artifact(otmp)) {
                     /* prevent duplicate--revert to ordinary obj */
                     otmp->oartifact = 0;
                     if (has_oname(otmp))
@@ -77,6 +79,15 @@ resetobjs(struct obj *ochain, boolean restore)
                 }
             } else if (has_oname(otmp)) {
                 sanitize_name(ONAME(otmp));
+            }
+            /* the materials of rings and wands depend on their shuffled
+               descriptions, which differ from game to game, so a ring
+               from the dead hero's game might not be able to be made of
+               its material in this one */
+            if (!valid_obj_material(otmp, otmp->material)) {
+                set_material(otmp, objects[otmp->otyp].oc_material);
+                if (otmp->where == OBJ_CONTAINED)
+                    container_weight(otmp->ocontainer);
             }
             /* 3.6.3: set no_charge for partly eaten food in shop;
                all other items become goods for sale if in a shop */
@@ -169,6 +180,7 @@ resetobjs(struct obj *ochain, boolean restore)
             } else if (otmp->otyp == AMULET_OF_YENDOR) {
                 /* no longer the real Amulet */
                 otmp->otyp = FAKE_AMULET_OF_YENDOR;
+                set_material(otmp, objects[otmp->otyp].oc_material);
                 curse(otmp);
             } else if (otmp->otyp == CANDELABRUM_OF_INVOCATION) {
                 if (otmp->lamplit)
@@ -178,13 +190,18 @@ resetobjs(struct obj *ochain, boolean restore)
                 if (otmp->spe > 0)
                     otmp->quan = (long) otmp->spe;
                 otmp->spe = 0;
+                otmp->material = objects[otmp->otyp].oc_material;
                 otmp->owt = weight(otmp);
                 curse(otmp);
             } else if (otmp->otyp == BELL_OF_OPENING) {
                 otmp->otyp = BELL;
+                /* bell is still silver (a valid material for bells) */
+                if (!valid_obj_material(otmp, otmp->material))
+                    set_material(otmp, objects[otmp->otyp].oc_material);
                 curse(otmp);
             } else if (otmp->otyp == SPE_BOOK_OF_THE_DEAD) {
                 otmp->otyp = SPE_BLANK_PAPER;
+                fixup_obj_material(otmp);
                 curse(otmp);
             }
         }
@@ -406,6 +423,9 @@ remove_mon_from_bones(struct monst *mtmp)
     if (mtmp->iswiz || mptr == &mons[PM_MEDUSA]
         || mptr->msound == MS_NEMESIS || mptr->msound == MS_LEADER
         || is_Vlad(mtmp) /* mptr == &mons[VLAD_THE_IMPALER] || cham == VLAD */
+        /* Slash'EM: the masters of the alignment key quests */
+        || mptr == &mons[PM_NIGHTMARE] || mptr == &mons[PM_BEHOLDER]
+        || mptr == &mons[PM_VECNA]
         || (mptr == &mons[PM_ORACLE] && !fixuporacle(mtmp)))
         mongone(mtmp);
 }

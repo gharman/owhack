@@ -5,7 +5,9 @@
 
 #include "hack.h"
 #include "artifact.h"
+#define ARTI_MATERIALS
 #include "artilist.h"
+#undef ARTI_MATERIALS
 
 #ifndef SFCTOOL
 
@@ -43,6 +45,8 @@ staticfn int invoke_banish(struct obj *) NONNULLARG1;
 staticfn int invoke_fling_poison(struct obj *) NONNULLARG1;
 staticfn int invoke_storm_spell(struct obj *) NONNULLARG1;
 staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
+staticfn int invoke_death_gaze(struct obj *) NONNULLARG1;
+staticfn int invoke_summon_undead(struct obj *) NONNULLARG1;
 staticfn int arti_invoke_cost_pw(struct obj *) NONNULLARG1;
 staticfn boolean arti_invoke_cost(struct obj *) NONNULLARG1;
 staticfn int arti_invoke(struct obj *);
@@ -560,7 +564,7 @@ shade_glare(struct obj *obj)
     const struct artifact *arti;
 
     /* any silver object is effective */
-    if (objects[obj->otyp].oc_material == SILVER)
+    if (obj->material == SILVER)
         return TRUE;
     /* non-silver artifacts with bonus against undead also are effective */
     arti = get_artifact(obj);
@@ -916,6 +920,9 @@ touch_artifact(struct obj *obj, struct monst *mon)
     touch_blasted = FALSE;
     if (oart == &artilist[ART_NONARTIFACT])
         return 1;
+    /* Slash'EM: Thiefbane has a special affinity with shopkeepers */
+    if (mon != &gy.youmonst && mon->isshk && obj->oartifact == ART_THIEFBANE)
+        return 1;
 
     yours = (mon == &gy.youmonst);
     /* all quest artifacts are self-willed; if this ever changes, `badclass'
@@ -954,9 +961,11 @@ touch_artifact(struct obj *obj, struct monst *mon)
         You("are blasted by %s power!", s_suffix(the(xname(obj))));
         touch_blasted = TRUE;
         dmg = d((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
-        /* add half (maybe quarter) of the usual silver damage bonus */
-        if (objects[obj->otyp].oc_material == SILVER && Hate_silver)
-            tmp = rnd(10), dmg += Maybe_Half_Phys(tmp);
+        /* add half (maybe quarter) of the usual silver (or other hated
+           material) damage bonus */
+        if (Hate_material(obj->material))
+            tmp = rnd(sear_damage(obj->material) / 2),
+            dmg += Maybe_Half_Phys(tmp);
         Sprintf(buf, "touching %s", oart->name);
         losehp(dmg, buf, KILLED_BY); /* magic damage, not physical */
         exercise(A_WIS, FALSE);
@@ -2056,7 +2065,9 @@ invoke_create_portal(struct obj *obj)
         newlev.dlevel = svd.dungeons[i].dunlev_ureached;
 
     if (u.uhave.amulet || In_endgame(&u.uz) || In_endgame(&newlev)
-        || newlev.dnum == u.uz.dnum || !next_to_u()) {
+        || newlev.dnum == u.uz.dnum || !next_to_u()
+        /* Slash'EM: One-eyed Sam doesn't let shoppers slip away */
+        || (Is_blackmarket(&u.uz) && *u.ushops)) {
         You_feel("very disoriented for a moment.");
     } else {
         if (!Blind)
@@ -2223,6 +2234,104 @@ invoke_blinding_ray(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* Slash'EM: artifacts that have a set location in the extra special
+   levels (One-eyed Sam's sword and the key quest relics); these can't be
+   wished for and don't survive into bones */
+boolean
+placed_artifact(struct obj *obj)
+{
+    return (boolean) (obj->oartifact == ART_THIEFBANE
+                      || obj->oartifact == ART_NIGHTHORN
+                      || obj->oartifact == ART_EYE_OF_THE_BEHOLDER
+                      || obj->oartifact == ART_HAND_OF_VECNA);
+}
+
+/* Slash'EM: the Eye of the Beholder glares at everything in view */
+staticfn int
+invoke_death_gaze(struct obj *obj UNUSED)
+{
+    struct monst *mtmp;
+    int unseen = 0;
+
+    if (u.uluck < -9) {
+        pline_The("Eye turns on you!");
+        u.uhp = 0;
+        svk.killer.format = KILLED_BY;
+        Strcpy(svk.killer.name, "the Eye of the Beholder");
+        done(DIED);
+        /* lifesaved */
+        return ECMD_TIME;
+    }
+    pline_The("Eye looks around with its icy gaze!");
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+        /* the Eye is never blind... */
+        if (couldsee(mtmp->mx, mtmp->my) && !is_undead(mtmp->data)) {
+            if (canspotmon(mtmp))
+                pline_mon(mtmp, "%s screams in agony!", Monnam(mtmp));
+            else
+                unseen++;
+            mtmp->mhp /= 3;
+            if (mtmp->mhp < 1)
+                mtmp->mhp = 1;
+            if (!mtmp->mpeaceful || !rn2(2))
+                wakeup(mtmp, TRUE);
+        }
+    }
+    if (unseen)
+        You_hear("%s of intense pain!", unseen > 1 ? "cries" : "a cry");
+    /* Tsk, tsk.. */
+    adjalign(-3);
+    change_luck(-3);
+    return ECMD_TIME;
+}
+
+/* Slash'EM: the Hand of Vecna calls up creatures from the grave */
+staticfn int
+invoke_summon_undead(struct obj *obj UNUSED)
+{
+    int summon_loop;
+
+    if (u.uluck < -9) {
+        pline_The("Hand claws you with its icy nails!");
+        losehp(rn2(20) + 5, "the Hand of Vecna", KILLED_BY);
+        if (u.uhp < 1)
+            return ECMD_TIME;
+    }
+    summon_loop = rn2(4) + 4;
+    pline("Creatures from the grave surround you!");
+    do {
+        struct permonst *pm;
+        struct monst *mtmp;
+
+        switch (rnd(6)) {
+        case 1:
+            pm = mkclass(S_VAMPIRE, 0);
+            break;
+        case 2:
+        case 3:
+            pm = mkclass(S_ZOMBIE, 0);
+            break;
+        case 4:
+            pm = mkclass(S_MUMMY, 0);
+            break;
+        case 5:
+            pm = mkclass(S_GHOST, 0);
+            break;
+        default:
+            pm = mkclass(S_WRAITH, 0);
+            break;
+        }
+        if (pm && (mtmp = makemon(pm, u.ux, u.uy, NO_MM_FLAGS)) != 0)
+            (void) tamedog(mtmp, (struct obj *) 0, FALSE);
+    } while (--summon_loop > 0);
+    /* Tsk, tsk.. */
+    adjalign(-3);
+    change_luck(-3);
+    return ECMD_TIME;
+}
+
 /* return the amount of Pw invoking an object costs.
    return a negative value, if obj invoking cannot be paid with Pw */
 staticfn int
@@ -2315,6 +2424,8 @@ arti_invoke(struct obj *obj)
             /*FALLTHRU*/
         case FIRESTORM: res = invoke_storm_spell(obj); break;
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
+        case DEATH_GAZE: res = invoke_death_gaze(obj); break;
+        case SUMMON_UNDEAD: res = invoke_summon_undead(obj); break;
         case SUMMON_FIRE_ELEMENTAL:
         case SUMMON_WATER_ELEMENTAL:
             res = invoke_summon_elemental(obj);
@@ -2452,6 +2563,20 @@ artifact_has_invprop(struct obj *otmp, uchar inv_prop)
 
     return (boolean) ((arti != &artilist[ART_NONARTIFACT])
                       && (arti->inv_prop == inv_prop));
+}
+
+/* the material that artifact #artinum is made of, or 0 (NO_MATERIAL) for
+   "whatever its base object is made of" (artimaterials[] in artilist.h) */
+int
+artifact_material(int artinum)
+{
+    int i;
+
+    if (artinum > 0 && artinum < AFTER_LAST_ARTIFACT)
+        for (i = 0; artimaterials[i].artinum; ++i)
+            if (artimaterials[i].artinum == artinum)
+                return (int) artimaterials[i].material;
+    return NO_MATERIAL;
 }
 
 /* Return the price sold to the hero of a given artifact or unique item */
@@ -2659,6 +2784,18 @@ retouch_object(
     struct obj **objp, /* might be destroyed or unintentionally dropped */
     boolean loseit)    /* whether to drop it if hero can longer touch it */
 {
+    return retouch_object_prot(objp, loseit, FALSE);
+}
+
+/* retouch_object() for an object that the hero's gear might keep from
+   touching skin (gloves when wielding, body armor under a cloak) */
+int
+retouch_object_prot(
+    struct obj **objp, /* might be destroyed or unintentionally dropped */
+    boolean loseit,    /* whether to drop it if hero can longer touch it */
+    boolean protected_by_gear) /* hero's gear keeps obj from touching skin,
+                                * so a hated material doesn't matter */
+{
     struct obj *obj = *objp;
 
     /* allow hero in silver-hating form to try to perform invocation ritual */
@@ -2668,44 +2805,63 @@ retouch_object(
     }
 
     if (touch_artifact(obj, &gy.youmonst)) {
-        char buf[BUFSZ];
+        char buf[BUFSZ], whatbuf[BUFSZ];
         int dmg = 0, tmp;
-        boolean ag = (objects[obj->otyp].oc_material == SILVER && Hate_silver),
+        boolean hatemat = Hate_material(obj->material),
+                ag = (hatemat && obj->material == SILVER),
                 bane = bane_applies(get_artifact(obj), &gy.youmonst);
 
         /* nothing else to do if hero can successfully handle this object */
-        if (!ag && !bane)
+        if (!hatemat && !bane)
+            return 1;
+        /* or if hero's gear keeps it from touching skin (gloves when
+           wielding, &c) and it's only the material that's a problem */
+        if (!bane && protected_by_gear)
             return 1;
 
         /* hero can't handle this object, but didn't get touch_artifact()'s
-           "<obj> evades your grasp|control" message; give an alternate one */
-        You_cant("handle %s%s!", yname(obj),
-                 obj->owornmask ? " anymore" : "");
+           "<obj> evades your grasp|control" message; give an alternate
+           one; only silver is unbearable, other hated materials (cold
+           iron for elves) merely hurt and the object can still be used */
+        if (ag || bane)
+            You_cant("handle %s%s!", yname(obj),
+                     obj->owornmask ? " anymore" : "");
+        else
+            pline_The("%s of %s hurts to touch!", materialnm[obj->material],
+                      yname(obj));
         /* also inflict damage unless touch_artifact() already did so */
         if (!touch_blasted) {
             const char *what = killer_xname(obj);
 
-            if (ag && !obj->oartifact && !bane) {
-                /* 'obj' is silver; for rings and wands it ended up that
-                   way due to randomization at start of game; showing this
-                   game's silver item without stating that it is silver
-                   potentially leads to confusion about cause of death */
-                if (obj->oclass == RING_CLASS)
-                    what = "a silver ring";
-                else if (obj->oclass == WAND_CLASS)
-                    what = "a silver wand";
+            if (hatemat && !obj->oartifact && !bane) {
+                /* 'obj' is silver (or iron); for rings and wands it ended
+                   up that way due to randomization at start of game;
+                   showing this game's silver item without stating that it
+                   is silver potentially leads to confusion about cause of
+                   death */
+                if (obj->oclass == RING_CLASS || obj->oclass == WAND_CLASS) {
+                    Sprintf(whatbuf, "%s", materialnm[obj->material]);
+                    Strcat(whatbuf, (obj->oclass == RING_CLASS) ? " ring"
+                                                                : " wand");
+                    what = an(whatbuf);
+                }
                 /* for anything else, stick with killer_xname() */
             }
             /* damage is somewhat arbitrary; half the usual 1d20 physical
-               for silver, 1d10 magical for <foo>bane, potentially both */
-            if (ag)
-                tmp = rnd(10), dmg += Maybe_Half_Phys(tmp);
+               for silver (1d3 for cold iron), 1d10 magical for <foo>bane,
+               potentially both */
+            if (hatemat)
+                tmp = rnd(sear_damage(obj->material) / 2),
+                dmg += Maybe_Half_Phys(tmp);
             if (bane)
                 dmg += rnd(10);
             Sprintf(buf, "handling %s", what);
             losehp(dmg, buf, KILLED_BY);
             exercise(A_CON, FALSE);
         }
+        /* hated but bearable material: the hero keeps using it */
+        if (!ag && !bane)
+            return 1;
     }
 
     /* removing a worn item might result in loss of levitation,
@@ -2771,7 +2927,9 @@ untouchable(
     }
 
     if (beingworn || carryeffect || invoked) {
-        if (!retouch_object(&obj, drop_untouchable)) {
+        if (!retouch_object_prot(&obj, drop_untouchable,
+                                 !will_touch_skin(obj->owornmask
+                                                  & wearmask))) {
             /* "<artifact> is beyond your control" or "you can't handle
                <object>" has been given and it is now unworn/unwielded
                and possibly dropped (depending upon caller); if dropped,

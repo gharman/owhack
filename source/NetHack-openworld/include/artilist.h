@@ -212,6 +212,30 @@ static NEARDATA struct artifact artilist[] = {
       0, 6, 1500L, NO_COLOR, SUNSWORD),
 
     /*
+     *      Slash'EM artifacts guarded in the extra special levels:
+     *      One-eyed Sam's sword, and the relics left by the masters of
+     *      the three alignment key quests.  None is ever generated
+     *      at random or wishable.
+     */
+    A("Thiefbane", LONG_SWORD,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_BEHEAD | SPFX_DCLAS | SPFX_DRLI), 0,
+      S_HUMAN, DRLI(5, 1), NO_DFNS, NO_CARY, 0, A_CHAOTIC, NON_PM, NON_PM,
+      0, 12, 1500L, CLR_RED, THIEFBANE),
+
+    A("Nighthorn", UNICORN_HORN, (SPFX_NOGEN | SPFX_RESTR | SPFX_REFLECT), 0,
+      0, NO_ATTK, NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM,
+      0, 12, 10000L, NO_COLOR, NIGHTHORN),
+
+    A("The Eye of the Beholder", EYEBALL, (SPFX_NOGEN | SPFX_RESTR), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, DEATH_GAZE, A_NEUTRAL, NON_PM, NON_PM,
+      0, 12, 500L, NO_COLOR, EYE_OF_THE_BEHOLDER),
+
+    A("The Hand of Vecna", SEVERED_HAND, (SPFX_NOGEN | SPFX_RESTR),
+      (SPFX_REGEN | SPFX_HPHDAM), 0, NO_ATTK, DRLI(0, 0), CARY(AD_COLD),
+      SUMMON_UNDEAD, A_CHAOTIC, NON_PM, NON_PM,
+      0, 12, 700L, NO_COLOR, HAND_OF_VECNA),
+
+    /*
      *      Role gifts for the Slash'EM roles (as Hack'EM assigns them).
      *      Serpent's Tongue poisons whatever it hits (artifact.c);
      *      Firewall and Deep Freeze are Hack'EM's elemental staves: they
@@ -380,5 +404,29 @@ static NEARDATA struct artifact artilist[] = {
 #undef ELEC
 #undef STUN
 #endif
+
+#ifdef ARTI_MATERIALS
+/*
+ * Artifacts made of something other than the default material of their
+ * base object type (see "Materials" in objclass.h).  Any artifact that is
+ * created at random, wished for, bestowed or dipped for gets the material
+ * listed here, or else its base type's default material; an artifact made
+ * by naming an ordinary object keeps that object's material unless it is
+ * listed here.  Add artifacts here in any order; entries whose material is
+ * the default one just document that the material is part of what the
+ * artifact is.
+ */
+static const struct arti_material {
+    short artinum;
+    uchar material;
+} artimaterials[] = {
+    { ART_DEMONBANE, SILVER },
+    { ART_WEREBANE, SILVER },
+    { ART_GRAYSWANDIR, SILVER },
+    { ART_SCEPTRE_OF_MIGHT, GOLD },
+    { ART_YENDORIAN_EXPRESS_CARD, PLATINUM },
+    { 0, 0 } /* terminator */
+};
+#endif /* ARTI_MATERIALS */
 
 /*artilist.h*/

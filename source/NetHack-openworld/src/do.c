@@ -1664,8 +1664,11 @@ goto_level(
     set_ustuck((struct monst *) 0); /* clear u.ustuck and u.uswallow */
     set_uinwater(0); /* u.uinwater = 0 */
     u.uundetected = 0; /* not hidden, even if means are available */
-    if (!iflags.nofollowers)
+    if (!iflags.nofollowers) {
+        set_keepdogs_dest(newlevel);
         keepdogs(FALSE);
+        set_keepdogs_dest((d_level *) 0);
+    }
     recalc_mapseen(); /* recalculate map overview before we leave the level */
     /*
      *  We no longer see anything on the level.  Make sure that this
@@ -1996,6 +1999,10 @@ goto_level(
     } else if (In_mines(&u.uz)) {
         if (newdungeon)
             record_achievement(ACH_MINE);
+    } else if (In_goblintown(&u.uz)) {
+        /* EvilHack */
+        if (newdungeon && new && dunlev(&u.uz) == 1)
+            You("have entered Goblin Town, the lair of the Goblin King.");
     } else if (In_sokoban(&u.uz)) {
         if (newdungeon)
             record_achievement(ACH_SOKO);

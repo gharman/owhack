@@ -147,6 +147,10 @@ struct obj {
     Bitfield(how_lost, 3);  /* stolen by mon or thrown, dropped by hero, etc */
 
     Bitfield(named_how, 1);  /* source of name per TODO in resetobjs() */
+    Bitfield(material, 5);   /* what this object is made of (one of
+                              * obj_material_types in objclass.h); normally
+                              * objects[otyp].oc_material but can differ;
+                              * change it with set_material() */
     Bitfield(altmode, 1); /* double lightsaber: both blades are lit */
     Bitfield(oarmed, 1);  /* bomb: its fuse is burning */
     Bitfield(yours, 1);   /* bomb: armed by the hero */
@@ -155,10 +159,9 @@ struct obj {
     Bitfield(eknown, 1); /* effect known for wands zapped or rings worn when
                           * not seen yet after being picked up while blind
                           * [maybe for remaining stack of used potion too] */
-    /* 2 free bits */
-#else
-    /* 3 free bits */
 #endif
+    /* the three lightsaber and bomb bits above start a new word of
+       bitfields: 29 free bits after them */
 
     int corpsenm;         /* type of corpse is mons[corpsenm] */
 #define leashmon corpsenm /* gets m_id of attached pet */
@@ -275,9 +278,8 @@ struct obj {
 /* 'missile' aspect is up to the caller and does not imply is_missile();
    rings might be launched as missiles when being scattered by an explosion */
 #define stone_missile(o) \
-    ((objects[(o)->otyp].oc_material == GEMSTONE             \
-             || (objects[(o)->otyp].oc_material == MINERAL))        \
-         && (o)->oclass != RING_CLASS)
+    (((o)->material == GEMSTONE || (o)->material == MINERAL) \
+     && (o)->oclass != RING_CLASS)
 
 /* Armor */
 #define is_shield(otmp)          \
@@ -301,7 +303,7 @@ struct obj {
     (otmp->oclass == ARMOR_CLASS && objects[otmp->otyp].oc_armcat == ARM_SUIT)
 #define is_elven_armor(otmp)                                              \
     ((otmp)->otyp == ELVEN_LEATHER_HELM                                   \
-     || (otmp)->otyp == ELVEN_MITHRIL_COAT || (otmp)->otyp == ELVEN_CLOAK \
+     || (otmp)->otyp == ELVEN_CHAIN_MAIL || (otmp)->otyp == ELVEN_CLOAK   \
      || (otmp)->otyp == ELVEN_SHIELD || (otmp)->otyp == ELVEN_BOOTS)
 #define is_orcish_armor(otmp)                                            \
     ((otmp)->otyp == ORCISH_HELM || (otmp)->otyp == ORCISH_CHAIN_MAIL    \
@@ -309,7 +311,7 @@ struct obj {
      || (otmp)->otyp == URUK_HAI_SHIELD || (otmp)->otyp == ORCISH_SHIELD)
 #define is_dwarvish_armor(otmp)               \
     ((otmp)->otyp == DWARVISH_IRON_HELM       \
-     || (otmp)->otyp == DWARVISH_MITHRIL_COAT \
+     || (otmp)->otyp == DWARVISH_CHAIN_MAIL   \
      || (otmp)->otyp == DWARVISH_CLOAK        \
      || (otmp)->otyp == DWARVISH_ROUNDSHIELD)
 #define is_gnomish_armor(otmp) (FALSE)
@@ -427,8 +429,7 @@ struct obj {
 
 /* misc helpers, simple enough to be macros */
 #define is_flimsy(otmp)                           \
-    (objects[(otmp)->otyp].oc_material <= LEATHER \
-     || (otmp)->otyp == RUBBER_HOSE)
+    ((otmp)->material <= LEATHER || (otmp)->otyp == RUBBER_HOSE)
 #define is_plural(o) \
     ((o)->quan != 1L                                                    \
      /* "the Eyes of the Overworld" are plural, but                     \

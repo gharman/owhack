@@ -824,6 +824,9 @@ m_dowear_type(
     best = old;
 
     for (obj = mon->minvent; obj; obj = obj->nobj) {
+        /* monsters won't put on things made of a material they hate */
+        if (mon_hates_material(mon, obj->material))
+            continue;
         switch (flag) {
         case W_AMUL:
             if (obj->oclass != AMULET_CLASS

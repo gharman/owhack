@@ -75,6 +75,8 @@ enum invoke_prop_types {
     FIRESTORM,
     SNOWSTORM,
     BLINDING_RAY,
+    DEATH_GAZE,    /* Slash'EM: the Eye of the Beholder */
+    SUMMON_UNDEAD, /* Slash'EM: the Hand of Vecna */
     SUMMON_FIRE_ELEMENTAL,  /* Candle of Eternal Flame */
     SUMMON_WATER_ELEMENTAL, /* Storm Whistle: a creature of the storm */
     CONJURE_SPHERE          /* Firewall, Deep Freeze: elemental spheres */

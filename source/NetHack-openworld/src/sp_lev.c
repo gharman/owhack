@@ -118,6 +118,10 @@ staticfn int get_table_montype(lua_State *, int *);
 staticfn lua_Integer get_table_int_or_random(lua_State *, const char *, int);
 staticfn int get_table_buc(lua_State *);
 staticfn int find_objtype(lua_State *, const char *, char);
+staticfn int get_table_material(lua_State *);
+/* material implied by the last object name find_objtype() matched (for
+   old names like "elven mithril-coat"); only used within lspo_object() */
+static int sp_legacy_material = NO_MATERIAL;
 staticfn const char *get_mkroom_name(int) NONNULL;
 staticfn int get_table_roomtype_opt(lua_State *, const char *, int);
 staticfn int get_table_traptype_opt(lua_State *, const char *, int);
@@ -228,19 +232,19 @@ mapfrag_fromstr(char *str)
 {
     struct mapfragment *mf = (struct mapfragment *) alloc(sizeof *mf);
 
-    char *tmps;
+    char *tmps, *raw, *out;
 
-    mf->data = dupstr(str);
+    raw = dupstr(str);
 
-    (void) stripdigits(mf->data);
-    mf->wid = str_lines_maxlen(mf->data);
+    (void) stripdigits(raw);
+    mf->wid = str_lines_maxlen(raw);
     mf->hei = 0;
-    tmps = mf->data;
+    tmps = raw;
     while (tmps && *tmps) {
         char *s1 = strchr(tmps, '\n');
 
         if (mf->hei > MAP_Y_LIM) {
-            free(mf->data);
+            free(raw);
             free(mf);
             return NULL;
         }
@@ -249,6 +253,22 @@ mapfrag_fromstr(char *str)
         tmps = s1;
         mf->hei++;
     }
+    /* mapfrag_get() indexes the data as a rectangle, so pad any short
+       lines (such as ones that lost their trailing spaces) with rock */
+    mf->data = out = (char *) alloc((mf->wid + 1) * mf->hei + 1);
+    tmps = raw;
+    while (tmps && *tmps) {
+        char *s1 = strchr(tmps, '\n');
+        int len = s1 ? (int) (s1 - tmps) : (int) strlen(tmps);
+
+        (void) memcpy(out, tmps, len);
+        (void) memset(out + len, ' ', mf->wid - len);
+        out += mf->wid;
+        *out++ = '\n';
+        tmps = s1 ? s1 + 1 : (char *) 0;
+    }
+    *out = '\0';
+    free(raw);
     return mf;
 }
 
@@ -2284,11 +2304,42 @@ create_object(object *o, struct mkroom *croom)
     }
     if (o->recharged)
         otmp->recharged = (o->recharged % 8);
+    /* a specific material requested by the level file */
+    if (o->material != NO_MATERIAL && otmp->material != o->material) {
+        if (valid_obj_material(otmp, o->material))
+            set_material(otmp, o->material);
+        else
+            impossible("des.object: %s can't be made of %s",
+                       simpleonames(otmp), materialnm[o->material]);
+    }
     if (o->locked == 0 || o->locked == 1) {
         otmp->olocked = o->locked;
+        if (Is_box(otmp)) {
+            /* stone boxes have no lock and crystal ones are always
+               (magically) locked; if the box only randomly got such a
+               material, give it its usual one instead, otherwise the
+               level designer's material wins over the lock state */
+            if (otmp->material == MINERAL && o->locked == 1) {
+                if (o->material == NO_MATERIAL)
+                    set_material(otmp, objects[otmp->otyp].oc_material);
+                else
+                    otmp->olocked = 0;
+            }
+            if (otmp->material == GLASS && o->locked == 0) {
+                if (o->material == NO_MATERIAL)
+                    set_material(otmp, objects[otmp->otyp].oc_material);
+                else
+                    otmp->olocked = 1;
+            }
+        }
     } else if (o->broken) {
-        otmp->obroken = 1;
-        otmp->olocked = 0; /* obj generation may set */
+        if (Is_box(otmp)
+            && (otmp->material == MINERAL || otmp->material == GLASS)) {
+            otmp->obroken = 0;
+        } else {
+            otmp->obroken = 1;
+            otmp->olocked = 0; /* obj generation may set */
+        }
     }
     if (o->trapped == 0 || o->trapped == 1)
         otmp->otrapped = o->trapped;
@@ -3468,6 +3519,7 @@ get_table_objclass(lua_State *L)
 staticfn int
 find_objtype(lua_State *L, const char *s, char oclass)
 {
+    sp_legacy_material = NO_MATERIAL;
     if (s && *s) {
         int i;
         const char *objname;
@@ -3524,6 +3576,21 @@ find_objtype(lua_State *L, const char *s, char oclass)
          *  level description but "gray stone" is not....
          */
 
+        /* names of former objects such as "elven mithril-coat" or of
+           objects that were renamed when they gained materials, such as
+           "dwarvish iron helm"; the implied material is picked up by
+           lspo_object() */
+        {
+            int legmat = NO_MATERIAL,
+                legtyp = legacy_objname_material(s, &legmat);
+
+            if (legtyp != STRANGE_OBJECT
+                && (!class || class == objects[legtyp].oc_class)) {
+                sp_legacy_material = legmat;
+                return legtyp;
+            }
+        }
+
         /* find by object description */
         for (i = 0; i < NUM_OBJECTS; i++) {
             objname = OBJ_DESCR(objects[i]);
@@ -3534,6 +3601,32 @@ find_objtype(lua_State *L, const char *s, char oclass)
         nhl_error(L, "Unknown object id");
     }
     return STRANGE_OBJECT;
+}
+
+/* material = "mithril" (etc) in des.object(); NO_MATERIAL if absent */
+staticfn int
+get_table_material(lua_State *L)
+{
+    static const struct { const char *nm; int mat; } matsyn[] = {
+        { "wood", WOOD }, { "metal", STEEL }, { "stone", MINERAL },
+        { "crystal", GLASS }, { "bronze", COPPER }, { "brass", COPPER },
+        { "dragon hide", DRAGON_HIDE }, { "dragonhide", DRAGON_HIDE },
+    };
+    char *s = get_table_str_opt(L, "material", (char *) 0);
+    int i, mat = NO_MATERIAL;
+
+    if (!s)
+        return NO_MATERIAL;
+    for (i = NO_MATERIAL + 1; i < NUM_MATERIAL_TYPES; ++i)
+        if (!strcmpi(s, materialnm[i]))
+            mat = i;
+    for (i = 0; mat == NO_MATERIAL && i < SIZE(matsyn); ++i)
+        if (!strcmpi(s, matsyn[i].nm))
+            mat = matsyn[i].mat;
+    Free(s);
+    if (mat == NO_MATERIAL)
+        nhl_error(L, "Unknown material");
+    return mat;
 }
 
 int
@@ -3570,6 +3663,7 @@ lspo_object(lua_State *L)
             0,       /* lit */
             0, 0, 0, 0, 0, /* eroded, locked, trapped, tknown, recharged */
             0, 0, 0, 0, /* invis, greased, broken, achievement */
+            0,       /* material */
     };
 #if 0
     int nparams = 0;
@@ -3647,6 +3741,7 @@ lspo_object(lua_State *L)
         tmpobj.greased = get_table_boolean_opt(L, "greased", 0);
         tmpobj.broken = get_table_boolean_opt(L, "broken", 0);
         tmpobj.achievement = get_table_boolean_opt(L, "achievement", 0);
+        tmpobj.material = get_table_material(L);
 
         get_table_xy_or_coord(L, &ox, &oy);
 
@@ -3659,6 +3754,12 @@ lspo_object(lua_State *L)
         tmpobj.coord = SP_COORD_PACK_RANDOM(0);
     else
         tmpobj.coord = SP_COORD_PACK(ox, oy);
+
+    /* an old object name such as "elven mithril-coat" implies a material */
+    if (tmpobj.material == NO_MATERIAL && sp_legacy_material
+        && tmpobj.id > STRANGE_OBJECT)
+        tmpobj.material = sp_legacy_material;
+    sp_legacy_material = NO_MATERIAL;
 
     if (tmpobj.class == -1 && tmpobj.id > STRANGE_OBJECT)
         tmpobj.class = objects[tmpobj.id].oc_class;
@@ -3935,7 +4036,16 @@ lspo_engraving(lua_State *L)
         ecoord = SP_COORD_PACK(x, y);
 
     get_location_coord(&x, &y, DRY, gc.coder->croom, ecoord);
-    make_engr_at(x, y, txt, NULL, 0L, etyp);
+    /* a random "dry" spot can be air or cloud, which can't hold an
+       engraving; try for another one */
+    if (ecoord == SP_COORD_PACK_RANDOM(0)) {
+        int tries;
+
+        for (tries = 0; tries < 100 && IS_AIR(levl[x][y].typ); tries++)
+            get_location_coord(&x, &y, DRY, gc.coder->croom, ecoord);
+    }
+    if (!IS_AIR(levl[x][y].typ))
+        make_engr_at(x, y, txt, NULL, 0L, etyp);
     Free(txt);
     ep = engr_at(x, y);
     if (ep) {
@@ -3994,6 +4104,7 @@ static const struct {
     { "book shop", BOOKSHOP },
     { "health food shop", FODDERSHOP },
     { "candle shop", CANDLESHOP },
+    { "black market", BLACKSHOP },
     { 0, 0 }
 };
 

@@ -167,6 +167,11 @@ m_initweap(struct monst *mtmp)
 
     if (Is_rogue_level(&u.uz))
         return;
+    /* EvilHack: the goblins' prisoners in Goblin Town have been disarmed */
+    if (In_goblintown(&u.uz)
+        && (is_gnome(ptr) || is_dwarf(ptr) || is_elf(ptr)
+            || ptr == &mons[PM_HOBBIT]))
+        return;
     /*
      *  First a few special cases:
      *          giants get a boulder to throw sometimes
@@ -241,9 +246,14 @@ m_initweap(struct monst *mtmp)
             otmp->spe = rn1(3, 3);
             (void) mpickobj(mtmp, otmp);
         } else if (is_elf(ptr)) {
-            if (rn2(2))
-                (void) mongets(mtmp,
-                               rn2(2) ? ELVEN_MITHRIL_COAT : ELVEN_CLOAK);
+            if (rn2(2)) {
+                /* elves who used to get an elven mithril-coat get mithril
+                   elven chain mail */
+                if (rn2(2))
+                    (void) mongets_mat(mtmp, ELVEN_CHAIN_MAIL, MITHRIL);
+                else
+                    (void) mongets(mtmp, ELVEN_CLOAK);
+            }
             if (rn2(2))
                 (void) mongets(mtmp, ELVEN_LEATHER_HELM);
             else if (!rn2(4))
@@ -399,8 +409,8 @@ m_initweap(struct monst *mtmp)
                 m_initthrow(mtmp, !rn2(4) ? FLINT : ROCK, 6);
                 break;
             }
-            if (!rn2(10))
-                (void) mongets(mtmp, ELVEN_MITHRIL_COAT);
+            if (!rn2(10)) /* hobbits: Bilbo's mithril shirt */
+                (void) mongets_mat(mtmp, ELVEN_CHAIN_MAIL, MITHRIL);
             if (!rn2(10))
                 (void) mongets(mtmp, DWARVISH_CLOAK);
         } else if (is_dwarf(ptr)) {
@@ -418,8 +428,10 @@ m_initweap(struct monst *mtmp)
                     (void) mongets(mtmp, DWARVISH_ROUNDSHIELD);
                 }
                 (void) mongets(mtmp, DWARVISH_IRON_HELM);
+                /* dwarves who used to get a dwarvish mithril-coat get
+                   mithril dwarvish chain mail */
                 if (!rn2(3))
-                    (void) mongets(mtmp, DWARVISH_MITHRIL_COAT);
+                    (void) mongets_mat(mtmp, DWARVISH_CHAIN_MAIL, MITHRIL);
             } else {
                 (void) mongets(mtmp, !rn2(3) ? PICK_AXE : DAGGER);
             }
@@ -434,10 +446,13 @@ m_initweap(struct monst *mtmp)
             (void) mongets(mtmp, (rn2(2)) ? CLUB : RUBBER_HOSE);
         break;
     case S_ORC:
-        if (rn2(2))
+        if (mm != PM_GOBLIN_KING && rn2(2))
             (void) mongets(mtmp, ORCISH_HELM);
         switch ((mm != PM_ORC_CAPTAIN) ? mm
                 : rn2(2) ? PM_MORDOR_ORC : PM_URUK_HAI) {
+        case PM_GOBLIN_KING: /* EvilHack: his bone staff */
+            (void) mongets(mtmp, QUARTERSTAFF);
+            break;
         case PM_MORDOR_ORC:
             if (!rn2(3))
                 (void) mongets(mtmp, SCIMITAR);
@@ -550,6 +565,22 @@ m_initweap(struct monst *mtmp)
         FALLTHROUGH;
         /*FALLTHRU*/
     default:
+        if (mm == PM_GNOLL) {
+            /* Slash'EM: gnolls come armored, with polearms or spears */
+            if (!rn2(3))
+                (void) mongets(mtmp, ORCISH_HELM);
+            if (!rn2(3))
+                (void) mongets(mtmp, rn2(2) ? STUDDED_LEATHER_ARMOR
+                                            : LEATHER_ARMOR);
+            if (!rn2(3))
+                (void) mongets(mtmp, ORCISH_SHIELD);
+            if (!rn2(2))
+                (void) mongets(mtmp, !rn2(3) ? BARDICHE
+                                     : rn2(2) ? VOULGE : HALBERD);
+            else if (!rn2(2))
+                (void) mongets(mtmp, SPEAR);
+            break;
+        }
         /*
          * Now the general case, some chance of getting some type
          * of weapon for "normal" monsters.  Certain special types
@@ -862,6 +893,12 @@ m_initinv(struct monst *mtmp)
                 otmp->owt = weight(otmp);
             }
             (void) mpickobj(mtmp, otmp);
+        }
+        if (ptr == &mons[PM_DOCTOR_FRANKENSTEIN]) {
+            /* Slash'EM: his lab coat (an apron here) and his research */
+            (void) mongets(mtmp, ALCHEMY_SMOCK);
+            (void) mongets(mtmp, WAN_POLYMORPH);
+            (void) mongets(mtmp, SPE_POLYMORPH);
         }
         break;
     case S_LEPRECHAUN:
@@ -1407,6 +1444,8 @@ makemon(
     case S_NYMPH:
         if (rn2(5) && !u.uhave.amulet)
             mtmp->msleeping = 1;
+        if (mndx == PM_PIXIE) /* Slash'EM: pixies are born invisible */
+            mon_set_minvis(mtmp, FALSE);
         break;
     case S_ORC:
         if (Race_if(PM_ELF))
@@ -1456,8 +1495,12 @@ makemon(
     } else if (mndx == PM_PESTILENCE) {
         mitem = POT_SICKNESS;
     }
-    if (mitem != STRANGE_OBJECT && allow_minvent)
-        (void) mongets(mtmp, mitem);
+    if (mitem != STRANGE_OBJECT && allow_minvent) {
+        if (mndx == PM_CROESUS)
+            (void) mongets_mat(mtmp, mitem, GOLD); /* bling */
+        else
+            (void) mongets(mtmp, mitem);
+    }
 
     if (gi.in_mklev) {
         if ((is_ndemon(ptr) || mndx == PM_WUMPUS
@@ -1737,7 +1780,7 @@ rndmonst_adj(int minadj, int maxadj)
     struct permonst *ptr;
     int mndx;
     int weight, totalweight, selected_mndx, zlevel, minmlev, maxmlev;
-    boolean elemlevel, upper;
+    boolean elemlevel, upper, gtown = In_goblintown(&u.uz);
 
     if (u.uz.dnum == quest_dnum && rn2(7) && (ptr = qt_montype()) != 0)
         return ptr;
@@ -1764,6 +1807,8 @@ rndmonst_adj(int minadj, int maxadj)
         if (uncommon(mndx))
             continue;
         if (Inhell && (ptr->geno & G_NOHELL))
+            continue;
+        if (gtown && !likes_gtown(ptr)) /* EvilHack */
             continue;
 
         /*
@@ -2256,12 +2301,46 @@ grow_up(struct monst *mtmp, struct monst *victim)
 struct obj *
 mongets(struct monst *mtmp, int otyp)
 {
+    return mongets_mat(mtmp, otyp, NO_MATERIAL);
+}
+
+/* give a monster an object made of a specific material (or, if mat is
+   NO_MATERIAL, of whatever material the object randomly gets) */
+struct obj *
+mongets_mat(struct monst *mtmp, int otyp, int mat)
+{
     struct obj *otmp;
 
     if (!otyp)
         return (struct obj *) 0;
     otmp = mksobj(otyp, TRUE, FALSE);
     if (otmp) {
+        if (mat != NO_MATERIAL && valid_obj_material(otmp, mat))
+            set_material(otmp, mat);
+        /* if mtmp would hate the material of a worn or wielded object it
+           is getting, pick a different one (pointless for objects that
+           only have one valid material, such as rings and wands) */
+        if ((otmp->oclass == WEAPON_CLASS || otmp->oclass == ARMOR_CLASS
+             || is_weptool(otmp) || otmp->oclass == AMULET_CLASS)
+            && mon_hates_material(mtmp, otmp->material)
+            && !otmp->oartifact) {
+            int tryct = 0;
+
+            while (mon_hates_material(mtmp, otmp->material)
+                   && ++tryct < 100)
+                init_obj_material(otmp);
+            if (mon_hates_material(mtmp, otmp->material)) {
+                /* will anything work? */
+                int m;
+
+                for (m = NO_MATERIAL + 1; m < NUM_MATERIAL_TYPES; ++m)
+                    if (valid_obj_material(otmp, m)
+                        && !mon_hates_material(mtmp, m)) {
+                        set_material(otmp, m);
+                        break;
+                    }
+            }
+        }
         if (mtmp->data->mlet == S_DEMON) {
             /* demons never get blessed objects */
             if (otmp->blessed)
@@ -2333,6 +2412,9 @@ golemhp(int type)
         return 80;
     case PM_IRON_GOLEM:
         return 120;
+    case PM_FRANKENSTEIN_S_MONSTER:
+        /* Slash'EM gives it 400 on a scale where iron golems have 240 */
+        return 200;
     default:
         return 0;
     }

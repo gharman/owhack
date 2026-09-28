@@ -281,6 +281,7 @@ l_obj_to_table(lua_State *L)
                                 (obj->spe & CORPSTAT_FEMALE) != 0);
     }
 
+    nhl_add_table_entry_str(L, "material", materialnm[obj->material]);
     nhl_add_table_entry_char(L, "oclass",
                              def_oc_syms[(uchar) obj->oclass].sym);
     nhl_add_table_entry_char(L, "invlet", obj->invlet);

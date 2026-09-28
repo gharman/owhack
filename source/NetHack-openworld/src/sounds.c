@@ -367,6 +367,30 @@ dosounds_core(void)
         if (get_iter_mons(oracle_sound))
             return;
     }
+    /* open world: sounds of the extra special levels, heard near the
+       portals leading to them (in Slash'EM and EvilHack, on the level with
+       the entrance to their branch) */
+    if (In_overworld && !rn2(200)
+        && ow_portal_nearby("One-eyed Sam's Market")) {
+        static const char *const blkmar_msg[3] = {
+            "You hear someone complaining about the prices.",
+            "Somebody whispers: \"Food rations?  Only 900 zorkmids.\"",
+            "You feel like searching for more gold.",
+        };
+
+        pline1(blkmar_msg[rn2(2) + hallu]);
+        return;
+    }
+    if (In_overworld && !rn2(200) && ow_portal_nearby("Goblin Town")) {
+        static const char *const gtown_msg[3] = {
+            "the sounds of a bustling town nearby.",
+            "what sounds like a goblin war party off in the distance.",
+            "a chorus singing \"We are the Lollipop Guild\"...",
+        };
+
+        You_hear1(gtown_msg[rn2(2) + hallu]);
+        return;
+    }
 }
 
 static const char *const h_sounds[] = {
@@ -1083,6 +1107,25 @@ domonnoise(struct monst *mtmp)
         else if (mtmp->mtame && !mtmp->isminion
                  && svm.moves > EDOG(mtmp)->hungrytime)
             verbl_msg = "I'm hungry.";
+        /* EvilHack: the goblins' prisoners in Goblin Town */
+        else if (mtmp->mpeaceful && In_goblintown(&u.uz)
+                 && (is_elf(ptr) || is_dwarf(ptr) || is_gnome(ptr))) {
+            boolean gkdead = (svm.mvitals[PM_GOBLIN_KING].died > 0);
+
+            if (is_elf(ptr))
+                verbl_msg = gkdead ? "The Goblin King is dead!"
+                            : rn2(2) ? "Death to the Goblin King!"
+                                     : "Curse this wretched town!";
+            else if (is_dwarf(ptr))
+                verbl_msg = gkdead
+                    ? "The Goblin King has fallen!  Back to mining, lads!"
+                    : rn2(2) ? "Baruk Khazad!  Khazad ai-menu!"
+                             : "Bah!  Not a single pint of ale to be found!";
+            else
+                verbl_msg = gkdead
+                    ? "The Goblin King is no more!  Let's go home!"
+                    : "We must free our brothers and sisters!";
+        }
         /* Specific monsters' interests */
         else if (is_elf(ptr))
             pline_msg = "curses orcs.";
