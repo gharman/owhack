@@ -292,8 +292,9 @@ sense_portals(void)
         if (t->ttyp != MAGIC_PORTAL || t->tx < lx || t->tx > hx
             || t->ty < ly || t->ty > hy)
             continue;
-        if (t->tseen && glyph_is_trap(levl[t->tx][t->ty].glyph))
-            continue; /* already on the map */
+        if (t->tseen && (glyph_is_trap(levl[t->tx][t->ty].glyph)
+                         || cansee(t->tx, t->ty)))
+            continue; /* already on the map, or in plain sight */
         t->tseen = 1;
         map_trap(t, 0);
         newsym(t->tx, t->ty);

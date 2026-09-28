@@ -12,7 +12,7 @@
 --
 des.level_init({ style="mazegrid", bg ="-" });
 
-des.level_flags("mazelevel", "noflip")
+des.level_flags("mazelevel")
 
 des.map({ x = 1, y = 0, map = [[
 ......T...T.T..T....}}.....  ......  ......  ......|xxxxxxxxxxxxxxxxxxxxxxxxxx
