@@ -1058,6 +1058,12 @@ FOOD("meat stick",            0,  1,  1, 0, FLESH,   5, CLR_BROWN,
 /* formerly "huge chunk of meat" */
 FOOD("enormous meatball",     0, 20,400, 0, FLESH,2000, CLR_BROWN,
                                                         ENORMOUS_MEATBALL),
+/* Slash'EM: the remains of the Beholder and of Vecna; never generated
+   except as the artifacts the Eye of the Beholder and the Hand of Vecna */
+FOOD("eyeball",               0,  1,  1, 0, FLESH,  10, CLR_WHITE,
+                                                        EYEBALL),
+FOOD("severed hand",          0,  1,  5, 0, FLESH,  40, CLR_BROWN,
+                                                        SEVERED_HAND),
 /* special case because it's not mergeable */
 OBJECT(OBJ("meat ring", NoDes),
        BITS(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FLESH),

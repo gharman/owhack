@@ -2524,6 +2524,20 @@ fpostfx(struct obj *otmp)
             || !attacktype_fordmg(u.ustuck->data, AT_ENGL, AD_BLND))
             make_blinded((long) u.ucreamed, TRUE);
         break;
+    case EYEBALL:
+    case SEVERED_HAND:
+        /* Slash'EM: the relics of the Beholder and of Vecna fight back */
+        if (otmp->oartifact) {
+            if (otmp->otyp == EYEBALL)
+                You_feel("a burning inside!");
+            else
+                You_feel("the hand scrabbling around inside of you!");
+            losehp(rn1(50, 150),
+                   (otmp->otyp == EYEBALL) ? "the Eye of the Beholder"
+                                           : "the Hand of Vecna",
+                   KILLED_BY);
+        }
+        break;
     case FORTUNE_COOKIE:
         outrumor(bcsign(otmp), BY_COOKIE);
         if (!Blind)
@@ -2878,6 +2892,9 @@ doeat(void)
                                : touch_artifact(otmp, &gy.youmonst))) {
         return ECMD_TIME; /* got blasted so use a turn */
     }
+    if ((otmp->otyp == EYEBALL || otmp->otyp == SEVERED_HAND)
+        && y_n("Are you sure you want to eat that?") != 'y')
+        return ECMD_OK;
     if (is_metallic(otmp) && u.umonnum == PM_RUST_MONSTER
         && otmp->oerodeproof) {
         otmp->rknown = TRUE;

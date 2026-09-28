@@ -74,7 +74,9 @@ enum invoke_prop_types {
     FLING_POISON,
     FIRESTORM,
     SNOWSTORM,
-    BLINDING_RAY
+    BLINDING_RAY,
+    DEATH_GAZE,    /* Slash'EM: the Eye of the Beholder */
+    SUMMON_UNDEAD  /* Slash'EM: the Hand of Vecna */
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items

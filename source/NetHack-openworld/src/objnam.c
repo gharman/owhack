@@ -5404,7 +5404,7 @@ readobjnam(char *bp, struct obj *no_wish)
 
     /* more wishing abuse: don't allow wishing for certain artifacts */
     /* and make them pay; charge them for the wish anyway! */
-    if ((is_quest_artifact(d.otmp)
+    if ((is_quest_artifact(d.otmp) || placed_artifact(d.otmp)
          || (d.otmp->oartifact && rn2(nartifact_exist()) > 1)) && !wizard) {
         artifact_exists(d.otmp, safe_oname(d.otmp), FALSE, ONAME_NO_FLAGS);
         obfree(d.otmp, (struct obj *) 0);

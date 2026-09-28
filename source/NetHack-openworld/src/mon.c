@@ -44,7 +44,8 @@ extern const struct shclass shtypes[]; /* defined in shknam.c */
 #define LEVEL_SPECIFIC_NOCORPSE(mdat) \
     (Is_rogue_level(&u.uz)            \
      || !svl.level.flags.deathdrops    \
-     || (svl.level.flags.graveyard && is_undead(mdat) && rn2(3)))
+     || (svl.level.flags.graveyard && is_undead(mdat)  \
+         && (mdat) != &mons[PM_VECNA] && rn2(3)))
 
 #if 0   /* potentially of historical interest */
 /* part of the original warning code which was replaced in 3.3.1 */
@@ -618,6 +619,40 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_LONG_WORM:
         (void) mksobj_at(WORM_TOOTH, x, y, TRUE, FALSE);
         goto default_1;
+    case PM_NIGHTMARE:
+    case PM_BEHOLDER:
+    case PM_VECNA: {
+        /* Slash'EM: each master of an alignment key quest leaves a relic */
+        int rotyp = (mndx == PM_NIGHTMARE) ? UNICORN_HORN
+                    : (mndx == PM_BEHOLDER) ? EYEBALL : SEVERED_HAND,
+            rart = (mndx == PM_NIGHTMARE) ? ART_NIGHTHORN
+                   : (mndx == PM_BEHOLDER) ? ART_EYE_OF_THE_BEHOLDER
+                     : ART_HAND_OF_VECNA;
+
+        if (exist_artifact(rotyp, artiname(rart)))
+            return (struct obj *) 0;
+        if (cansee(x, y))
+            pline("All that remains is %s...",
+                  (mndx == PM_NIGHTMARE) ? "her horn"
+                  : (mndx == PM_BEHOLDER) ? "a single eye" : "a hand");
+        obj = mksobj(rotyp, TRUE, FALSE);
+        obj = oname(obj, artiname(rart), ONAME_NO_FLAGS);
+        obj->quan = 1L;
+        obj->owt = weight(obj);
+        curse(obj);
+        place_object(obj, x, y);
+        stackobj(obj);
+        free_mgivenname(mtmp); /* don't christen the relic */
+        newsym(x, y);
+        return obj;
+    }
+    case PM_FRANKENSTEIN_S_MONSTER:
+        /* Slash'EM: what was stitched together from the dead falls apart
+           into an old corpse */
+        corpstatflags |= CORPSTAT_INIT;
+        obj = mkcorpstat(CORPSE, mtmp, mdat, x, y, corpstatflags);
+        obj->age -= (TAINT_AGE + 1); /* this is an *OLD* corpse */
+        break;
     case PM_VAMPIRE:
     case PM_VAMPIRE_LEADER:
         /* include mtmp in the mkcorpstat() call */
@@ -886,6 +921,20 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_PAGE: case PM_ABBOT: case PM_ACOLYTE: case PM_HUNTER:
     case PM_THUG: case PM_NINJA: case PM_ROSHI: case PM_GUIDE:
     case PM_WARRIOR: case PM_APPRENTICE:
+
+    /* monsters of the extra special levels */
+    case PM_SWAMP_KOBOLD: case PM_ROCK_KOBOLD: case PM_KROO_THE_KOBOLD_KING:
+    case PM_BROWNIE: case PM_PIXIE: case PM_QUICKLING: case PM_APHRODITE:
+    case PM_WAR_ORC: case PM_GREAT_ORC: case PM_SNOW_ORC: case PM_DEMON_ORC:
+    case PM_GRUND_THE_ORC_KING: case PM_BLACK_RAT: case PM_PACK_RAT:
+    case PM_RAT_KING: case PM_SHELOB: case PM_GIRTAB: case PM_MAGGOT:
+    case PM_RHUMBAT: case PM_WYVERN: case PM_HYDRA: case PM_GNOME_THIEF:
+    case PM_GNOME_WARRIOR: case PM_RUGGO_THE_GNOME_KING: case PM_GNOLL:
+    case PM_LARGEST_GIANT: case PM_OGRE_MAGE: case PM_DOCTOR_FRANKENSTEIN:
+    case PM_GHAST: case PM_DWARF_THIEF: case PM_GOLLUM: case PM_NUPPERIBO:
+    case PM_BLACK_MARKETEER: case PM_MUGGER: case PM_SHADOW: case PM_BABAU:
+    case PM_GIANT_CRAB: case PM_RHAUMBUSUN: case PM_STATUE_GARGOYLE:
+    case PM_GOBLIN_KING:
 #else
     default:
 #endif
@@ -3209,7 +3258,8 @@ corpse_chance(
         if (cansee(mon->mx, mon->my) && !was_swallowed)
             pline_mon(mon, "%s body crumbles into dust.",
                       s_suffix(Monnam(mon)));
-        return FALSE;
+        /* Slash'EM: make_corpse() leaves Vecna's hand behind */
+        return (boolean) (mdat == &mons[PM_VECNA]);
     }
 
     /* Gas spores always explode upon death */
@@ -4306,6 +4356,10 @@ setmangry(struct monst *mtmp, boolean via_attack)
 
     /* AIS: Should this be in both places, or just in wakeup()? */
     mtmp->mstrategy &= ~STRAT_WAITMASK;
+    /* Slash'EM: even if the black marketeer is already angry he may not
+       have called for his assistants yet */
+    if (!mtmp->mpeaceful && mtmp->isshk && Is_blackmarket(&u.uz))
+        blkmar_guards(mtmp);
     if (!mtmp->mpeaceful)
         return;
     /* [FIXME: this logic seems wrong; peaceful humanoids gasp or exclaim
@@ -4328,6 +4382,23 @@ setmangry(struct monst *mtmp, boolean via_attack)
         growl(mtmp);
     }
 
+    /* Slash'EM: don't misbehave in the black market, or else... */
+    if (Is_blackmarket(&u.uz)) {
+        if (mtmp->isshk) {
+            blkmar_guards(mtmp);
+        } else if (has_mgivenname(mtmp)) {
+            /* non-tame named monsters are presumably the black
+               marketeer's assistants */
+            struct monst *shkp = shop_keeper(inside_shop(mtmp->mx,
+                                                         mtmp->my));
+
+            if (shkp && shkp->mpeaceful) {
+                wakeup(shkp, TRUE);
+                hot_pursuit(shkp);
+            }
+        }
+    }
+
     /* attacking your own quest leader will anger his or her guardians */
     if (mtmp->data == &mons[quest_info(MS_LEADER)])
         qst_guardians_respond();
@@ -4344,7 +4415,9 @@ wake_msg(struct monst *mtmp, boolean interesting)
     if (mtmp->msleeping && canseemon(mtmp)) {
         pline_mon(mtmp, "%s wakes up%s%s",
               Monnam(mtmp), interesting ? "!" : ".",
-              mtmp->data == &mons[PM_FLESH_GOLEM] ? " It's alive!" : "");
+              (mtmp->data == &mons[PM_FLESH_GOLEM]
+               || mtmp->data == &mons[PM_FRANKENSTEIN_S_MONSTER])
+                  ? " It's alive!" : "");
     }
 }
 

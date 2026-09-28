@@ -29,6 +29,9 @@ staticfn void offer_different_alignment_altar(struct obj *, aligntyp);
 staticfn void sacrifice_your_race(struct obj *, boolean, aligntyp);
 staticfn int bestow_artifact(uchar);
 staticfn int sacrifice_value(struct obj *);
+staticfn void offer_valued(struct obj *, int, boolean, aligntyp);
+
+#define MAXVALUE 24 /* Highest corpse value (besides Wiz) */
 staticfn int eval_offering(struct obj *, aligntyp);
 staticfn void offer_corpse(struct obj *, boolean, aligntyp);
 staticfn boolean pray_revive(void);
@@ -1905,6 +1908,19 @@ dosacrifice(void)
         return ECMD_TIME;
     }
 
+    /* Slash'EM: offering the Eye of the Beholder or the Hand of Vecna
+       pleases the gods as much as the best of corpses */
+    if (otmp->oartifact == ART_EYE_OF_THE_BEHOLDER
+        || otmp->oartifact == ART_HAND_OF_VECNA) {
+        You("offer this evil thing to %s...", a_gname());
+        if (!u.uconduct.gnostic++)
+            livelog_printf(LL_CONDUCT, "rejected atheism"
+                                       " by offering %s on an altar of %s",
+                           the(xname(otmp)), a_gname());
+        offer_valued(otmp, MAXVALUE, highaltar, altaralign);
+        return ECMD_TIME;
+    }
+
     pline1(nothing_happens);
     return ECMD_TIME;
 }
@@ -1985,7 +2001,7 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
      * toughness.  Human and pet sacrifice, as well as sacrificing unicorns
      * of your alignment, is strongly discouraged.
      */
-#define MAXVALUE 24 /* Highest corpse value (besides Wiz) */
+/* MAXVALUE (highest corpse value, besides Wiz) is defined above */
 
     /* KMH, conduct */
     if (!u.uconduct.gnostic++)
@@ -2030,7 +2046,17 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
         offer_negative_valued(highaltar, altaralign);
         return;
     }
+    offer_valued(otmp, value, highaltar, altaralign);
+}
 
+/* the effects of a positively valued offering, corpse or otherwise */
+staticfn void
+offer_valued(
+    struct obj *otmp,
+    int value,
+    boolean highaltar,
+    aligntyp altaralign)
+{
     if (altaralign != u.ualign.type && highaltar) {
         desecrate_altar(highaltar, altaralign);
         return;

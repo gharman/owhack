@@ -212,6 +212,30 @@ static NEARDATA struct artifact artilist[] = {
       0, 6, 1500L, NO_COLOR, SUNSWORD),
 
     /*
+     *      Slash'EM artifacts guarded in the extra special levels:
+     *      One-eyed Sam's sword, and the relics left by the masters of
+     *      the three alignment key quests.  None is ever generated
+     *      at random or wishable.
+     */
+    A("Thiefbane", LONG_SWORD,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_BEHEAD | SPFX_DCLAS | SPFX_DRLI), 0,
+      S_HUMAN, DRLI(5, 1), NO_DFNS, NO_CARY, 0, A_CHAOTIC, NON_PM, NON_PM,
+      0, 12, 1500L, CLR_RED, THIEFBANE),
+
+    A("Nighthorn", UNICORN_HORN, (SPFX_NOGEN | SPFX_RESTR | SPFX_REFLECT), 0,
+      0, NO_ATTK, NO_DFNS, NO_CARY, 0, A_LAWFUL, NON_PM, NON_PM,
+      0, 12, 10000L, NO_COLOR, NIGHTHORN),
+
+    A("The Eye of the Beholder", EYEBALL, (SPFX_NOGEN | SPFX_RESTR), 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, DEATH_GAZE, A_NEUTRAL, NON_PM, NON_PM,
+      0, 12, 500L, NO_COLOR, EYE_OF_THE_BEHOLDER),
+
+    A("The Hand of Vecna", SEVERED_HAND, (SPFX_NOGEN | SPFX_RESTR),
+      (SPFX_REGEN | SPFX_HPHDAM), 0, NO_ATTK, DRLI(0, 0), CARY(AD_COLD),
+      SUMMON_UNDEAD, A_CHAOTIC, NON_PM, NON_PM,
+      0, 12, 700L, NO_COLOR, HAND_OF_VECNA),
+
+    /*
      *      The artifacts for the quest dungeon, all self-willed.
      *      gen_spe should be 0; gift_value irrelevant and set to 12.
      */
