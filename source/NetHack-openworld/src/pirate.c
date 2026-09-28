@@ -259,6 +259,7 @@ treasury_of_proteus(void)
             (void) poly_obj(otmp, STRANGE_OBJECT);
         }
     }
+    chest->owt = weight(chest);
     update_inventory();
 }
 

@@ -1424,6 +1424,9 @@ ini_inv_adjust_obj(const struct trobj *trop, struct obj *obj)
         if (obj->otyp == STRIPED_SHIRT && Role_if(PM_CONVICT)) {
             obj->blessed = 0;
             obj->cursed = 1;
+            /* made to last, so it can't erode away at the start of the
+               game (EvilHack) */
+            obj->oerodeproof = obj->rknown = 1;
         }
         /* Infidels are used to playing with fire */
         if (Role_if(PM_INFIDEL) && obj->oclass == ARMOR_CLASS)

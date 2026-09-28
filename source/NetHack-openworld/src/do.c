@@ -1826,7 +1826,12 @@ goto_level(
                     You("fly down %s.",
                         ga.at_ladder ? "along the ladder" : "the stairs");
             } else if (near_capacity() > UNENCUMBERED
-                       || Punished || Fumbling) {
+                       || (Punished
+                           /* a convict who wields the iron ball like a
+                              flail carries it down safely (EvilHack) */
+                           && !(Role_if(PM_CONVICT) && uwep == uball
+                                && P_SKILL(P_FLAIL) >= P_BASIC))
+                       || Fumbling) {
                 You("fall down the %s.", ga.at_ladder ? "ladder" : "stairs");
                 if (Punished) {
                     drag_down();

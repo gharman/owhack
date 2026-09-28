@@ -900,6 +900,9 @@ newgame(void)
     if (Role_if(PM_CONVICT)) {
         setworn(mkobj(CHAIN_CLASS, TRUE), W_CHAIN);
         setworn(mkobj(BALL_CLASS, TRUE), W_BALL);
+        /* the convict knows the ball and chain well (EvilHack) */
+        uball->dknown = uball->bknown = uball->rknown = 1;
+        uchain->dknown = uchain->bknown = uchain->rknown = 1;
         placebc();
         newsym(u.ux, u.uy);
     }
