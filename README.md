@@ -134,11 +134,12 @@ ring), quest artifact, sacrifice gift and pet.
   which has to be applied to switch it on, lights the area, uses up its
   charge while lit (a scroll of charging refills it, and from experience
   level 5 so does the charge saber technique, which pours the Jedi's
-  energy into it) and only cuts when lit; it can melt locks and cut through doors (#force).  A skilled Jedi
-  deflects missiles, cuts foes' weapons in half and can throw the lit
-  lightsaber and call it back with the Force.  Jedi fight in robes, not
-  armor, and must not attack the peaceful.  The quest: find the
-  Lightsaber Prototype in the Outer Rim before Lord Sidious does.
+  energy into it) and only cuts when lit; it can melt locks and cut
+  through doors (#force).  A skilled Jedi deflects missiles, cuts foes'
+  weapons in half and can throw the lit lightsaber and call it back with
+  the Force.  Jedi fight in robes, not armor, and must not attack the
+  peaceful.  The quest: find the Lightsaber Prototype in the Outer Rim
+  before Lord Sidious does.
   Gift: the cloak Deluder.
 
 ## What changed, and why
