@@ -179,11 +179,25 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
+        case PM_CONVICT: /* (Hack'EM) */
+            if (rn2(2))
+                weapon = FLAIL;
+            break;
         case PM_HEALER:
             if (rn2(4))
                 weapon = QUARTERSTAFF;
             else if (rn2(2))
                 weapon = rn2(2) ? UNICORN_HORN : SCALPEL;
+            if (rn2(4))
+                helm = rn2(2) ? HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
+            if (rn2(2))
+                shield = STRANGE_OBJECT;
+            break;
+        case PM_INFIDEL: /* (Hack'EM) */
+            if (!rn2(4))
+                weapon = CRYSKNIFE;
+            if (rn2(3))
+                cloak = CLOAK_OF_PROTECTION;
             if (rn2(4))
                 helm = rn2(2) ? HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
             if (rn2(2))
@@ -201,6 +215,13 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             cloak = ROBE;
             if (rn2(2))
                 shield = STRANGE_OBJECT;
+            break;
+        case PM_PIRATE: /* (Hack'EM) */
+            if (rn2(4))
+                weapon = SCIMITAR;
+            if (rn2(3))
+                armor = LEATHER_JACKET;
+            (void) mongets(mtmp, POT_BOOZE);
             break;
         case PM_CLERIC:
             if (rn2(2))

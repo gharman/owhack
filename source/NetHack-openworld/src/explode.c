@@ -241,6 +241,7 @@ explode(
         }
         switch (Role_switch) {
         case PM_CLERIC:
+        case PM_INFIDEL:
         case PM_MONK:
         case PM_WIZARD:
             damu /= 5;

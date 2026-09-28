@@ -884,6 +884,12 @@ doengrave_sfx_item(struct _doengrave_ctx *de)
                       de->frosted ? "frosty" : "dusty");
             }
             break;
+        case SPOON:
+            /* the Iron Spoon of Liberation engraves as well and as quickly
+               as an athame, without dulling */
+            if (de->otmp->oartifact)
+                de->type = ENGRAVE;
+            break;
         default:
             break;
         }

@@ -154,6 +154,7 @@ extern void found_artifact(int);
 extern void find_artifact(struct obj *) NONNULLPTRS;
 extern int nartifact_exist(void);
 extern void artifact_origin(struct obj *, unsigned) NONNULLPTRS;
+extern boolean arti_digs(struct obj *);
 extern boolean arti_immune(struct obj *, int);
 extern boolean spec_ability(struct obj *, unsigned long);
 extern boolean confers_luck(struct obj *) NONNULLPTRS;

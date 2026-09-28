@@ -724,7 +724,8 @@ peffect_water(struct obj *otmp)
     }
     gp.potion_unkn++;
     if (mon_hates_blessings(&gy.youmonst) /* undead or demon */
-        || u.ualign.type == A_CHAOTIC) {
+        || (!Upolyd && Race_if(PM_DEMON)) /* crowned Infidel */
+        || u.ualign.type == A_CHAOTIC || u.ualign.type == A_NONE) {
         if (otmp->blessed) {
             pline("This burns like %s!", hliquid("acid"));
             exercise(A_CON, FALSE);
@@ -735,8 +736,9 @@ peffect_water(struct obj *otmp)
                     you_unwere(FALSE);
                 set_ulycn(NON_PM); /* cure lycanthropy */
             }
-            losehp(Maybe_Half_Phys(d(2, 6)), "potion of holy water",
-                   KILLED_BY_AN);
+            /* worshippers of Moloch suffer twice as much (EvilHack) */
+            losehp(Maybe_Half_Phys(d((u.ualign.type == A_NONE) ? 4 : 2, 6)),
+                   "potion of holy water", KILLED_BY_AN);
         } else if (otmp->cursed) {
             You_feel("quite proud of yourself.");
             healup(d(2, 6), 0, 0, 0);

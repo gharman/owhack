@@ -2288,8 +2288,9 @@ can_pray(boolean praying) /* false means no messages should be given */
     gp.p_aligntyp = on_altar() ? a_align(u.ux, u.uy) : u.ualign.type;
     gp.p_trouble = in_trouble();
 
-    if (is_demon(gy.youmonst.data) /* ok if chaotic or none (Moloch) */
-        && (gp.p_aligntyp == A_LAWFUL || gp.p_aligntyp != A_NEUTRAL)) {
+    if (maybe_polyd(is_demon(gy.youmonst.data), Race_if(PM_DEMON))
+        /* ok if chaotic or none (Moloch) */
+        && gp.p_aligntyp > A_CHAOTIC) {
         if (praying)
             pline_The("very idea of praying to a %s god is repugnant to you.",
                       gp.p_aligntyp ? "lawful" : "neutral");
@@ -2608,7 +2609,7 @@ doturn(void)
         return (u.uconduct.gnostic == 1) ? ECMD_TIME : ECMD_OK;
     }
     if ((u.ualign.type != A_CHAOTIC
-         && (is_demon(gy.youmonst.data)
+         && (maybe_polyd(is_demon(gy.youmonst.data), Race_if(PM_DEMON))
              || is_undead(gy.youmonst.data) || is_vampshifter(&gy.youmonst)))
         || u.ugangr > 6) { /* "Die, mortal!" */
         pline("For some reason, %s seems to ignore you.", Gname);

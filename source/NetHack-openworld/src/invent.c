@@ -962,10 +962,14 @@ addinv_core1(struct obj *obj)
     if (obj->oclass == COIN_CLASS) {
         disp.botl = TRUE;
     } else if (obj->otyp == AMULET_OF_YENDOR) {
-        if (u.uhave.amulet)
+        /* (an Infidel's imbued Idol of Moloch also counts as the Amulet) */
+        if (u.uhave.amulet && !(Role_if(PM_INFIDEL) && u.uidol_imbued))
             impossible("already have amulet?");
         u.uhave.amulet = 1;
-        record_achievement(ACH_AMUL);
+        /* Infidels start out with the Amulet; for them, the achievement
+           is having Moloch imbue the Idol of Moloch with its power */
+        if (!Role_if(PM_INFIDEL))
+            record_achievement(ACH_AMUL);
     } else if (obj->otyp == CANDELABRUM_OF_INVOCATION) {
         if (u.uhave.menorah)
             impossible("already have candelabrum?");
@@ -986,6 +990,9 @@ addinv_core1(struct obj *obj)
             if (u.uhave.questart)
                 impossible("already have quest artifact?");
             u.uhave.questart = 1;
+            /* the imbued Idol of Moloch has the power of the Amulet */
+            if (Role_if(PM_INFIDEL) && u.uidol_imbued)
+                u.uhave.amulet = 1;
             artitouch(obj);
         }
         set_artifact_intrinsic(obj, 1, W_ART);
@@ -1361,7 +1368,9 @@ freeinv_core(struct obj *obj)
     } else if (obj->otyp == AMULET_OF_YENDOR) {
         if (!u.uhave.amulet)
             impossible("don't have amulet?");
-        u.uhave.amulet = 0;
+        /* still carrying the power of the Amulet in the imbued Idol? */
+        u.uhave.amulet = (Role_if(PM_INFIDEL) && u.uidol_imbued
+                          && u.uhave.questart) ? 1 : 0;
     } else if (obj->otyp == CANDELABRUM_OF_INVOCATION) {
         if (!u.uhave.menorah)
             impossible("don't have candelabrum?");
@@ -1379,6 +1388,8 @@ freeinv_core(struct obj *obj)
             if (!u.uhave.questart)
                 impossible("don't have quest artifact?");
             u.uhave.questart = 0;
+            if (Role_if(PM_INFIDEL) && u.uidol_imbued)
+                u.uhave.amulet = carrying(AMULET_OF_YENDOR) ? 1 : 0;
         }
         set_artifact_intrinsic(obj, 0, W_ART);
     }

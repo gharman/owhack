@@ -987,7 +987,23 @@ touch_artifact(struct obj *obj, struct monst *mon)
         return 0;
     }
 
+    /* the Iron Spoon of Liberation frees its bearer from a mundane ball
+       and chain (Hack'EM) */
+    if (yours && oart == &artilist[ART_IRON_SPOON_OF_LIBERATION]
+        && Punished && obj != uball) {
+        You("pick the lock of the shackle with %s.", the(xname(obj)));
+        unpunish();
+    }
+
     return 1;
+}
+
+/* can this artifact be used to dig like a pick-axe? */
+boolean
+arti_digs(struct obj *obj)
+{
+    return (boolean) (obj && obj->oartifact
+                      && (get_artifact(obj)->spfx & SPFX_DIG) != 0);
 }
 
 /* decide whether an artifact itself is vulnerable to a particular type

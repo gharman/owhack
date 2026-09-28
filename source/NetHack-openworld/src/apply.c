@@ -4353,6 +4353,18 @@ doapply(void)
     case DWARVISH_MATTOCK:
         res = use_pick_axe(obj);
         break;
+    case SPOON:
+        if (obj->oartifact) {
+            /* the Iron Spoon of Liberation digs like a pick-axe */
+            res = use_pick_axe(obj);
+        } else if (Role_if(PM_CONVICT)) {
+            pline_The("guards used to hand these out with our food rations.  "
+                      "No one was ever able to figure out why.");
+        } else {
+            You("have never in your life seen such an odd item.  "
+                "You have no idea how to use it.");
+        }
+        break;
     case TINNING_KIT:
         use_tinning_kit(obj);
         break;

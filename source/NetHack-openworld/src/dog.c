@@ -1209,6 +1209,10 @@ tamedog(
     if (mtmp->iswiz || mtmp->data == &mons[PM_MEDUSA]
         || (mtmp->data->mflags3 & M3_WANTSARTI))
         return FALSE;
+    /* lawful angelic beings are never pacified by an Infidel (EvilHack) */
+    if (Role_if(PM_INFIDEL) && mtmp->data->mlet == S_ANGEL
+        && mon_aligntyp(mtmp) > 0)
+        return FALSE;
 
     /* worst case, at least it'll be peaceful. */
     if (givemsg && !mtmp->mpeaceful && canspotmon(mtmp)) {

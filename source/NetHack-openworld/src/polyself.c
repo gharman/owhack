@@ -98,6 +98,13 @@ set_uasmon(void)
        suppress flying for it so that enlightenment doesn't confusingly
        show latent flight capability always blocked by levitation */
     PROPSET(FLYING, (is_flyer(mdat) && !is_floater(mdat)));
+    /* a crowned Infidel has become a demon, with big wings */
+    if (!Upolyd && Race_if(PM_DEMON))
+        u.uprops[FLYING].intrinsic |= FROMFORM;
+    /* a demonic hero's wings may be folded under body armor; when
+       restoring, the saved blocking is still valid */
+    if (!program_state.restoring)
+        check_wings(TRUE);
     PROPSET(SWIMMING, is_swimmer(mdat));
     /* [don't touch MAGICAL_BREATHING here; both Amphibious and Breathless
        key off of it but include different monster forms...] */

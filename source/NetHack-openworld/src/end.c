@@ -1412,7 +1412,12 @@ really_done(int how)
     }
 #endif
     if (u.uhave.amulet) {
-        Strcat(svk.killer.name, " (with the Amulet)");
+        /* an Infidel starts out with the Amulet and may later carry its
+           power in the imbued Idol of Moloch */
+        if (Role_if(PM_INFIDEL) && u.uidol_imbued && u.uhave.questart)
+            Strcat(svk.killer.name, " (with the Idol)");
+        else if (!Role_if(PM_INFIDEL))
+            Strcat(svk.killer.name, " (with the Amulet)");
     } else if (how == ESCAPED) {
         if (Is_astralevel(&u.uz)) /* offered Amulet to wrong deity */
             Strcat(svk.killer.name, " (in celestial disgrace)");
@@ -1426,6 +1431,8 @@ really_done(int how)
                 ? (const char *) ((flags.female && gu.urole.name.f)
                     ? gu.urole.name.f
                     : gu.urole.name.m)
+                /* an Infidel can only ascend through Moloch */
+                : Role_if(PM_INFIDEL) ? "Archfiend of Moloch"
                 : (const char *) (flags.female ? "Demigoddess" : "Demigod"));
     dump_forward_putstr(endwin, 0, pbuf, done_stopprint);
     dump_forward_putstr(endwin, 0, "", done_stopprint);

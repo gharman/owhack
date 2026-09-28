@@ -2363,6 +2363,11 @@ show_achievements(
             you_have_X("gained access to Moloch's Sanctum");
             break;
         case ACH_AMUL:
+            /* for an Infidel, this is the imbuing of the Idol of Moloch */
+            if (Role_if(PM_INFIDEL)) {
+                you_have_X("imbued the Idol of Moloch");
+                break;
+            }
             /* alternate wording for ascended (always past tense) since
                hero had it until #offer forced it to be relinquished */
             enl_msg(You_,
