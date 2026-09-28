@@ -668,7 +668,9 @@ really_kick_object(coordxy x, coordxy y)
             pline("THUD!");
         container_impact_dmg(gk.kickedobj, x, y);
         if (gk.kickedobj->olocked) {
-            if (!rn2(5) || (martial() && !rn2(2))) {
+            /* a crystal chest's lock is magical and can't be broken */
+            if (gk.kickedobj->material != GLASS
+                && (!rn2(5) || (martial() && !rn2(2)))) {
                 You("break open the lock!");
                 breakchestlock(gk.kickedobj, FALSE);
                 if (otrp)

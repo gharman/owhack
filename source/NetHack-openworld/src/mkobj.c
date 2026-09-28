@@ -1022,6 +1022,12 @@ mksobj_init(struct obj **obj, boolean artif)
         case CHEST:
         case LARGE_BOX:
             otmp->olocked = !!(rn2(5));
+            /* stone boxes have no lock; crystal ones are always locked,
+               magically (see lock.c) */
+            if (otmp->material == MINERAL)
+                otmp->olocked = 0;
+            else if (otmp->material == GLASS)
+                otmp->olocked = 1;
             otmp->otrapped = !(rn2(10));
             otmp->tknown = otmp->otrapped && !rn2(100); /* obvious trap */
             FALLTHROUGH;
@@ -4104,6 +4110,8 @@ material_list(struct obj *obj)
     case BULLWHIP:
     case WORM_TOOTH:
     case CRYSKNIFE:
+    case RUNESWORD: /* shares "runed broadsword" with the (wooden) elven
+                     * broadsword; a wooden runesword would give it away */
     case ELVEN_LEATHER_HELM:
     case LEATHER_ARMOR:
     case STUDDED_LEATHER_ARMOR:
