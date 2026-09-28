@@ -2455,6 +2455,7 @@ slippery_ice_fumbling(void)
 
     if (on_ice) {
         if ((uarmf && objdescr_is(uarmf, "snow boots"))
+            || (Role_if(PM_ICE_MAGE) && iceskater == &gy.youmonst)
             || resists_cold(iceskater) || Flying
             || is_floater(iceskater->data) || is_clinger(iceskater->data)
             || is_whirly(iceskater->data)) {

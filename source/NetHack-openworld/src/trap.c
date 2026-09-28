@@ -977,6 +977,20 @@ mu_maybe_destroy_web(
     boolean isyou = (mtmp == &gy.youmonst);
     struct permonst *mptr = mtmp->data;
 
+    /* the Jedi's droid cuts through webs */
+    if (mptr == &mons[PM_DROID]) {
+        if (domsg) {
+            if (isyou)
+                You("cut %s spider web!", a_your[trap->madeby_u]);
+            else
+                pline_mon(mtmp, "%s cuts %s spider web!", Monnam(mtmp),
+                          a_your[trap->madeby_u]);
+        }
+        deltrap(trap);
+        newsym(mtmp == &gy.youmonst ? u.ux : mtmp->mx,
+               mtmp == &gy.youmonst ? u.uy : mtmp->my);
+        return TRUE;
+    }
     if (amorphous(mptr) || is_whirly(mptr) || flaming(mptr)
         || unsolid(mptr) || mptr == &mons[PM_GELATINOUS_CUBE]) {
         coordxy x = trap->tx;

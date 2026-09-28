@@ -1056,6 +1056,10 @@ dig_up_grave(coord *cc)
     } else if (Role_if(PM_SAMURAI)) {
         adjalign(-sgn(u.ualign.type));
         You("disturb the honorable dead!");
+    } else if (Role_if(PM_NECROMANCER)) {
+        /* grave-digging is a proper job for a necromancer */
+        adjalign(1);
+        You_feel("like a proper gravedigger.");
     } else if (u.ualign.type == A_LAWFUL) {
         if (u.ualign.record > -10)
             adjalign(-1);
@@ -1070,6 +1074,11 @@ dig_up_grave(coord *cc)
         You("unearth a corpse.");
         if ((otmp = mk_tt_object(CORPSE, dig_x, dig_y)) != 0)
             otmp->age -= (TAINT_AGE + 1); /* this is an *OLD* corpse */
+        /* necromancers like old corpses */
+        if (Role_if(PM_NECROMANCER)) {
+            You("find the result satisfying.");
+            exercise(A_WIS, TRUE);
+        }
         break;
     case 2:
         if (!Blind)

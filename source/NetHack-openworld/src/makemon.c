@@ -223,6 +223,23 @@ m_initweap(struct monst *mtmp)
                 w2 = KNIFE;
             if (w2)
                 (void) mongets(mtmp, w2);
+        } else if (mm == PM_STORMTROOPER) {
+            /* the Empire's troops shoot first */
+            (void) mongets(mtmp, CROSSBOW);
+            m_initthrow(mtmp, CROSSBOW_BOLT, 30);
+            (void) mongets(mtmp, rn2(2) ? SHORT_SWORD : KNIFE);
+        } else if (mm == PM_JEDI_MASTER) {
+            otmp = mksobj(BLUE_LIGHTSABER, TRUE, FALSE);
+            otmp->cursed = 0;
+            otmp->blessed = otmp->oerodeproof = 1;
+            otmp->spe = rn1(3, 3);
+            (void) mpickobj(mtmp, otmp);
+        } else if (mm == PM_HIGH_ICE_MAGE || mm == PM_HIGH_FLAME_MAGE) {
+            otmp = mksobj(QUARTERSTAFF, TRUE, FALSE);
+            otmp->cursed = 0;
+            otmp->blessed = otmp->oerodeproof = 1;
+            otmp->spe = rn1(3, 3);
+            (void) mpickobj(mtmp, otmp);
         } else if (is_elf(ptr)) {
             if (rn2(2))
                 (void) mongets(mtmp,
@@ -279,6 +296,9 @@ m_initweap(struct monst *mtmp)
             case PM_ACOLYTE:
             case PM_GUIDE:
             case PM_APPRENTICE:
+            case PM_IGNITER:
+            case PM_FROSTER:
+            case PM_EMBALMER:
                 if (rn2(2))
                     (void) mongets(mtmp, rn2(3) ? DAGGER : KNIFE);
                 if (rn2(5))
@@ -322,6 +342,12 @@ m_initweap(struct monst *mtmp)
             case PM_NEANDERTHAL:
                 (void) mongets(mtmp, CLUB);
                 (void) mongets(mtmp, LEATHER_ARMOR);
+                break;
+            case PM_PADAWAN:
+            case PM_JEDI_TRAINER:
+                (void) mongets(mtmp, !rn2(3) ? RED_LIGHTSABER
+                                     : rn2(2) ? BLUE_LIGHTSABER
+                                              : GREEN_LIGHTSABER);
                 break;
             }
         }
@@ -698,7 +724,52 @@ m_initinv(struct monst *mtmp)
                     (void) mongets(mtmp, C_RATION);
                 if (ptr != &mons[PM_SOLDIER] && !rn2(3))
                     (void) mongets(mtmp, BUGLE);
+                /* some carry fire bombs (Hack'EM) */
+                if (!rn2(2))
+                    while (rn2(3))
+                        (void) mongets(mtmp, FIRE_BOMB);
             }
+        } else if (ptr == &mons[PM_STORMTROOPER]) {
+            (void) mongets(mtmp, PLASTEEL_ARMOR);
+            (void) mongets(mtmp, PLASTEEL_HELM);
+            (void) mongets(mtmp, PLASTEEL_GLOVES);
+            (void) mongets(mtmp, PLASTEEL_BOOTS);
+        } else if (ptr == &mons[PM_JEDI_TRAINER]) {
+            (void) mongets(mtmp, SKELETON_KEY);
+            if (rn2(4))
+                (void) mongets(mtmp, rn2(3) ? ELVEN_LEATHER_HELM : HELMET);
+            switch (rn2(4)) {
+            /* MAJOR fall through ... */
+            case 0:
+                (void) mongets(mtmp, WAN_MAGIC_MISSILE);
+                FALLTHROUGH;
+                /*FALLTHRU*/
+            case 1:
+                (void) mongets(mtmp, POT_EXTRA_HEALING);
+                FALLTHROUGH;
+                /*FALLTHRU*/
+            case 2:
+                (void) mongets(mtmp, POT_HEALING);
+                FALLTHROUGH;
+                /*FALLTHRU*/
+            case 3:
+                (void) mongets(mtmp, WAN_SLEEP);
+            }
+        } else if (ptr == &mons[PM_PADAWAN]) {
+            if (rn2(4))
+                (void) mongets(mtmp, rn2(3) ? ELVEN_LEATHER_HELM : HELMET);
+            if (rn2(3))
+                (void) mongets(mtmp, rn2(6) ? CLOAK_OF_PROTECTION
+                                            : CLOAK_OF_MAGIC_RESISTANCE);
+        } else if (ptr == &mons[PM_JEDI_MASTER]) {
+            (void) mongets(mtmp, HIGH_BOOTS);
+            (void) mongets(mtmp, AMULET_OF_REFLECTION);
+            (void) mongets(mtmp, ROBE);
+            (void) mongets(mtmp, POT_FULL_HEALING);
+        } else if (ptr == &mons[PM_HIGH_ICE_MAGE]
+                   || ptr == &mons[PM_HIGH_FLAME_MAGE]) {
+            (void) mongets(mtmp, rn2(3) ? ROBE : CLOAK_OF_PROTECTION);
+            (void) mongets(mtmp, POT_FULL_HEALING);
         } else if (ptr == &mons[PM_SHOPKEEPER]) {
             (void) mongets(mtmp, SKELETON_KEY);
             switch (rn2(4)) {
@@ -2275,6 +2346,16 @@ peace_minded(struct permonst *ptr)
     aligntyp mal = ptr->maligntyp, ual = u.ualign.type;
 
     if (always_peaceful(ptr))
+        return TRUE;
+    /* Slash'EM: the undead sometimes recognize a necromancer as one of
+       their masters, and elementals of their own element are friendly
+       to the elemental mages */
+    if (Role_if(PM_NECROMANCER) && is_undead(ptr)
+        && !(ptr->geno & G_UNIQ) && ptr->msound != MS_NEMESIS
+        && u.ualign.record >= 0 && !rn2(3))
+        return TRUE;
+    if ((Role_if(PM_FLAME_MAGE) && ptr == &mons[PM_FIRE_ELEMENTAL])
+        || (Role_if(PM_ICE_MAGE) && ptr == &mons[PM_ICE_ELEMENTAL]))
         return TRUE;
     if (always_hostile(ptr))
         return FALSE;

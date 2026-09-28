@@ -2484,6 +2484,17 @@ mm_aggression(
     if ((mndx == PM_PURPLE_WORM || mndx == PM_BABY_PURPLE_WORM)
         && mdef->data == &mons[PM_SHRIEKER])
         return ALLOW_M | ALLOW_TM;
+    /* the Empire's stormtroopers and the Jedi are at war (SlashTHEM) */
+    if (mndx == PM_STORMTROOPER || mndx == PM_LORD_SIDIOUS) {
+        int dndx = monsndx(mdef->data);
+
+        if (dndx == PM_PADAWAN || dndx == PM_JEDI || dndx == PM_JEDI_TRAINER)
+            return ALLOW_M | ALLOW_TM;
+    }
+    if ((mndx == PM_PADAWAN || mndx == PM_JEDI || mndx == PM_JEDI_TRAINER)
+        && (mdef->data == &mons[PM_STORMTROOPER]
+            || mdef->data == &mons[PM_LORD_SIDIOUS]))
+        return ALLOW_M | ALLOW_TM;
     /* Various other combinations such as dog vs cat, cat vs rat, and
        elf vs orc have been suggested.  For the time being we don't
        support those. */

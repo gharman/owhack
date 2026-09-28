@@ -1923,6 +1923,10 @@ skill_init(const struct def_skill *class_skill)
     } else if (Role_if(PM_WIZARD)) {
         P_SKILL(P_ATTACK_SPELL) = P_BASIC;
         P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;
+    } else if (Role_if(PM_FLAME_MAGE) || Role_if(PM_ICE_MAGE)) {
+        P_SKILL(P_MATTER_SPELL) = P_BASIC;
+    } else if (Role_if(PM_NECROMANCER)) {
+        P_SKILL(P_ATTACK_SPELL) = P_BASIC; /* their necromancy */
     }
 
     /* walk through array to set skill maximums */

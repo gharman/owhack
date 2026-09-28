@@ -3589,7 +3589,8 @@ int
 spell_damage_bonus(
     int dmg) /* base amount to be adjusted by bonus or penalty */
 {
-    int intell = ACURR(A_INT);
+    /* flame mages are judged by their wisdom */
+    int intell = Role_if(PM_FLAME_MAGE) ? ACURR(A_WIS) : ACURR(A_INT);
 
     /* Punish low intelligence before low level else low intelligence
        gets punished only when high level */

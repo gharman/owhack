@@ -1297,7 +1297,15 @@ dog_move(
         wasseen = canseemon(mtmp);
         remove_monster(omx, omy);
         place_monster(mtmp, nix, niy);
-        if (cursemsg[chi] && (wasseen || canseemon(mtmp))) {
+        if (mtmp->data == &mons[PM_DROID]) {
+            /* the droid scans what it rolls over: it reveals the
+               blessed/uncursed/cursed state of the items there */
+            struct obj *floor_obj;
+
+            for (floor_obj = svl.level.objects[nix][niy]; floor_obj;
+                 floor_obj = floor_obj->nexthere)
+                set_bknown(floor_obj, 1);
+        } else if (cursemsg[chi] && (wasseen || canseemon(mtmp))) {
             /* describe top item of pile, not necessarily cursed item itself;
                don't use glyph_at() here--it would return the pet but we want
                to know whether an object is remembered at this map location */

@@ -27,6 +27,8 @@ enermod(int en)
 {
     switch (Role_switch) {
     case PM_CLERIC:
+    case PM_FLAME_MAGE:
+    case PM_ICE_MAGE:
     case PM_WIZARD:
         return (2 * en);
     case PM_HEALER:

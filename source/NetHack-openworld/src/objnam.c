@@ -626,7 +626,8 @@ xname_flags(
         obj->known = 0;
     if (!Blind && !gd.distantname)
         observe_object(obj);
-    if (Role_if(PM_CLERIC))
+    /* priests, and necromancers (Slash'EM), see the B/U/C of things */
+    if (Role_if(PM_CLERIC) || Role_if(PM_NECROMANCER))
         obj->bknown = 1; /* avoid set_bknown() to bypass update_inventory() */
 
     if (iflags.override_ID) {
@@ -1346,7 +1347,7 @@ doname_base(
 #endif
                      && obj->otyp != FAKE_AMULET_OF_YENDOR
                      && obj->otyp != AMULET_OF_YENDOR
-                     && !Role_if(PM_CLERIC)))
+                     && !Role_if(PM_CLERIC) && !Role_if(PM_NECROMANCER)))
             Strcat(prefix, "uncursed ");
     }
 
