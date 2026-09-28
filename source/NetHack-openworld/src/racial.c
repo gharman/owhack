@@ -462,9 +462,11 @@ u_race_ac_adjust(void)
 int
 u_arm_bonus(struct obj *obj)
 {
-    int base = objects[obj->otyp].a_ac
-               - min((int) greatest_erosion(obj), objects[obj->otyp].a_ac);
+    /* base protection includes the material's adjustment (mithril is
+       better than iron, and so on; see armor_bonus()) */
+    int base = objects[obj->otyp].a_ac + material_bonus(obj);
 
+    base -= min((int) greatest_erosion(obj), base);
     if (u_ghost())
         base /= 2;
     return base + obj->spe;
