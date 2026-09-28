@@ -597,6 +597,12 @@ vision_recalc(int control)
     gv.vision_full_recalc = 0; /* reset flag */
     if (gi.in_mklev || program_state.in_getlev || !iflags.vision_inited)
         return;
+    if (!gv.viz_array || !gv.viz_rmin || !gv.viz_rmax) {
+        /* should never happen; recover rather than crash */
+        impossible("vision_recalc: vision arrays unset");
+        vision_reset();
+        gv.vision_full_recalc = 0;
+    }
 
     /* confine the work to the neighborhood of the hero on large maps */
     vision_set_clip(u.ux, u.uy);

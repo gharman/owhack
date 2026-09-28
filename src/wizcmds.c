@@ -1479,6 +1479,9 @@ sanity_check(void)
     trap_sanity_check();
     engraving_sanity_check();
     levl_sanity_check();
+    if (iflags.vision_inited
+        && (!gv.viz_array || !gv.viz_rmin || !gv.viz_rmax))
+        impossible("vision sanity: vision arrays unset");
     program_state.in_sanity_check--;
 }
 
