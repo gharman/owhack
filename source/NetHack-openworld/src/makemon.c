@@ -773,6 +773,11 @@ m_initinv(struct monst *mtmp)
         if (rn2(7))
             (void) mongets(mtmp, MUMMY_WRAPPING);
         break;
+    case S_VAMPIRE:
+        /* vampires carry some blood to drink (EvilHack) */
+        if (rn2(2))
+            (void) mongets(mtmp, rn2(4) ? POT_BLOOD : POT_VAMPIRE_BLOOD);
+        break;
     case S_QUANTMECH:
         if (!rn2(20) && ptr == &mons[PM_QUANTUM_MECHANIC]) {
             struct obj *catcorpse;

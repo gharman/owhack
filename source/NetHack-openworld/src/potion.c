@@ -742,7 +742,8 @@ peffect_water(struct obj *otmp)
                 set_ulycn(NON_PM); /* cure lycanthropy */
             }
             /* the undead races burn more (EvilHack) */
-            losehp(Maybe_Half_Phys(d((u_undead() && !Upolyd) ? 4 : 2, 6)),
+            losehp(Maybe_Half_Phys(d((u_destroyed_not_killed() && !Upolyd)
+                                     ? 4 : 2, 6)),
                    "potion of holy water", KILLED_BY_AN);
         } else if (otmp->cursed) {
             You_feel("quite proud of yourself.");
