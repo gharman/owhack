@@ -208,6 +208,147 @@ moderately well, using Intelligence.
   damage, and makes its wielder fast; invoked, a controlled level
   teleport (in the open world, pick a ring) with the usual limits.
 
+## New races
+
+Nine races join NetHack's five.  Eight come from other variants (giant,
+centaur, illithid, tortle and draugr from EvilHack; vampire from EvilHack,
+Hack'EM and Slash'EM; werewolf and doppelganger from Slash'EM); the ghost is
+new.  Which roles each race can take:
+
+| race | alignments | roles |
+|---|---|---|
+| giant | any | Barbarian, Caveman, Monk, Priest, Samurai, Valkyrie, Wizard, Convict, Flame Mage, Infidel, Necromancer |
+| centaur | neutral, chaotic | Barbarian, Healer, Monk, Priest, Ranger, Valkyrie, Cartographer, Convict, Ice Mage, Infidel, Necromancer |
+| illithid | chaotic | Priest, Wizard, Convict, Ice Mage, Infidel, Necromancer, Pirate |
+| tortle | lawful, neutral | Archeologist, Barbarian, Healer, Monk, Priest, Samurai, Tourist, Wizard, Cartographer, Jedi, Pirate |
+| draugr | chaotic | Barbarian, Rogue, Convict, Ice Mage, Infidel, Necromancer |
+| vampire | neutral, chaotic | Archeologist, Barbarian, Rogue, Wizard, Convict, Ice Mage, Infidel, Necromancer, Pirate |
+| werewolf | chaotic | Barbarian, Rogue, Ranger, Convict, Pirate |
+| doppelganger | neutral, chaotic | Healer, Monk, Priest, Rogue, Wizard, Convict |
+| ghost | any | Archeologist, Priest, Rogue, Samurai, Tourist, Wizard, Cartographer, Convict, Necromancer, Pirate |
+
+* **Giant**: huge, strong and slow; carries more, and carries, throws and
+  steps onto boulders; can't wear body armor or cloaks, ride, or be
+  stealthy; digs fast, kicks doors open, shatters weapons.
+* **Centaur**: fast (speed 18) and a strong kicker; no boots and no
+  riding; extra shots with bows and crossbows, and uses lances and
+  polearms as if mounted.
+* **Illithid**: a mind flayer: telepathic and psychic resistant, with a
+  brain-eating tentacle attack, a psychic blast (#monster) and the psionic
+  wave spell only illithids can learn; a heavy metal helmet blocks its
+  psionics; flies from level 12.
+* **Tortle**: a turtle folk that hides in its shell (#monster), swims and
+  breathes water; natural armor that improves with level, but no body
+  armor or boots.
+* **Draugr**: an undead Norse warrior that eats only rotten meat, returns
+  from death a few times, and bites to zombify; fire does it extra harm,
+  and shopkeepers, the watch and lawful or neutral priests shun it.
+* **Vampire**: lives on blood (drains fresh corpses, drinks potions of
+  blood, feeds by biting); shapechanges into a bat, fog cloud or warg
+  (#monster) from level 3; hurt by silver, fire and holy water; flies from
+  level 12 and regenerates from level 20.
+* **Werewolf**: born a lycanthrope, which can't be cured; changes into its
+  wolf form at will (#youpoly) from level 3, and fights with berserk fury.
+* **Doppelganger**: polymorphs at will (#youpoly) for power, remembering
+  the forms it has eaten, and gains polymorph control at level 9.
+* The undead races (draugr, vampire, ghost) are harmed by holy water and
+  blessed weapons, are healed rather than killed by death rays, and are
+  often left alone by ordinary undead; lawful gods don't answer them.
+
+### The ghost (new)
+
+A restless spirit who can pass through things, frightens the living, and
+has a hard time with the physical world:
+
+* **Drifts through walls, rock, trees, doors, bars and boulders**, but only
+  while unburdened, and each move into solid matter costs 1 power point.
+  Out of power, a ghost can't enter solid matter (and if already inside,
+  each step costs a little health, so it can never get stuck).  Levels
+  whose walls resist phasing (Sokoban and others) stop it.
+* **Incorporeal**: ordinary physical blows and missiles do half damage,
+  unless silver or blessed, or struck by another incorporeal being;
+  grabs slip through it.  Always floats; doesn't breathe; resists cold,
+  sleep and level drain; sees invisible; later gains stealth (5), poison
+  resistance (9) and warning (13).
+* **Frightening**: its melee hits may send foes fleeing; ordinary peaceful
+  folk sometimes run from it; the *haunt* technique terrifies everything
+  nearby.
+* **Clumsy with material things**: half the usual carrying capacity; worn
+  armor gives only half its base AC (enchantment counts in full); wielded
+  weapons are at -2 to hit.  In exchange, bare hands deliver a chilling
+  touch (extra cold damage).
+* **Never eats and never gets hungry**, so it gains nothing from corpses.
+* Polymorphed into a solid form, a ghost has that form's body and needs.
+
+## Techniques
+
+Every role and most races have Slash'EM-style **techniques**, special
+abilities learned at experience levels (and lost again if drained below
+them).  `#technique` (or `M-x`) lists them with their status (Prepared,
+Active, Soon, Not Ready) and uses one; each then needs time to recharge.
+The tables follow Hack'EM (Slash'EM, SlashTHEM) for the roles and races
+they cover:
+
+* Archeologist: appraisal, research (3).  Barbarian: berserk, rage
+  eruption (5).  Caveman: primal roar.  Healer: surgery.  Knight: turn
+  undead, healing hands (a chaotic knight gets souleater instead).  Monk:
+  twelve martial techniques from pummel to spirit bomb.  Priest: turn
+  undead, blessing, healing hands (10), revivification (30).  Rogue:
+  pickpocket, critical strike, cutthroat (15).  Ranger: missile flurry.
+  Samurai: kiii.  Valkyrie: weapon practice.  Wizard: reinforce memory,
+  draw energy (3), power surge (5).
+* Necromancer: reinforce memory, whistle undead, raise zombies,
+  blood magic, souleater, power surge, revivification, spirit tempest.
+  Flame and Ice Mages: reinforce memory, power surge, draw energy (and
+  ice armor for the Ice Mage).  Jedi: jedi jump, charge saber (5),
+  telekinesis (8), force push (14).  Pirate: tumble, hold breath (3),
+  sunder (5).  Convict: pickpocket, slip free (5).  Infidel: curse,
+  reinforce memory, draw energy (5).  Cartographer: survey, triangulate
+  (3), waymark (8).
+* Dwarf: rage eruption.  Gnome: vanish, tinker (7).  Giant: primal roar,
+  berserk (10).  Centaur: missile flurry (5).  Illithid: mind blast.
+  Draugr: berserk.  Vampire: dazzle, draw blood.  Werewolf: eviscerate,
+  berserk (10).  Doppelganger: liquid leap.  Ghost: haunt.
+* Reaching Skilled in a melee weapon teaches *disarm*.  NetHack's own
+  `#turn` is the turn undead technique.
+
+## Materials
+
+Every object is made of a material, and many can come in several (ported
+from xNetHack, with EvilHack's rules for material hatred): iron, steel,
+mithril, copper, silver, gold, platinum, wood, bone, glass, gemstone,
+leather, cloth, dragonhide, plastic, paper and others.  Names show it
+("silver long sword", "mithril chain mail"), and you can wish for one
+("wooden dagger") when it suits the object.
+
+* Material changes weight, armor class (mithril +1 over iron; mithril body
+  armor gives at least MC2), weapon damage and to-hit (glass and gemstone
+  edges cut deeper, gold and platinum hit harder, wood and plastic
+  weaker), erosion (only iron rusts, copper and iron corrode, wood burns,
+  glass cracks and shatters, mithril, platinum and gems never erode) and
+  price.  Elven gear tends to wood, copper, silver and mithril, dwarvish
+  gear to iron, steel and mithril, orcish gear to iron and bone.
+* **There are no mithril coats any more.**  Mithril is a material:
+  elven chain mail comes in mithril, and any chain, splint, banded, plate
+  or other metal mail may turn up made of it.  (Wishing for an "elven" or
+  "dwarvish mithril-coat" still works.)
+* Silver harms demons, vampires, werewolves and shades as always; **cold
+  iron** harms elves and the fae; **copper** harms molds and bringers of
+  disease.  Heroes of those races take the same harm, so an elf is better
+  off with copper, wood or mithril (and gloves).
+
+## Also new
+
+* **#enhance** shows each skill as `[current / maximum]` and how far its
+  training has come toward the next level, as a percentage (every 100% is
+  a level, `MAX` when there is nothing left to train).
+* **Drain resistance and psychic resistance** are full resistances, for
+  monsters and heroes: undead, demons and lycanthropes resist level drain;
+  mind flayers and other psychic monsters resist psionics; the hero can
+  gain them from race, items (a tinfoil hat, a ring of psychic resistance)
+  and polymorph.  Psychic resistance protects against mind flayers'
+  psychic blasts and their memory-stealing tentacles.
+
 ## What changed, and why
 
 Everything not listed here plays as it does in NetHack 5.0.
