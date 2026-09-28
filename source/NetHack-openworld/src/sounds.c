@@ -1127,6 +1127,10 @@ domonnoise(struct monst *mtmp)
                 pline_msg =
                 "describes a recent article in \"Spelunker Today\" magazine.";
                 break;
+            case PM_CARTOGRAPHER:
+                pline_msg = "asks whether you have seen any roads that"
+                            " weren't on the map.";
+                break;
             case PM_TOURIST:
                 verbl_msg = "Aloha.";
                 break;

@@ -3658,14 +3658,14 @@
        no heed to Elbereth */
     MON(NAM("Asterion"), S_GIANT,
         LVL(18, 15, 0, 50, -10), (G_NOGEN | G_UNIQ),
-        A(ATTK(AT_WEAP, AD_PHYS, 3, 10), ATTK(AT_BUTT, AD_PHYS, 4, 8),
-          ATTK(AT_CLAW, AD_SAMU, 2, 6), NO_ATTK, NO_ATTK, NO_ATTK),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6), ATTK(AT_BUTT, AD_PHYS, 3, 6),
+          ATTK(AT_CLAW, AD_SAMU, 1, 4), NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(1500, 700, MS_NEMESIS, MZ_LARGE), MR_POISON | MR_STONE, 0,
         M1_HUMANOID | M1_CARNIVORE,
         M2_NOPOLY | M2_PNAME | M2_MALE | M2_STALK | M2_HOSTILE | M2_STRONG
             | M2_NASTY | M2_COLLECT,
         M3_WANTSARTI | M3_WAITFORU | M3_INFRAVISION | M3_INFRAVISIBLE,
-        22, HI_LORD, ASTERION),
+        21, HI_LORD, ASTERION),
     /* Multi-headed, possessing the breath attacks of all the other dragons
      * (selected at random when attacking).  Despite being a superset of
      * gold dragon, does not emit light.  Also does not fly.

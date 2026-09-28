@@ -84,7 +84,6 @@ des.monster({ id = "umber hulk", peaceful = 0 })
 des.monster({ id = "umber hulk", peaceful = 0 })
 des.monster({ id = "umber hulk", peaceful = 0 })
 des.monster({ id = "umber hulk", peaceful = 0 })
-des.monster({ id = "minotaur", peaceful = 0 })
 for i = 1, 10 do
    des.monster({ class = "q", peaceful = 0 })
 end
