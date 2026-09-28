@@ -1049,7 +1049,10 @@ mdamagem(
     /* touch attacks made with (or by a body made of) something mdef hates:
        an iron golem's fists vs an elf, silver gloves vs a demon */
     {
-        long armask = attack_contact_slots(magr, mattk->aatyp);
+        /* a claw attack made with a wielded weapon is a weapon hit, and
+           dmgval() handles the weapon's material */
+        long armask = (mattk->aatyp == AT_CLAW && mwep)
+                          ? 0L : attack_contact_slots(magr, mattk->aatyp);
         struct obj *hated_obj = (struct obj *) 0;
 
         if (armask) {
@@ -1060,6 +1063,9 @@ mdamagem(
     }
 
     mhitm_adtyping(magr, mattk, mdef, &mhm);
+    /* magr's glass weapon might have shattered */
+    if (mwep && MON_WEP(magr) != mwep)
+        mwep = (struct obj *) 0;
 
     if (mhitm_knockback(magr, mdef, mattk, &mhm.hitflags,
                         (MON_WEP(magr) != 0))

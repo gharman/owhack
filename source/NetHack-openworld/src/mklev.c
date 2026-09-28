@@ -1931,7 +1931,7 @@ mktrap_victim(struct trap *ttmp)
         otmp = mkobj(poss_class, FALSE);
         curse(otmp);
         /* for mktrap_victim(), PIT is actually an exploded LANDMINE */
-        if (ttmp->ttyp == PIT && breaktest(otmp)) {
+        if (ttmp->ttyp == PIT && breaktest(otmp) && breaks_unseen(otmp)) {
             /* landmine: if fragile object has been created, destroy it;
                don't worry about non-empty containers--they aren't
                breakable--nor about breakable contents of such */

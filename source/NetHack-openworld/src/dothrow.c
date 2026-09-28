@@ -2541,6 +2541,24 @@ release_camera_demon(struct obj *obj, coordxy x, coordxy y)
     }
 }
 
+/* For breakage nobody sees, of an object that passed breaktest() (falling
+   to another level, or created broken): a glass weapon or piece of armor
+   just gets more cracked instead, unless it was already thoroughly
+   cracked.  Returns TRUE if obj should be destroyed. */
+boolean
+breaks_unseen(struct obj *obj)
+{
+    if (is_crackable(obj)) {
+        if (obj->oerodeproof)
+            return FALSE;
+        if (obj->oeroded < MAX_ERODE) {
+            obj->oeroded++;
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 /* Possibly crack a glass weapon or piece of armor through its use in
  * combat (a glass weapon that hits something).  Unlike breakobj(), this
  * doesn't happen every time.  Return TRUE if obj was destroyed.
@@ -2688,9 +2706,10 @@ breaktest(struct obj *obj)
 
     if (obj_resists(obj, nonbreakchance, 99))
         return FALSE;
+    /* (crystal chests and boxes are sturdier than glassware) */
     if (obj->material == GLASS && !obj->oartifact
         && !(is_crackable(obj) && obj->oerodeproof)
-        && obj->oclass != GEM_CLASS)
+        && obj->oclass != GEM_CLASS && !Is_container(obj))
         return TRUE;
     switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
     case EXPENSIVE_CAMERA:

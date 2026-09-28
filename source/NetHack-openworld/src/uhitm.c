@@ -807,8 +807,11 @@ hitum(struct monst *mon, struct attack *uattk)
                              dieroll);
         /* second passive counter-attack only occurs if second attack hits */
         if (mhit)
-            (void) passive(mon, secondwep, mhit, malive, AT_WEAP,
-                           secondwep && !uswapwep);
+            (void) passive(mon,
+                           /* a glass off-hand weapon might have shattered */
+                           (secondwep && secondwep == uswapwep)
+                               ? secondwep : (struct obj *) 0,
+                           mhit, malive, AT_WEAP, secondwep && !uswapwep);
     }
     gt.twohits = 0;
     return malive;
@@ -1921,8 +1924,10 @@ hmon_hitmon(
         Your("%s %s no longer poisoned.", hmd.saved_oname,
              vtense(hmd.saved_oname, "are"));
 
-    /* a wielded glass weapon might crack (and eventually shatter) */
-    if (hmd.hand_to_hand && obj && (obj == uwep || obj == uswapwep)
+    /* a wielded glass weapon might crack (and eventually shatter); only
+       for ordinary melee hits, since callers of hmon() for applied
+       polearms go on to use the weapon (passive_obj()) */
+    if (thrown == HMON_MELEE && obj && (obj == uwep || obj == uswapwep)
         && is_crackable(obj))
         (void) crack_glass_obj(obj);
 

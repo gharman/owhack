@@ -44,6 +44,7 @@ staticfn const char *material_prefix(struct obj *);
 staticfn boolean not_actually_specifying_material(const char *const,
                                                   const char *);
 staticfn int legacy_objname(const char *, int *);
+staticfn boolean is_legacy_objname(const char *);
 staticfn int wish_material(const char *, int *);
 staticfn void wish_set_material(struct _readobjnam_data *);
 staticfn void add_erosion_words(struct obj *, char *);
@@ -4311,7 +4312,7 @@ wish_material(const char *str, int *matp)
 staticfn boolean
 not_actually_specifying_material(const char *const str, const char *matstr)
 {
-    int i, legmat;
+    int i;
     int matlen = (int) strlen(matstr);
     short otyp;
 
@@ -4346,14 +4347,16 @@ not_actually_specifying_material(const char *const str, const char *matstr)
         }
     }
     /* legacy object names like "elven mithril-coat", "silver shield" */
-    if (legacy_objname(str, &legmat) != STRANGE_OBJECT)
+    if (is_legacy_objname(str))
         return TRUE;
     /* alternate spellings like "iron ball" */
     {
         const struct alt_spellings *as;
 
+        /* (not "stone" itself, which is also an alternate spelling) */
         for (as = spellings; as->sp; as++)
-            if (!strncmpi(str, as->sp, strlen(as->sp)))
+            if (strlen(as->sp) > (size_t) matlen
+                && !strncmpi(str, as->sp, strlen(as->sp)))
                 return TRUE;
     }
     /* does it match some monster? e.g. "silver dragon scale mail" */
@@ -4406,6 +4409,18 @@ static const struct legacy_objnames {
     { "silver shield", SHIELD_OF_REFLECTION, SILVER },
     { (const char *) 0, 0, 0 }
 };
+
+/* is name one of the legacy object names above? (no random choices) */
+staticfn boolean
+is_legacy_objname(const char *name)
+{
+    const struct legacy_objnames *ln;
+
+    for (ln = legacy_objnames; ln->name; ++ln)
+        if (wishymatch(name, ln->name, FALSE))
+            return TRUE;
+    return FALSE;
+}
 
 /* if name is one of the legacy object names above, return its object type
    and set *matp to its material; otherwise return STRANGE_OBJECT */
@@ -4601,6 +4616,9 @@ readobjnam_postparse1(struct _readobjnam_data *d)
     } else if (!strncmpi(d->bp, "sets of ", 8)) {
         d->bp += 8;
     }
+    /* "pair of plastic high boots": the material comes after "pair of" */
+    if (!d->material)
+        d->bp += wish_material(d->bp, &d->material);
 
     /* Intercept pudding globs here; they're a valid wish target,
      * but we need them to not get treated like a corpse.

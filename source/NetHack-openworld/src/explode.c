@@ -775,7 +775,9 @@ scatter(
 
         /* 9 in 10 chance of fracturing boulders or statues */
         if ((scflags & MAY_FRACTURE) != 0
-            && (otmp->otyp == BOULDER || otmp->otyp == STATUE)
+            && (otmp->otyp == BOULDER
+                /* copper and gold statues don't fracture */
+                || (otmp->otyp == STATUE && !is_metallic(otmp)))
             && rn2(10)) {
             if (otmp->otyp == BOULDER) {
                 if (cansee(sx, sy)) {

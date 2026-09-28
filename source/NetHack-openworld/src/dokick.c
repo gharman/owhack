@@ -1732,8 +1732,9 @@ ship_object(struct obj *otmp, coordxy x, coordxy y, boolean shop_floor_obj)
     if (otmp->owornmask)
         remove_worn_item(otmp, TRUE);
 
-    /* some things break rather than ship */
-    if (breaktest(otmp)) {
+    /* some things break rather than ship (glass weapons and armor crack
+       instead, and go on falling) */
+    if (breaktest(otmp) && breaks_unseen(otmp)) {
         const char *result;
 
         if (otmp->material == GLASS
@@ -1845,7 +1846,7 @@ obj_delivery(boolean near_hero)
                 if (where == MIGR_WITH_HERO) {
                     if (breaks(otmp, nx, ny))
                         continue;
-                } else if (breaktest(otmp)) {
+                } else if (breaktest(otmp) && breaks_unseen(otmp)) {
                     /* assume it broke before player arrived, no messages */
                     delobj(otmp);
                     continue;
@@ -1860,7 +1861,8 @@ obj_delivery(boolean near_hero)
             /* set dummy coordinates because there's no
                current position for rloco() to update */
             otmp->ox = otmp->oy = 0;
-            if (rloco(otmp) && !nobreak && breaktest(otmp)) {
+            if (rloco(otmp) && !nobreak && breaktest(otmp)
+                && breaks_unseen(otmp)) {
                 /* assume it broke before player arrived, no messages */
                 delobj(otmp);
             }

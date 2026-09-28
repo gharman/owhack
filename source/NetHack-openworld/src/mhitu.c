@@ -2528,7 +2528,8 @@ passiveum(
         return M_ATTK_HIT;
     }
     case AD_ENCH: /* KMH -- remove enchantment (disenchanter) */
-        if (mon_currwep) {
+        /* the weapon might be gone (a glass one that shattered) */
+        if (mon_currwep && mon_currwep == MON_WEP(mtmp)) {
             /* by_you==True: passive counterattack to hero's action
                is hero's fault */
             (void) drain_item(mon_currwep, TRUE);
