@@ -144,6 +144,7 @@ M-u   untrap    untrap something
 M-V   vanquished list number and type of vanquished monsters
 M-v   version   print compile time options for this version
 M-w   wipe      wipe off your face
+M-x   technique perform one of your techniques (special abilities)
 M-X   explore   switch from regular play to non-scoring explore mode
 
 If the 'number_pad' option is on, keys usually used for movement can be

@@ -1485,6 +1485,41 @@ do_mapping(void)
     exercise(A_WIS, TRUE);
 }
 
+/*
+ * A Cartographer's survey (#technique): map the terrain within 'radius' of
+ * <cx,cy>, like magic mapping, and find the traps within 'trapradius'.
+ */
+void
+do_survey_mapping(coordxy cx, coordxy cy, int radius, int trapradius)
+{
+    int zx, zy;
+    boolean unconstrained;
+    struct trap *t;
+
+    unconstrained = unconstrain_map();
+    for (zx = max(1, cx - radius); zx <= min(COLNO - 1, cx + radius); zx++)
+        for (zy = max(0, cy - radius); zy <= min(ROWNO - 1, cy + radius);
+             zy++)
+            if (dist2(zx, zy, cx, cy) <= radius * radius)
+                show_map_spot(zx, zy, Confusion);
+    for (t = gf.ftrap; t; t = t->ntrap) {
+        if (dist2(t->tx, t->ty, cx, cy) > trapradius * trapradius)
+            continue;
+        if (t->ttyp == STATUE_TRAP || (Confusion && rn2(7)))
+            continue;
+        t->tseen = 1;
+        map_trap(t, 1);
+    }
+    if (!svl.level.flags.hero_memory || unconstrained) {
+        flush_screen(1);                 /* flush temp screen */
+        browse_map(TER_DETECT | TER_MAP | TER_TRP, "anything of interest");
+        map_redisplay(); /* calls reconstrain_map() and docrt() */
+    } else {
+        reconstrain_map();
+    }
+    exercise(A_WIS, TRUE);
+}
+
 /* clairvoyance */
 void
 do_vicinity_map(

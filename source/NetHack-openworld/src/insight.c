@@ -31,6 +31,7 @@ staticfn void one_characteristic(int, int, int);
 staticfn void status_enlightenment(int, int);
 staticfn void weapon_insight(int);
 staticfn void attributes_enlightenment(int, int);
+staticfn void techniques_enlightenment(int, int);
 staticfn void show_achievements(int);
 staticfn int QSORTCALLBACK vanqsort_cmp(const genericptr, const genericptr);
 staticfn int num_extinct(void);
@@ -410,6 +411,8 @@ enlightenment(
         basics_enlightenment(mode, final);
         /* strength, dexterity, &c */
         characteristics_enlightenment(mode, final);
+        /* known techniques */
+        techniques_enlightenment(mode, final);
     }
     /* expanded status line information, including things which aren't
        included there due to space considerations;
@@ -820,6 +823,23 @@ basics_enlightenment(int mode UNUSED, int final)
     } else
         Strcpy(buf, "off");
     enl_msg("Autopickup ", "is ", "was ", buf, "");
+}
+
+/* the techniques the hero knows (see tech.c) */
+staticfn void
+techniques_enlightenment(int mode UNUSED, int final)
+{
+    char buf[BUFSZ];
+    int n;
+
+    if (!tech_describe(0, buf, final))
+        return;
+    enlght_out(""); /* separator */
+    enlght_out("Techniques:");
+    for (n = 0; tech_describe(n, buf, final); n++) {
+        Strcat(buf, ".");
+        enlght_out(buf);
+    }
 }
 
 /* characteristics: expanded version of bottom line strength, dexterity, &c */
@@ -2177,6 +2197,14 @@ show_conduct(int final)
     } else if (wizard) {
         Sprintf(buf, "changed form %ld time%s", u.uconduct.polyselfs,
                 plur(u.uconduct.polyselfs));
+        you_have_X(buf);
+    }
+
+    if (!u.uconduct.techuse) {
+        you_have_never("used a technique");
+    } else if (wizard) {
+        Sprintf(buf, "used techniques %ld time%s", u.uconduct.techuse,
+                plur(u.uconduct.techuse));
         you_have_X(buf);
     }
 

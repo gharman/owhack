@@ -3117,3 +3117,128 @@ ow_world_dump(void)
     }
     fclose(fp);
 }
+
+/* ------------------------------------------------------------------ */
+/* way-finding (the Cartographer's #technique triangulate)             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The magic portal nearest to <x,y> on the same side of the Gehennom
+ * barrier.  Its site is generated if it hasn't been yet, so that it can
+ * be shown on the map.
+ */
+boolean
+ow_nearest_portal(coordxy x, coordxy y, coordxy *px, coordxy *py,
+                  xint16 *pdnum)
+{
+    int r, k, qx, qy, bx = 0, by = 0;
+    long d, best = -1L;
+    xint16 bdnum = -1;
+    boolean past = ow_past_barrier(x, y);
+
+    if (!svow.inited)
+        return FALSE;
+    for (r = 0; r < svow.nrings; r++) {
+        const struct ow_ringinfo *ri = &svow.rings[r];
+
+        if (ri->dnum < 0 || ri->dnum >= svn.n_dgns)
+            continue;
+        for (k = 0; k < ri->nportals; k++) {
+            ow_portal_pos(ri, k, &qx, &qy);
+            if (ow_past_barrier(qx, qy) != past)
+                continue;
+            d = (long) (qx - x) * (qx - x) + (long) (qy - y) * (qy - y);
+            if (best < 0L || d < best)
+                best = d, bx = qx, by = qy, bdnum = ri->dnum;
+        }
+    }
+    if (best < 0L)
+        return FALSE;
+    /* a portal site lies wholly inside one chunk */
+    ow_generate_area(bx, by, 0);
+    *px = (coordxy) bx, *py = (coordxy) by, *pdnum = bdnum;
+    return TRUE;
+}
+
+/* might the chunk <cx,cy> hold a town?  if so, return its central square
+   (where the fountain stands); cf. ow_structures() and ow_town() */
+staticfn boolean ow_town_site(int, int, int *, int *);
+
+staticfn boolean
+ow_town_site(int cx, int cy, int *tx, int *ty)
+{
+    int x0 = cx * OW_CHUNK, y0 = cy * OW_CHUNK,
+        x1 = min(x0 + OW_CHUNK - 1, OW_SIZE - 1),
+        y1 = min(y0 + OW_CHUNK - 1, OW_SIZE - 1),
+        mx = (x0 + x1) / 2, my = (y0 + y1) / 2, biome, roll;
+    boolean big;
+
+    if (OW_CX >= x0 - 9 && OW_CX <= x1 + 9 && OW_CY >= y0 - 9
+        && OW_CY <= y1 + 9)
+        return FALSE; /* the central plaza */
+    biome = ow_biome_at(mx, my);
+    roll = (int) (ow_hash(cx, cy, 1409) % 1000);
+    if (biome == OWB_BARRIER || biome == OWB_EDGE || ow_dist(mx, my) < 24
+        || ow_in_gehennom(mx, my))
+        return FALSE;
+    if (ow_past_barrier(x0, y0) != ow_past_barrier(x1, y1)
+        || ow_past_barrier(x0, y1) != ow_past_barrier(x1, y0))
+        return FALSE;
+    if (roll >= 110 || biome == OWB_MOUNTAIN || biome == OWB_LAKE
+        || biome == OWB_SWAMP || biome == OWB_BARRENS)
+        return FALSE;
+    big = (roll < 40);
+    *tx = x0 + (big ? 2 + 13 : 6 + 9);
+    *ty = y0 + (big ? 7 + 8 : 9 + 6);
+    return TRUE;
+}
+
+/*
+ * The town nearest to <x,y> (its central square), looking up to ten
+ * chunks away.  Generates a few of the candidate chunks if necessary to
+ * find out whether a town was actually built there.
+ */
+boolean
+ow_nearest_town(coordxy x, coordxy y, coordxy *tx, coordxy *ty)
+{
+    int cx0 = x / OW_CHUNK, cy0 = y / OW_CHUNK, rad, cx, cy, qx, qy,
+        ngen = 0, bx = 0, by = 0, lastrad = 10;
+    long d, best = -1L;
+
+    if (!svow.inited)
+        return FALSE;
+    for (rad = 0; rad <= lastrad; rad++) {
+        for (cx = cx0 - rad; cx <= cx0 + rad; cx++)
+            for (cy = cy0 - rad; cy <= cy0 + rad; cy++) {
+                if (max(abs(cx - cx0), abs(cy - cy0)) != rad)
+                    continue; /* only the ring of chunks at this radius */
+                if (cx < 0 || cy < 0 || cx >= OW_NCHUNKS
+                    || cy >= OW_NCHUNKS)
+                    continue;
+                if (!ow_town_site(cx, cy, &qx, &qy) || !isok(qx, qy))
+                    continue;
+                if (!svow.genmap[cx][cy]) {
+                    if (ngen >= 4)
+                        continue;
+                    ow_generate_area(qx, qy, 0);
+                    ngen++;
+                }
+                /* was the town really built? */
+                if (!IS_FOUNTAIN(levl[qx][qy].typ)
+                    && !(levl[qx][qy].flavor == OWF_PAVED
+                         && levl[qx - 3][qy].flavor == OWF_PAVED
+                         && levl[qx + 3][qy].flavor == OWF_PAVED))
+                    continue;
+                d = (long) (qx - x) * (qx - x) + (long) (qy - y) * (qy - y);
+                if (best < 0L || d < best)
+                    best = d, bx = qx, by = qy;
+            }
+        /* a town in the next ring out could still be a little closer */
+        if (best >= 0L && lastrad > rad + 1)
+            lastrad = rad + 1;
+    }
+    if (best < 0L)
+        return FALSE;
+    *tx = (coordxy) bx, *ty = (coordxy) by;
+    return TRUE;
+}

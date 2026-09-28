@@ -646,6 +646,8 @@ nh_timeout(void)
         else
             rehumanize();
     }
+    /* techniques: timeouts, and active ones wearing off */
+    tech_timeout();
     if (u.ucreamed)
         u.ucreamed--;
 

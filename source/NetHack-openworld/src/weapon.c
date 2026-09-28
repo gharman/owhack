@@ -1247,6 +1247,8 @@ skill_advance(int skill)
        the Luck bias they used to have over other roles */
     if (skill >= P_FIRST_SPELL && skill <= P_LAST_SPELL)
         skill_based_spellbook_id();
+    /* Skilled with a melee weapon teaches the disarm technique */
+    tech_skill_advanced(skill);
 }
 
 static const struct skill_range {
@@ -1523,6 +1525,7 @@ lose_weapon_skill(int n) /* number of slots to lose; normally one */
                to that effect would seem pretty confusing.... */
         }
     }
+    tech_skills_lost(); /* maybe forget the disarm technique */
 }
 
 void
@@ -1564,6 +1567,7 @@ drain_weapon_skill(int n) /* number of skills to drain */
             You("forget %syour training in %s.",
                 P_SKILL(skill) >= P_BASIC ? "some of " : "", P_NAME(skill));
         }
+    tech_skills_lost(); /* maybe forget the disarm technique */
 }
 
 int

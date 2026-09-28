@@ -542,6 +542,7 @@ extern void use_crystal_ball(struct obj **) NONNULLARG1;
 extern void show_map_spot(coordxy, coordxy, boolean);
 extern void do_mapping(void);
 extern void do_vicinity_map(struct obj *);
+extern void do_survey_mapping(coordxy, coordxy, int, int);
 extern void cvt_sdoor_to_door(struct rm *) NONNULLARG1;
 extern int findit(void);
 extern int openit(void);
@@ -2426,6 +2427,10 @@ extern int ow_home_dir(void);
 extern char *ow_compass_str(char *);
 extern void ow_draw_compass(void);
 extern boolean ow_compass_covers(int, int);
+extern boolean ow_nearest_portal(coordxy, coordxy, coordxy *, coordxy *,
+                                 xint16 *) NONNULLPTRS;
+extern boolean ow_nearest_town(coordxy, coordxy, coordxy *,
+                               coordxy *) NONNULLPTRS;
 
 /* ### pager.c ### */
 
@@ -3192,6 +3197,7 @@ extern void show_spells(void);
 extern void initialspell(struct obj *) NONNULLARG1;
 extern int known_spell(short);
 extern int spell_idx(short);
+extern boolean studyspell(void);
 extern char force_learn_spell(short);
 extern int num_spells(void);
 extern void skill_based_spellbook_id(void);
@@ -3284,6 +3290,30 @@ extern boolean parsesymbols(char *, int) NONNULLARG1;
 extern void sys_early_init(void);
 extern void sysopt_release(void);
 extern void sysopt_seduce_set(int);
+
+/* ### tech.c ### */
+
+extern boolean tech_known(short);
+extern int tech_inuse(int);
+extern int tech_level(int);
+extern void extend_tech_time(int, int);
+extern void aborttech(int);
+extern void learntech(short, long, int);
+extern void adjtech(int, int);
+extern void tech_skill_advanced(int);
+extern void tech_skills_lost(void);
+extern int dotech(void);
+extern void show_techniques(void);
+extern boolean tech_describe(int, char *, int) NONNULLARG2;
+extern int dowiztech(void);
+extern void tech_timeout(void);
+extern int do_breakrock(coordxy, coordxy);
+extern int tech_tohit_bonus(void);
+extern int tech_dmg_bonus(struct monst *, struct obj *, int, int,
+                          boolean *) NONNULLARG1;
+extern int tech_flurry_bonus(struct obj *) NONNULLARG1;
+extern int tech_icearmor_ac(void);
+extern boolean tech_icearmor_passive(struct monst *) NONNULLARG1;
 
 /* ### teleport.c ### */
 
