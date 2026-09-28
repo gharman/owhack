@@ -85,7 +85,9 @@ set_uasmon(void)
                         || dmgtype(mdat, AD_RBRE)));
     PROPSET(SICK_RES, (mdat->mlet == S_FUNGUS || mdat == &mons[PM_GHOUL]));
 
-    PROPSET(STUNNED, (mdat == &mons[PM_STALKER] || is_bat(mdat)));
+    /* a vampire bat flies true (EvilHack) */
+    PROPSET(STUNNED, (mdat == &mons[PM_STALKER]
+                      || (is_bat(mdat) && mdat != &mons[PM_VAMPIRE_BAT])));
     PROPSET(HALLUC_RES, dmgtype(mdat, AD_HALU));
     PROPSET(SEE_INVIS, perceives(mdat));
     PROPSET(TELEPAT, telepathic(mdat));

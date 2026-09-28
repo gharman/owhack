@@ -271,14 +271,26 @@ void
 gainstr(struct obj *otmp, int incr, boolean givemsg)
 {
     int num = incr;
+    /* the naturally strong races gain strength the way everyone gains it
+       from a potion, however it's gained (EvilHack) */
+    boolean strongrace = ((Race_if(PM_GIANT) || Race_if(PM_CENTAUR)
+                           || Race_if(PM_TORTLE) || Race_if(PM_DRAUGR)
+                           || Race_if(PM_VAMPIRE))
+                          && !(otmp && otmp->cursed));
 
-    if (!num) {
+    if (!num || strongrace) {
         if (ABASE(A_STR) < 18)
             num = (rn2(4) ? 1 : rnd(6));
         else if (ABASE(A_STR) < STR18(85))
             num = rnd(10);
         else
             num = 1;
+        /* giants grow stronger faster, up to 18/100 */
+        if (strongrace && Race_if(PM_GIANT) && ABASE(A_STR) < STR18(100))
+            num += d(2, 2);
+        if (strongrace && ABASE(A_STR) < STR18(100)
+            && ABASE(A_STR) + num > STR18(100))
+            num = STR18(100) - ABASE(A_STR);
     }
     (void) adjattrib(A_STR, (otmp && otmp->cursed) ? -num : num,
                      givemsg ? -1 : 1);

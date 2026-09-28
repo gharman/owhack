@@ -4384,8 +4384,10 @@ weight_cap(void)
 
     carrcap = (WT_WEIGHTCAP_STRCON * (ACURRSTR + ACURR(A_CON)))
                + WT_WEIGHTCAP_SPARE;
-    /* the bigger and stronger races can carry more (EvilHack) */
-    if (!Upolyd) {
+    /* the bigger and stronger races can carry more (EvilHack); a
+       shapechanged vampire's gear melds into its new form, which carries
+       no less than its natural one */
+    if (!Upolyd || u_vampire_form()) {
         if (Race_if(PM_GIANT) || Race_if(PM_CENTAUR)) {
             carrcap += 100;
             maxcarrcap += 400;
@@ -4395,7 +4397,7 @@ weight_cap(void)
             maxcarrcap += 200;
         }
     }
-    if (Upolyd) {
+    if (Upolyd && !u_vampire_form()) {
         /* consistent with can_carry() in mon.c */
         if (gy.youmonst.data->mlet == S_NYMPH)
             carrcap = MAX_CARR_CAP;

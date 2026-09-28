@@ -1281,6 +1281,11 @@ ini_inv_mkobj_filter(int oclass, boolean got_level1_spellbook)
            || (otyp == RIN_PSYCHIC_RESISTANCE && Race_if(PM_ILLITHID))
            /* doppelgangers shouldn't start with polymorph control */
            || (otyp == RIN_POLYMORPH_CONTROL && Race_if(PM_DOPPELGANGER))
+           /* ghosts never eat and already see invisible */
+           || ((otyp == SPE_DETECT_FOOD || otyp == RIN_SLOW_DIGESTION
+                || otyp == RIN_SEE_INVISIBLE) && Race_if(PM_GHOST))
+           /* nothing makes a giant stealthy */
+           || (otyp == RIN_STEALTH && Race_if(PM_GIANT))
            /* Monks don't use weapons */
            || (otyp == SCR_ENCHANT_WEAPON && Role_if(PM_MONK))
            /* wizard patch -- they already have one */
