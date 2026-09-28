@@ -43,27 +43,28 @@ enum p_skills {
     P_BOW                = 20, /* launchers */
     P_SLING              = 21,
     P_CROSSBOW           = 22,
-    P_DART               = 23, /* hand-thrown missiles */
-    P_SHURIKEN           = 24,
-    P_BOOMERANG          = 25,
-    P_WHIP               = 26, /* flexible, one-handed */
-    P_UNICORN_HORN       = 27, /* last weapon, two-handed */
+    P_FIREARM            = 23, /* flintlock (KMH, Slash'EM) */
+    P_DART               = 24, /* hand-thrown missiles */
+    P_SHURIKEN           = 25,
+    P_BOOMERANG          = 26,
+    P_WHIP               = 27, /* flexible, one-handed */
+    P_UNICORN_HORN       = 28, /* last weapon, two-handed */
 
     /* Spell Skills added by Larry Stewart-Zerba */
-    P_ATTACK_SPELL       = 28,
-    P_HEALING_SPELL      = 29,
-    P_DIVINATION_SPELL   = 30,
-    P_ENCHANTMENT_SPELL  = 31,
-    P_CLERIC_SPELL       = 32,
-    P_ESCAPE_SPELL       = 33,
-    P_MATTER_SPELL       = 34,
+    P_ATTACK_SPELL       = 29,
+    P_HEALING_SPELL      = 30,
+    P_DIVINATION_SPELL   = 31,
+    P_ENCHANTMENT_SPELL  = 32,
+    P_CLERIC_SPELL       = 33,
+    P_ESCAPE_SPELL       = 34,
+    P_MATTER_SPELL       = 35,
 
     /* Other types of combat */
-    P_BARE_HANDED_COMBAT = 35, /* actually weaponless; gloves are ok */
-    P_TWO_WEAPON_COMBAT  = 36, /* pair of weapons, one in each hand */
-    P_RIDING             = 37, /* How well you control your steed */
+    P_BARE_HANDED_COMBAT = 36, /* actually weaponless; gloves are ok */
+    P_TWO_WEAPON_COMBAT  = 37, /* pair of weapons, one in each hand */
+    P_RIDING             = 38, /* How well you control your steed */
 
-    P_NUM_SKILLS         = 38
+    P_NUM_SKILLS         = 39
 };
 
 #define P_MARTIAL_ARTS P_BARE_HANDED_COMBAT /* Role distinguishes */

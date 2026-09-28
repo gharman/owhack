@@ -232,13 +232,21 @@ struct obj {
          || is_art(otmp, ART_SNICKERSNEE)))
 #define is_spear(otmp) \
     (otmp->oclass == WEAPON_CLASS && objects[otmp->otyp].oc_skill == P_SPEAR)
+/* launchers and their ammo: bows, slings, crossbows and firearms
+   (P_FIREARM immediately follows P_CROSSBOW) */
 #define is_launcher(otmp)                                                  \
     (otmp->oclass == WEAPON_CLASS && objects[otmp->otyp].oc_skill >= P_BOW \
-     && objects[otmp->otyp].oc_skill <= P_CROSSBOW)
+     && objects[otmp->otyp].oc_skill <= P_FIREARM)
 #define is_ammo(otmp)                                            \
     ((otmp->oclass == WEAPON_CLASS || otmp->oclass == GEM_CLASS) \
-     && objects[otmp->otyp].oc_skill >= -P_CROSSBOW              \
+     && objects[otmp->otyp].oc_skill >= -P_FIREARM               \
      && objects[otmp->otyp].oc_skill <= -P_BOW)
+#define is_firearm(otmp) \
+    ((otmp)->oclass == WEAPON_CLASS                              \
+     && objects[(otmp)->otyp].oc_skill == P_FIREARM)
+#define is_bullet(otmp) \
+    ((otmp)->oclass == WEAPON_CLASS                              \
+     && objects[(otmp)->otyp].oc_skill == -P_FIREARM)
 #define matching_launcher(a, l) \
     ((l) && objects[(a)->otyp].oc_skill == -objects[(l)->otyp].oc_skill)
 #define ammo_and_launcher(a, l) (is_ammo(a) && matching_launcher(a, l))

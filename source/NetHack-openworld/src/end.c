@@ -576,7 +576,7 @@ dump_everything(
 
     /* character name and basic role info */
     Sprintf(pbuf, "%s, %s %s %s %s",
-            svp.plname, aligns[1 - u.ualign.type].adj,
+            svp.plname, aligns[alignidx(u.ualign.type)].adj,
             genders[flags.female].adj, gu.urace.adj,
             (flags.female && gu.urole.name.f) ? gu.urole.name.f
                                              : gu.urole.name.m);
@@ -741,7 +741,8 @@ savelife(int how)
     if (u.utrap && u.utraptype == TT_LAVA)
         reset_utrap(FALSE);
     disp.botl = TRUE;
-    u.ugrave_arise = NON_PM;
+    /* dead pirates rise as skeletal pirates */
+    u.ugrave_arise = Role_if(PM_PIRATE) ? PM_SKELETAL_PIRATE : NON_PM;
     HUnchanging = 0L;
     curs_on_u();
     if (!svc.context.mon_moving)

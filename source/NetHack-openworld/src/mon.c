@@ -480,14 +480,23 @@ genus(int mndx, int mode)
     case PM_NEANDERTHAL:
         mndx = mode ? PM_CAVE_DWELLER : PM_HUMAN;
         break;
+    case PM_INMATE:
+        mndx = mode ? PM_CONVICT : PM_HUMAN;
+        break;
     case PM_ATTENDANT:
         mndx = mode ? PM_HEALER : PM_HUMAN;
+        break;
+    case PM_CULTIST:
+        mndx = mode ? PM_INFIDEL : PM_HUMAN;
         break;
     case PM_PAGE:
         mndx = mode ? PM_KNIGHT : PM_HUMAN;
         break;
     case PM_ABBOT:
         mndx = mode ? PM_MONK : PM_HUMAN;
+        break;
+    case PM_PIRATE_CREWMATE:
+        mndx = mode ? PM_PIRATE : PM_HUMAN;
         break;
     case PM_ACOLYTE:
         mndx = mode ? PM_CLERIC : PM_HUMAN;
@@ -886,6 +895,16 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_PAGE: case PM_ABBOT: case PM_ACOLYTE: case PM_HUNTER:
     case PM_THUG: case PM_NINJA: case PM_ROSHI: case PM_GUIDE:
     case PM_WARRIOR: case PM_APPRENTICE:
+
+    /* Convict, Infidel and Pirate monsters */
+    case PM_LESSER_HOMUNCULUS: case PM_GREATER_HOMUNCULUS: case PM_PARROT:
+    case PM_SKELETAL_PIRATE: case PM_MINER: case PM_TEMPLAR:
+    case PM_CHAMPION: case PM_AGENT: case PM_PRISON_GUARD:
+    case PM_LAVA_DEMON: case PM_DAMNED_PIRATE: case PM_CONVICT:
+    case PM_INFIDEL: case PM_PIRATE: case PM_ROBERT_THE_LIFER:
+    case PM_ARCHBISHOP_OF_MOLOCH: case PM_MAYOR_CUMMERBUND:
+    case PM_WARDEN_ARIANNA: case PM_PALADIN: case PM_BLACKBEARD_S_GHOST:
+    case PM_INMATE: case PM_CULTIST: case PM_PIRATE_CREWMATE:
 #else
     default:
 #endif

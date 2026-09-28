@@ -34,6 +34,7 @@ staticfn boolean restricted_spell_discipline(int);
 #define UNDEF_TYP 0
 #define UNDEF_SPE '\177'
 #define UNDEF_BLESS 2
+#define CURSED 3 /* trbless value: starts out cursed (Infidel, EvilHack) */
 
 /*
  *      Initial inventory for the various roles.
@@ -73,6 +74,14 @@ static const struct trobj Cave_man[] = {
     { LEATHER_ARMOR, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
     { 0, 0, 0, 0, 0, 0 }
 };
+/* a convict escapes with nothing but prison garb, a rock and a spoon;
+   the striped shirt is always cursed (see ini_inv_adjust_obj()) */
+static const struct trobj Convict[] = {
+    { SPOON, 0, TOOL_CLASS, 1, 1, 0 },
+    { ROCK, 0, GEM_CLASS, 1, 1, 0 },
+    { STRIPED_SHIRT, 0, ARMOR_CLASS, 1, 1, 0 },
+    { 0, 0, 0, 0, 0, 0 }
+};
 static const struct trobj Healer[] = {
     { SCALPEL, 0, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
     { LEATHER_GLOVES, 1, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
@@ -85,6 +94,21 @@ static const struct trobj Healer[] = {
     { SPE_EXTRA_HEALING, 0, SPBOOK_CLASS, 1, 1, 1 },
     { SPE_STONE_TO_FLESH, 0, SPBOOK_CLASS, 1, 1, 1 },
     { APPLE, 0, FOOD_CLASS, 5, 5, 0 },
+    { 0, 0, 0, 0, 0, 0 }
+};
+/* the Infidel carries the Amulet of Yendor, entrusted to them by the
+   Cult of Moloch; the cursed potions are unholy water */
+static const struct trobj Infidel[] = {
+    { AMULET_OF_YENDOR, 0, AMULET_CLASS, 1, 1, 0 },
+    { DAGGER, 1, WEAPON_CLASS, 1, 1, 0 },
+    { LEATHER_JACKET, 1, ARMOR_CLASS, 1, 1, CURSED },
+    { CLOAK_OF_PROTECTION, 0, ARMOR_CLASS, 1, 1, CURSED },
+    { POT_WATER, 0, POTION_CLASS, 3, 3, CURSED },
+    { SCR_CHARGING, 0, SCROLL_CLASS, 2, 2, 0 },
+    { SPE_DRAIN_LIFE, 0, SPBOOK_CLASS, 1, 1, 0 },
+    { UNDEF_TYP, UNDEF_SPE, SPBOOK_CLASS, 1, 1, 0 },
+    { FIRE_HORN, UNDEF_SPE, TOOL_CLASS, 1, 1, 0 },
+    { OILSKIN_SACK, 0, TOOL_CLASS, 1, 1, 0 },
     { 0, 0, 0, 0, 0, 0 }
 };
 static const struct trobj Knight[] = {
@@ -109,6 +133,24 @@ static const struct trobj Monk[] = {
     /* Yes, we know fortune cookies aren't really from China.  They were
        invented by George Jung in Los Angeles, California, USA in 1916. */
     { FORTUNE_COOKIE, 0, FOOD_CLASS, 3, 3, UNDEF_BLESS },
+    { 0, 0, 0, 0, 0, 0 }
+};
+/* several entries of this are varied at random in u_init_role() */
+static const struct trobj Pirate[] = {
+    { SCIMITAR, 0, WEAPON_CLASS, 1, 1, UNDEF_BLESS },
+    { FLINTLOCK, 0, WEAPON_CLASS, 1, 1, 0 },
+    { KNIFE, 1, WEAPON_CLASS, 3, 3, 0 },
+    { LEATHER_JACKET, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { HIGH_BOOTS, 0, ARMOR_CLASS, 1, 1, UNDEF_BLESS },
+    { CRAM_RATION, 0, FOOD_CLASS, 4, 4, UNDEF_BLESS },
+#define PIR_SNACK 6
+    { BANANA, 0, FOOD_CLASS, 3, 6, 0 },
+    { POT_BOOZE, 0, POTION_CLASS, 3, 3, UNDEF_BLESS },
+#define PIR_JEWELRY 8
+    { UNDEF_TYP, UNDEF_SPE, RING_CLASS, 1, 1, UNDEF_BLESS },
+#define PIR_TOOL 9
+    { OILSKIN_SACK, 0, TOOL_CLASS, 1, 1, 0 },
+    { BULLET, 0, WEAPON_CLASS, 8, 11, 0 },
     { 0, 0, 0, 0, 0, 0 }
 };
 static const struct trobj Priest[] = {
@@ -217,6 +259,9 @@ static const struct trobj Wishing[] =
 static const struct trobj Money[] =
     { { GOLD_PIECE, 0, COIN_CLASS, 1, 1, 0 },
       { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj DeathWand[] = /* Pirates (Fyr/YANI) */
+    { { WAN_DEATH, 1, WAND_CLASS, 1, 1, 0 },
+      { 0, 0, 0, 0, 0, 0 } };
 
 /* race-based substitutions for initial inventory;
    the weaker cloak for elven rangers is intentional--they shoot better */
@@ -324,6 +369,26 @@ static const struct def_skill Skill_C[] = {
     { P_BARE_HANDED_COMBAT, P_MASTER },
     { P_NONE, 0 }
 };
+static const struct def_skill Skill_Con[] = {
+    { P_DAGGER, P_SKILLED },
+    { P_KNIFE, P_EXPERT },
+    { P_HAMMER, P_SKILLED },
+    { P_PICK_AXE, P_EXPERT },
+    { P_CLUB, P_EXPERT },
+    { P_MACE, P_BASIC },
+    { P_DART, P_SKILLED },
+    { P_FLAIL, P_EXPERT },
+    { P_SHORT_SWORD, P_BASIC },
+    { P_BROAD_SWORD, P_SKILLED },
+    { P_SLING, P_SKILLED },
+    { P_FIREARM, P_EXPERT },
+    { P_ATTACK_SPELL, P_BASIC },
+    { P_ESCAPE_SPELL, P_EXPERT },
+    { P_RIDING, P_BASIC },
+    { P_TWO_WEAPON_COMBAT, P_SKILLED },
+    { P_BARE_HANDED_COMBAT, P_SKILLED },
+    { P_NONE, 0 }
+};
 static const struct def_skill Skill_H[] = {
     { P_DAGGER, P_SKILLED },
     { P_KNIFE, P_EXPERT },
@@ -341,6 +406,29 @@ static const struct def_skill Skill_H[] = {
     { P_UNICORN_HORN, P_EXPERT },
     { P_HEALING_SPELL, P_EXPERT },
     { P_BARE_HANDED_COMBAT, P_BASIC },
+    { P_NONE, 0 }
+};
+static const struct def_skill Skill_Inf[] = {
+    { P_DAGGER, P_EXPERT },
+    { P_KNIFE, P_EXPERT },
+    { P_SHORT_SWORD, P_SKILLED },
+    { P_BROAD_SWORD, P_BASIC },
+    { P_SABER, P_SKILLED },
+    { P_CLUB, P_BASIC },
+    { P_HAMMER, P_BASIC },
+    { P_QUARTERSTAFF, P_SKILLED },
+    { P_POLEARMS, P_SKILLED },
+    { P_SPEAR, P_BASIC },
+    { P_SLING, P_BASIC },
+    { P_CROSSBOW, P_SKILLED },
+    { P_DART, P_BASIC },
+    { P_WHIP, P_SKILLED },
+    { P_ATTACK_SPELL, P_EXPERT },
+    { P_DIVINATION_SPELL, P_SKILLED },
+    { P_ENCHANTMENT_SPELL, P_BASIC },
+    { P_CLERIC_SPELL, P_EXPERT },
+    { P_BARE_HANDED_COMBAT, P_SKILLED },
+    { P_RIDING, P_SKILLED },
     { P_NONE, 0 }
 };
 static const struct def_skill Skill_K[] = {
@@ -385,6 +473,32 @@ static const struct def_skill Skill_Mon[] = {
     { P_ESCAPE_SPELL, P_SKILLED },
     { P_MATTER_SPELL, P_BASIC },
     { P_MARTIAL_ARTS, P_GRAND_MASTER },
+    { P_NONE, 0 }
+};
+static const struct def_skill Skill_Pir[] = {
+    { P_DAGGER, P_SKILLED },
+    { P_KNIFE, P_EXPERT },
+    { P_AXE, P_SKILLED },
+    { P_SHORT_SWORD, P_BASIC },
+    { P_BROAD_SWORD, P_EXPERT },
+    { P_LONG_SWORD, P_BASIC },
+    { P_SABER, P_EXPERT },
+    { P_CLUB, P_BASIC },
+    { P_MORNING_STAR, P_SKILLED },
+    { P_FLAIL, P_EXPERT },
+    { P_SPEAR, P_SKILLED },
+    { P_TRIDENT, P_EXPERT },
+    { P_CROSSBOW, P_EXPERT },
+    { P_FIREARM, P_EXPERT },
+    { P_DART, P_SKILLED },
+    { P_WHIP, P_SKILLED },
+    { P_UNICORN_HORN, P_BASIC },
+    { P_ATTACK_SPELL, P_BASIC },
+    { P_DIVINATION_SPELL, P_BASIC },
+    { P_ENCHANTMENT_SPELL, P_BASIC },
+    { P_ESCAPE_SPELL, P_SKILLED },
+    { P_TWO_WEAPON_COMBAT, P_SKILLED },
+    { P_BARE_HANDED_COMBAT, P_EXPERT },
     { P_NONE, 0 }
 };
 static const struct def_skill Skill_P[] = {
@@ -676,12 +790,27 @@ u_init_role(void)
     case PM_CAVE_DWELLER:
         ini_inv(Cave_man);
         break;
+    case PM_CONVICT:
+        ini_inv(Convict);
+        knows_object(SKELETON_KEY, FALSE);
+        knows_object(GRAPPLING_HOOK, FALSE);
+        /* prison food never filled anyone up; start on the verge of
+           hunger (the ball and chain are put on in newgame()) */
+        u.uhunger = 200;
+        break;
     case PM_HEALER:
         u.umoney0 = rn1(1000, 1001);
         ini_inv(Healer);
         if (!rn2(25))
             ini_inv(Lamp);
         knows_object(POT_FULL_HEALING, FALSE);
+        break;
+    case PM_INFIDEL:
+        u.umoney0 = rn1(251, 250);
+        ini_inv(Infidel);
+        knows_object(SCR_CHARGING, FALSE);
+        /* the Cult entrusted the genuine article to the Infidel */
+        knows_object(AMULET_OF_YENDOR, TRUE);
         break;
     case PM_KNIGHT:
         ini_inv(Knight);
@@ -704,6 +833,27 @@ u_init_role(void)
         knows_class(ARMOR_CLASS);
         /* sufficiently martial-arts oriented item to ignore language issue */
         knows_object(SHURIKEN, FALSE);
+        break;
+    }
+    case PM_PIRATE: {
+        struct trobj pirate_inv[SIZE(Pirate)];
+
+        (void) memcpy((genericptr_t) pirate_inv, (genericptr_t) Pirate,
+                      sizeof pirate_inv);
+        u.umoney0 = rnd(300);
+        if (!rn2(4))
+            pirate_inv[PIR_SNACK].trotyp = KELP_FROND;
+        if (rn2(100) < 50)
+            pirate_inv[PIR_JEWELRY].trotyp = RIN_ADORNMENT;
+        if (rn2(100) < 50)
+            pirate_inv[PIR_TOOL].trotyp = GRAPPLING_HOOK;
+        ini_inv(pirate_inv);
+        /* from Fyr/YANI/Pirate */
+        if (!rn2(10))
+            ini_inv(DeathWand);
+        knows_object(OILSKIN_SACK, FALSE);
+        knows_object(OILSKIN_CLOAK, FALSE);
+        knows_object(GRAPPLING_HOOK, FALSE);
         break;
     }
     case PM_CLERIC: /* priest/priestess */
@@ -841,8 +991,9 @@ u_init_race(void)
         break;
 
     case PM_ORC:
-        /* compensate for generally inferior equipment */
-        if (!Role_if(PM_WIZARD))
+        /* compensate for generally inferior equipment; convicts
+           escaped with no provisions */
+        if (!Role_if(PM_WIZARD) && !Role_if(PM_CONVICT))
             ini_inv(Xtra_food);
         /* Orcs can recognize all orcish objects */
         knows_object(ORCISH_SHORT_SWORD, FALSE);
@@ -898,6 +1049,15 @@ pauper_reinit(void)
         break;
     case PM_WIZARD:
         preknown = SPE_FORCE_BOLT;
+        break;
+    case PM_INFIDEL:
+        preknown = SPE_DRAIN_LIFE;
+        break;
+    case PM_CONVICT:
+        preknown = SKELETON_KEY;
+        break;
+    case PM_PIRATE:
+        preknown = OILSKIN_SACK;
         break;
     case PM_ARCHEOLOGIST:
         preknown = TOUCHSTONE;
@@ -986,7 +1146,8 @@ u_init_misc(void)
 
     u.umoved = FALSE;
     u.umortality = 0;
-    u.ugrave_arise = NON_PM;
+    /* dead pirates rise again as skeletal pirates */
+    u.ugrave_arise = Role_if(PM_PIRATE) ? PM_SKELETAL_PIRATE : NON_PM;
 
     u.umonnum = u.umonster = gu.urole.mnum;
     u.ulycn = NON_PM;
@@ -1051,14 +1212,23 @@ skills_for_role(void)
     case PM_CAVE_DWELLER:
         skills = Skill_C;
         break;
+    case PM_CONVICT:
+        skills = Skill_Con;
+        break;
     case PM_HEALER:
         skills = Skill_H;
+        break;
+    case PM_INFIDEL:
+        skills = Skill_Inf;
         break;
     case PM_KNIGHT:
         skills = Skill_K;
         break;
     case PM_MONK:
         skills = Skill_Mon;
+        break;
+    case PM_PIRATE:
+        skills = Skill_Pir;
         break;
     case PM_CLERIC:
         skills = Skill_P;
@@ -1240,8 +1410,20 @@ ini_inv_adjust_obj(const struct trobj *trop, struct obj *obj)
                 && objects[obj->otyp].oc_charged && obj->spe <= 0)
                 obj->spe = rne(3);
         }
-        if (trop->trbless != UNDEF_BLESS)
+        if (trop->trbless == CURSED) {
+            obj->blessed = 0;
+            obj->cursed = 1;
+        } else if (trop->trbless != UNDEF_BLESS) {
             obj->blessed = trop->trbless;
+        }
+        /* a convict's prison garb is cursed so it can't be taken off */
+        if (obj->otyp == STRIPED_SHIRT && Role_if(PM_CONVICT)) {
+            obj->blessed = 0;
+            obj->cursed = 1;
+        }
+        /* Infidels are used to playing with fire */
+        if (Role_if(PM_INFIDEL) && obj->oclass == ARMOR_CLASS)
+            obj->oerodeproof = 1;
 
     }
     /* defined after setting otyp+quan + blessedness */
@@ -1416,5 +1598,9 @@ u_init_skills_discoveries(void)
 #undef UNDEF_TYP
 #undef UNDEF_SPE
 #undef UNDEF_BLESS
+#undef CURSED
+#undef PIR_SNACK
+#undef PIR_JEWELRY
+#undef PIR_TOOL
 
 /*u_init.c*/

@@ -3682,7 +3682,7 @@ livelog_add(long ll_type, const char *str)
                aligns[] uses [0] lawful, [1] neutral, [2] chaotic;
                u.ualign.type uses -1 chaotic, 0 neutral, 1 lawful;
            so subtracting from 1 converts from either to the other */
-        aindx = 1 - u.ualign.type;
+        aindx = alignidx(u.ualign.type);
         /* format relies on STD C's implicit concatenation of
            adjacent string literals */
         (void) fprintf(livelogfile,

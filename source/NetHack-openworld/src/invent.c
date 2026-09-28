@@ -206,8 +206,8 @@ loot_classify(Loot *sort_item, struct obj *obj)
            missile (darts, boomerangs), stackable (daggers, knives, spears),
            'other' (swords, axes, &c), polearms */
         k = objects[otyp].oc_skill;
-        k = (k < 0) ? ((k >= -P_CROSSBOW && k <= -P_BOW) ? 1 : 3)
-                    : ((k >= P_BOW && k <= P_CROSSBOW) ? 2
+        k = (k < 0) ? ((k >= -P_FIREARM && k <= -P_BOW) ? 1 : 3)
+                    : ((k >= P_BOW && k <= P_FIREARM) ? 2
                        : (k == P_SPEAR || k == P_DAGGER || k == P_KNIFE) ? 4
                           : !is_pole(obj) ? 5 : 6);
         break;

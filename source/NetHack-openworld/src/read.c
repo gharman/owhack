@@ -281,6 +281,29 @@ apron_text(struct obj *apron, char *buf)
     return erode_obj_text(apron, buf);
 }
 
+/* the prisoner number stencilled on a striped shirt (EvilHack) */
+char *
+striped_text(struct obj *striped, char *buf)
+{
+    unsigned msgidx;
+    static const char *const striped_msgs[] = {
+        "AZ# 85",    /* Al Capone */
+        "AZ# 117",   /* George 'Machine Gun' Kelly */
+        "AZ# 594",   /* Robert 'The Birdman of Alcatraz' Stroud */
+        "B-33920",   /* Charles Manson */
+        "227501",    /* Jeffrey Dahmer */
+        "46664",     /* Nelson Mandela */
+        "B5160-8",   /* Hannibal Lecter */
+        "37927",     /* Andy Dufresne */
+        "55170-054", /* Martha Stewart */
+        "1027820",   /* O.J. Simpson */
+    };
+
+    msgidx = striped->o_id ^ (unsigned) ubirthday;
+    Strcpy(buf, striped_msgs[msgidx % SIZE(striped_msgs)]);
+    return erode_obj_text(striped, buf);
+}
+
 static const char *const candy_wrappers[] = {
     "",                         /* (none -- should never happen) */
     "Apollo",                   /* Lost */
@@ -374,7 +397,7 @@ doread(void)
         useup(scroll);
         return ECMD_TIME;
     } else if (otyp == T_SHIRT || otyp == ALCHEMY_SMOCK
-               || otyp == HAWAIIAN_SHIRT) {
+               || otyp == HAWAIIAN_SHIRT || otyp == STRIPED_SHIRT) {
         char buf[BUFSZ], *mesg;
         const char *endpunct;
 
@@ -383,7 +406,8 @@ doread(void)
             return ECMD_OK;
         }
         /* can't read shirt worn under suit (under cloak is ok though) */
-        if ((otyp == T_SHIRT || otyp == HAWAIIAN_SHIRT) && uarm
+        if ((otyp == T_SHIRT || otyp == HAWAIIAN_SHIRT
+             || otyp == STRIPED_SHIRT) && uarm
             && scroll == uarmu) {
             pline("%s shirt is obscured by %s%s.",
                   scroll->unpaid ? "That" : "Your", shk_your(buf, uarm),
@@ -398,11 +422,14 @@ doread(void)
         if (!u.uconduct.literate++)
             livelog_printf(LL_CONDUCT, "became literate by reading %s",
                            (scroll->otyp == T_SHIRT) ? "a T-shirt"
-                           : "an apron");
+                           : (scroll->otyp == STRIPED_SHIRT)
+                             ? "a striped shirt"
+                             : "an apron");
 
         /* populate 'buf[]' */
         mesg = (otyp == T_SHIRT) ? tshirt_text(scroll, buf)
-                                 : apron_text(scroll, buf);
+               : (otyp == STRIPED_SHIRT) ? striped_text(scroll, buf)
+                 : apron_text(scroll, buf);
         endpunct = "";
         if (flags.verbose) {
             int ln = (int) strlen(mesg);

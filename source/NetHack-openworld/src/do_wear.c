@@ -763,6 +763,7 @@ Shirt_on(void)
     switch (uarmu->otyp) {
     case HAWAIIAN_SHIRT:
     case T_SHIRT:
+    case STRIPED_SHIRT:
         break;
     default:
         impossible(unknown_type, c_shirt, uarmu->otyp);
@@ -784,6 +785,7 @@ Shirt_off(void)
     switch (uarmu->otyp) {
     case HAWAIIAN_SHIRT:
     case T_SHIRT:
+    case STRIPED_SHIRT:
         break;
     default:
         impossible(unknown_type, c_shirt, uarmu->otyp);

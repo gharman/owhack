@@ -447,8 +447,11 @@ moveloop_core(void)
     /* open world: keep the overworld generated around the hero */
     ow_maintain();
 
-    /* the Amulet of Yendor gives a wish when initially picked up */
-    if (u.uhave.amulet && !u.uevent.amulet_wish) {
+    /* the Amulet of Yendor gives a wish when initially picked up; an
+       Infidel starts out carrying it, and is only granted the wish once
+       Moloch imbues the Idol of Moloch with the Amulet's power */
+    if (u.uhave.amulet && !u.uevent.amulet_wish
+        && (!Role_if(PM_INFIDEL) || u.uidol_imbued)) {
         u.uevent.amulet_wish = 1;
         display_nhwindow(WIN_MESSAGE, TRUE);
         urgent_pline("The Amulet is bestowing a wish upon you!");
@@ -875,13 +878,22 @@ newgame(void)
     }
     u_init_skills_discoveries();
 
+    /* convicts escape still wearing their ball and chain */
+    if (Role_if(PM_CONVICT)) {
+        setworn(mkobj(CHAIN_CLASS, TRUE), W_CHAIN);
+        setworn(mkobj(BALL_CLASS, TRUE), W_BALL);
+        placebc();
+        newsym(u.ux, u.uy);
+    }
+
     if (wizard) {
         read_wizkit();
         obj_delivery(FALSE); /* finish wizkit */
     }
 
     if (flags.legacy) {
-        com_pager(u.uroleplay.pauper ? "pauper_legacy" : "legacy");
+        /* the Convict and the Infidel have their own introductions */
+        qt_pager(u.uroleplay.pauper ? "pauper_legacy" : "legacy");
     }
 
     urealtime.realtime = 0L;

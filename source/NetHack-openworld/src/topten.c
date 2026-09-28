@@ -378,7 +378,7 @@ writexlentry(FILE *rfile, struct toptenentry *tt, int how)
             timet_to_seconds(urealtime.finish_time));
     Fprintf(rfile, "%cgender0=%s%calign0=%s", XLOG_SEP,
             genders[flags.initgend].filecode, XLOG_SEP,
-            aligns[1 - u.ualignbase[A_ORIGINAL]].filecode);
+            aligns[alignidx(u.ualignbase[A_ORIGINAL])].filecode);
     Fprintf(rfile, "%cflags=0x%lx", XLOG_SEP, encodexlogflags());
     Fprintf(rfile, "%cgold=%ld", XLOG_SEP,
             money_cnt(gi.invent) + hidden_gold(TRUE));
@@ -689,7 +689,7 @@ topten(int how, time_t when)
     copynchars(t0->plrole, gu.urole.filecode, ROLESZ);
     copynchars(t0->plrace, gu.urace.filecode, ROLESZ);
     copynchars(t0->plgend, genders[flags.female].filecode, ROLESZ);
-    copynchars(t0->plalign, aligns[1 - u.ualign.type].filecode, ROLESZ);
+    copynchars(t0->plalign, aligns[alignidx(u.ualign.type)].filecode, ROLESZ);
     copynchars(t0->name, svp.plname, NAMSZ);
     formatkiller(t0->death, sizeof t0->death, how, TRUE);
     t0->birthdate = yyyymmdd(ubirthday);

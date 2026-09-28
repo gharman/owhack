@@ -92,6 +92,8 @@ item_reading_classification(struct obj *obj, char *outbuf)
         Strcpy(outbuf, "Read the message inside this cookie");
     } else if (otyp == T_SHIRT) {
         Strcpy(outbuf, "Read the slogan on the shirt");
+    } else if (otyp == STRIPED_SHIRT) {
+        Strcpy(outbuf, "Read the prisoner number on the shirt");
     } else if (otyp == ALCHEMY_SMOCK) {
         Strcpy(outbuf, "Read the slogan on the apron");
     } else if (otyp == HAWAIIAN_SHIRT) {

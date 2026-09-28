@@ -977,9 +977,11 @@ xname_flags(
         switch (obj->otyp) {
         case T_SHIRT:
         case ALCHEMY_SMOCK:
+        case STRIPED_SHIRT:
             ConcatF1(buf, 0, " with text \"%s\"",
                      (obj->otyp == T_SHIRT) ? tshirt_text(obj, tmpbuf)
-                                            : apron_text(obj, tmpbuf));
+                     : (obj->otyp == STRIPED_SHIRT) ? striped_text(obj, tmpbuf)
+                       : apron_text(obj, tmpbuf));
             break;
         case CANDY_BAR:
             lbl = candy_wrapper_text(obj);

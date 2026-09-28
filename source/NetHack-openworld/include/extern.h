@@ -854,6 +854,8 @@ extern void impact_drop(struct obj *, coordxy, coordxy, xint16);
 /* ### dothrow.c ### */
 
 extern int multishot_class_bonus(int, struct obj *, struct obj *) NONNULLARG2;
+extern int firearm_range(int);
+extern int firearm_rof(int);
 extern int dothrow(void);
 extern int dofire(void);
 extern void endmultishot(boolean);
@@ -2732,6 +2734,7 @@ extern void learnscroll(struct obj *) NONNULLARG1;
 extern char *tshirt_text(struct obj *, char *) NONNULLARG12;
 extern char *hawaiian_motif(struct obj *, char *) NONNULLARG12;
 extern char *apron_text(struct obj *, char *) NONNULLARG12;
+extern char *striped_text(struct obj *, char *) NONNULLARG12;
 extern const char *candy_wrapper_text(struct obj *) NONNULLARG1;
 extern void assign_candy_wrapper(struct obj *) NONNULLARG1;
 extern int doread(void);
@@ -2867,6 +2870,7 @@ extern boolean validrole(int);
 extern boolean validrace(int, int);
 extern boolean validgend(int, int, int);
 extern boolean validalign(int, int, int);
+extern int special_alignment(int, int);
 extern int randrole(boolean);
 extern int randrace(int);
 extern int randgend(int, int);
