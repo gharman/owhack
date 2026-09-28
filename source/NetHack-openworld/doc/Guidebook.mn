@@ -1721,6 +1721,11 @@ Default key is \(oqT\(cq.
 .lp #takeoffall
 Remove all armor.
 Default key is \(oqA\(cq.
+.lp #technique
+Perform a technique, one of the special abilities of your role or race;
+see the section on \(lqTechniques\(rq below.
+Autocompletes.
+Default key is \(oqM-x\(cq.
 .lp #teleport
 Teleport around the level.
 Default key is \(oq\(haT\(cq.
@@ -1943,6 +1948,10 @@ Debug mode only.
 Smell monster.
 Autocompletes.
 Debug mode only.
+.lp #wiztechnique
+Learn or forget any technique, or reset all technique timeouts.
+Autocompletes.
+Debug mode only.
 .lp #wizwhere
 Show locations of special levels.
 Autocompletes.
@@ -2043,6 +2052,8 @@ option is enabled)
 #vanquished
 .lp M-w
 #wipe
+.lp M-x
+#technique
 .lp M-X
 #exploremode
 .lp ""
@@ -3349,6 +3360,41 @@ option can be enabled in order to show an item differently when it is
 the top one of a pile.
 .
 .hn 1
+Techniques
+.pg
+Besides the spells they can learn, heroes have techniques: special
+abilities that come from their role and their race.
+You know some of them from the start and learn others as you gain
+experience levels (\(lqYou learn how to perform ...!\(rq).
+If you lose levels, you forget the techniques that you learned at
+those levels, though never the ones you started out with, and you
+learn them again when you regain the levels.
+Advancing a melee weapon skill to Skilled teaches the disarm technique.
+.pg
+The #technique command (\(oqM-x\(cq) lists your techniques with
+their current level and status and lets you pick one to perform.
+A technique's level starts at 1 and rises with your experience level;
+higher levels make most techniques stronger and their timeouts shorter.
+After you use a technique you must wait a while before you can use
+it again: its status is \(lqPrepared\(rq when it is ready,
+\(lqSoon\(rq when it will be ready within a hundred turns or so,
+and \(lqNot Ready\(rq otherwise.
+Some techniques, such as berserk or rage eruption, stay \(lqActive\(rq
+for a few turns once performed.
+A technique whose level has dropped to zero or below after losing
+experience levels is \(lqBeyond recall\(rq until you regain them.
+.pg
+For example, Barbarians go berserk, Samurai shout \(lqKIIILLL!\(rq,
+Monks learn a whole repertoire of martial arts blows that can be chained
+together into a blitz, Priests and Knights turn undead (the same action
+as #turn), Wizards reinforce their memory of spells and draw energy from
+their surroundings, dwarves fly into a rage, gnomes vanish in a puff of
+smoke and tinker with their tools, and Cartographers survey the land
+around them, find the nearest magic portal and town (or, in a branch,
+the way out) and can mark a spot on a level to return to later.
+Your techniques are listed by the #attributes command (\(oq^X\(cq)
+and at the end of the game.
+.hn 1
 Conduct
 .pg
 As if winning NetHack were not difficult enough, certain players
@@ -3499,6 +3545,8 @@ body into another creature (\(lqpolyself\(rq) by wand, spell, or potion of
 polymorph; avoiding these effects are each considered challenges.
 Polymorphing monsters, including pets, does not break either of these
 challenges.
+Never performing any of your techniques with #technique (see
+\fITechniques\fP above) is another challenge.
 Finally, you may sometimes receive wishes; a game without an attempt to
 wish for any items is a challenge, as is a game without wishing for
 an artifact (even if the artifact immediately disappears).

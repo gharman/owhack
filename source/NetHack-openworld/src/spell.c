@@ -48,6 +48,7 @@ staticfn void cast_protection(void);
 staticfn void cast_chain_lightning(void);
 staticfn void spell_backfire(int);
 staticfn boolean spelleffects_check(int, int *, int *);
+staticfn int blood_magic_cost(int, int);
 staticfn const char *spelltypemnemonic(int);
 staticfn boolean can_center_spell_location(coordxy, coordxy);
 staticfn void display_spell_target_positions(boolean);
@@ -782,6 +783,46 @@ getspell(int *spell_no)
                        spell_no);
 }
 
+/* hit points that the blood magic technique takes to make up for
+   missing energy when casting spell 'otyp' */
+staticfn int
+blood_magic_cost(int otyp, int energy)
+{
+    int cost = energy - u.uen;
+
+    if (otyp == SPE_HEALING || otyp == SPE_EXTRA_HEALING)
+        cost *= 4; /* no healing yourself for free */
+    return cost;
+}
+
+/* the reinforce memory technique: refresh the memory of a known spell;
+   TRUE if a spell was reinforced */
+boolean
+studyspell(void)
+{
+    int spell_no;
+
+    if (!num_spells()) {
+        You("don't know any spells right now.");
+        return FALSE;
+    }
+    if (!dospellmenu("Choose which spell to reinforce", SPELLMENU_CAST,
+                     &spell_no))
+        return FALSE;
+    if (spellknow(spell_no) <= 0) {
+        You("are unable to focus your memory of the spell.");
+        return FALSE;
+    } else if (spellknow(spell_no) <= KEEN / 2) {
+        You("focus and reinforce your memory of the spell.");
+        svs.spl_book[spell_no].sp_know = min(KEEN,
+                                             spellknow(spell_no) + KEEN / 2);
+        exercise(A_WIS, TRUE); /* extra study */
+        return TRUE;
+    }
+    You("know that spell quite well already.");
+    return FALSE;
+}
+
 /* #wizcast - cast any spell even without knowing it */
 int
 dowizcast(void)
@@ -1302,7 +1343,8 @@ spelleffects_check(int spell, int *res, int *energy)
         *res = ECMD_TIME; /* time is used even if spell doesn't get cast */
     }
 
-    if (*energy > u.uen) {
+    /* the blood magic technique pays for spells with hit points */
+    if (*energy > u.uen && !tech_inuse(T_BLOOD_MAGIC)) {
         /*
          * Hero has insufficient energy/power to cast the spell.
          * Augment the message when current energy is at maximum.
@@ -1316,6 +1358,13 @@ spelleffects_check(int spell, int *res, int *energy)
             (u.uen < u.uenmax) ? "" /* not at full energy => normal message */
             : (*energy > u.uenpeak) ? " yet" /* haven't ever had enough */
               : " anymore"); /* once had enough but have lost some since */
+        return TRUE;
+    } else if (*energy > u.uen
+               && blood_magic_cost(spellid(spell), *energy)
+                      >= (Upolyd ? u.mh : u.uhp)
+               && y_n("Drawing on so much of your own life force would kill "
+                      "you.  Cast anyway?") != 'y') {
+        /* blood magic would be fatal; no time passes */
         return TRUE;
     } else {
         if (spellid(spell) != SPE_DETECT_FOOD) {
@@ -1372,6 +1421,8 @@ spelleffects_check(int spell, int *res, int *energy)
     if (confused || (rnd(100) > chance)) {
         You("fail to cast the spell correctly.");
         u.uen -= *energy / 2;
+        if (u.uen < 0) /* blood magic */
+            u.uen = 0;
         disp.botl = TRUE;
         *res = ECMD_TIME;
         return TRUE;
@@ -1394,6 +1445,15 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
     if (!force && spelleffects_check(spell, &res, &energy))
         return res;
 
+    if (energy > u.uen && tech_inuse(T_BLOOD_MAGIC)) {
+        /* blood magic: draw on your own life force for the rest */
+        int cost = blood_magic_cost(spellid(spell), energy);
+
+        u.uen = energy = 0;
+        disp.botl = TRUE;
+        pline("You draw upon your own life force to cast the spell.");
+        losehp(cost, "reckless use of blood magic", KILLED_BY);
+    }
     u.uen -= energy;
     disp.botl = TRUE;
     exercise(A_WIS, TRUE);

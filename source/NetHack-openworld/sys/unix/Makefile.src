@@ -532,7 +532,8 @@ HACKCSRC ?= allmain.c alloc.c apply.c artifact.c attrib.c ball.c bones.c \
 	   restore.c revision.c  rip.c rnd.c role.c rumors.c save.c selvar.c \
 	   sfbase.c sfstruct.c shk.c shknam.c sit.c sounds.c sp_lev.c \
 	   spell.c stairs.c steal.c steed.c strutil.c symbols.c sys.c \
-	   teleport.c timeout.c topten.c track.c trap.c u_init.c utf8map.c \
+	   tech.c teleport.c timeout.c topten.c track.c trap.c u_init.c \
+	   utf8map.c \
 	   uhitm.c vault.c version.c vision.c weapon.c were.c wield.c \
 	   windows.c wizard.c wizcmds.c worm.c worn.c write.c zap.c
 
@@ -577,7 +578,7 @@ HACKINCL ?= align.h artifact.h artilist.h attrib.h botl.h \
 	savefile.h selvar.h sym.h rm.h sp_lev.h spell.h sndprocs.h \
 	seffects.h stairs.h sys.h tcap.h timeout.h tradstdc.h trap.h \
 	unixconf.h vision.h vmsconf.h wintty.h wincurs.h winX.h winprocs.h \
-	wintype.h you.h youprop.h weight.h openworld.h
+	wintype.h you.h youprop.h weight.h openworld.h tech.h
 
 HSOURCES ?= $(HACKINCL) dgn_file.h
 
@@ -627,7 +628,8 @@ HOBJ ?= $(TARGETPFX)allmain.o $(TARGETPFX)alloc.o \
 	$(TARGETPFX)sit.o $(TARGETPFX)sounds.o $(TARGETPFX)sp_lev.o \
 	$(TARGETPFX)spell.o $(TARGETPFX)stairs.o $(TARGETPFX)symbols.o \
 	$(TARGETPFX)sys.o $(TARGETPFX)steal.o $(TARGETPFX)steed.o \
-	$(TARGETPFX)strutil.o $(TARGETPFX)teleport.o $(TARGETPFX)timeout.o \
+	$(TARGETPFX)strutil.o $(TARGETPFX)tech.o $(TARGETPFX)teleport.o \
+	$(TARGETPFX)timeout.o \
 	$(TARGETPFX)topten.o $(TARGETPFX)track.o $(TARGETPFX)trap.o \
 	$(TARGETPFX)u_init.o $(TARGETPFX)uhitm.o $(TARGETPFX)utf8map.o \
 	$(TARGETPFX)vault.o $(TARGETPFX)vision.o $(TARGETPFX)weapon.o \
@@ -925,7 +927,7 @@ $(HACK_H): $(CONFIG_H) ../include/align.h ../include/artilist.h \
 		../include/sym.h ../include/sys.h ../include/timeout.h \
 		../include/trap.h ../include/vision.h ../include/weight.h \
 		../include/winprocs.h ../include/wintype.h ../include/you.h \
-		../include/youprop.h
+		../include/youprop.h ../include/tech.h
 	touch $(HACK_H)
 #
 $(TARGETPFX)cppregex.o: ../sys/share/cppregex.cpp $(CONFIG_H)
@@ -1298,6 +1300,7 @@ $(TARGETPFX)steed.o: steed.c $(HACK_H)
 $(TARGETPFX)strutil.o: strutil.c $(HACK_H)
 $(TARGETPFX)symbols.o: symbols.c $(HACK_H) ../include/tcap.h
 $(TARGETPFX)sys.o: sys.c $(HACK_H)
+$(TARGETPFX)tech.o: tech.c $(HACK_H)
 $(TARGETPFX)teleport.o: teleport.c $(HACK_H)
 $(TARGETPFX)tile.o: $(SRCDIR)/tile.c $(HACK_H)
 $(TARGETPFX)timeout.o: timeout.c $(HACK_H)

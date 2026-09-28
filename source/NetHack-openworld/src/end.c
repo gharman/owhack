@@ -603,6 +603,7 @@ dump_everything(
     putstr(0, 0, "");
     show_spells(); /* ends with a blank line */
     show_skills(); /* ends with a blank line */
+    show_techniques(); /* ends with a blank line */
     show_conduct((how >= PANICKED) ? 1 : 2);
     putstr(0, 0, "");
     show_overview((how >= PANICKED) ? 1 : 2, how);

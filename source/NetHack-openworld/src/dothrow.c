@@ -230,6 +230,8 @@ throw_obj(struct obj *obj, int shotlimit)
             && (int) ACURRSTR < (Race_if(PM_GNOME) ? 16 : 18))
             multishot = rnd(multishot);
 
+        /* missile flurry technique: let 'em rip! */
+        multishot += tech_flurry_bonus(obj);
         multishot = rnd(multishot);
         if ((long) multishot > obj->quan)
             multishot = (int) obj->quan;
