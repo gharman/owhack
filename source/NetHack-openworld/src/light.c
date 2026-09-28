@@ -757,9 +757,12 @@ snuff_light_source(coordxy x, coordxy y)
                  * dropped or thrown inside a monster, this won't matter
                  * anyway because it will go out when dropped.)
                  */
-                if (artifact_light(obj))
+                if (artifact_light(obj)
+                    || is_art(obj, ART_CANDLE_OF_ETERNAL_FLAME))
                     continue;
-                end_burn(obj, obj->otyp != MAGIC_LAMP);
+                end_burn(obj, obj->otyp != MAGIC_LAMP
+                                  && obj->otyp != MAGIC_CANDLE
+                                  && !is_art(obj, ART_LIGHTSABER_PROTOTYPE));
                 /*
                  * The current ls element has just been removed (and
                  * ls->next is now invalid).  Return assuming that there
@@ -782,7 +785,7 @@ obj_sheds_light(struct obj *obj)
 boolean
 obj_is_burning(struct obj *obj)
 {
-    return (boolean) (obj->lamplit && (ignitable(obj)
+    return (boolean) (obj->lamplit && (ignitable(obj) || is_lightsaber(obj)
                                        || artifact_light(obj)));
 }
 

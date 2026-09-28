@@ -1177,6 +1177,14 @@ domonnoise(struct monst *mtmp)
             case PM_TOURIST:
                 verbl_msg = "Aloha.";
                 break;
+            case PM_JEDI:
+            case PM_JEDI_TRAINER:
+                pline_msg = "discusses the various implications of the Force.";
+                break;
+            case PM_PADAWAN:
+                pline_msg = "tells you about their aspirations to become a "
+                            "great Jedi.";
+                break;
             default:
                 pline_msg = "discusses dungeon exploration.";
                 break;
@@ -1484,6 +1492,23 @@ dochat(void)
               canspotmon(mtmp) ? mon_nam(mtmp) : "",
               xresponse);
         return ECMD_OK;
+    }
+    /* necromancers can pacify or tame zombies with an ancient chant */
+    if (Role_if(PM_NECROMANCER) && mtmp->data->mlet == S_ZOMBIE
+        && !mtmp->mpeaceful && !mtmp->mtame) {
+        You("attempt an ancient chant directed at %s.", mon_nam(mtmp));
+        if (rnl(10) < 2) {
+            (void) tamedog(mtmp, (struct obj *) 0, TRUE);
+        } else if (rnl(10) > 8) {
+            pline_mon(mtmp, "%s unfortunately ignores your overtures.",
+                      Monnam(mtmp));
+        } else {
+            mtmp->mpeaceful = 1;
+            set_malign(mtmp);
+            if (canspotmon(mtmp))
+                pline_mon(mtmp, "%s seems pacified.", Monnam(mtmp));
+        }
+        return ECMD_TIME;
     }
     return domonnoise(mtmp);
 }

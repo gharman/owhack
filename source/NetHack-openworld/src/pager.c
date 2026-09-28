@@ -533,14 +533,19 @@ look_at_monster(
                     unsigned long mW = (svc.context.warntype.obj
                                         | svc.context.warntype.polyd),
                                   m2 = mtmp->data->mflags2;
-                    const char *whom = ((mW & M2_HUMAN & m2) ? "human"
+                    const char *whom = (Undead_warning
+                                        && is_undead(mtmp->data)
+                                        && !(mW & m2)) ? "undead"
+                                       : ((mW & M2_HUMAN & m2) ? "human"
                                         : (mW & M2_ELF & m2) ? "elf"
                                           : (mW & M2_ORC & m2) ? "orc"
                                             : (mW & M2_DEMON & m2) ? "demon"
                                               : pmname(mtmp->data,
                                                        Mgender(mtmp)));
 
-                    Sprintf(eos(monbuf), "warned of %s", makeplural(whom));
+                    Sprintf(eos(monbuf), "warned of %s",
+                            !strcmp(whom, "undead") ? whom
+                                                    : makeplural(whom));
                 }
                 how_seen &= ~MONSEEN_WARNMON;
                 if (how_seen)

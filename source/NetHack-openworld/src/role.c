@@ -194,6 +194,47 @@ const struct Role roles[NUM_ROLES+1] = {
       A_INT,
       SPE_DIG,
       -4 },
+    { { "Flame Mage", 0 },
+      { { "Spark", 0 },
+        { "Igniter", 0 },
+        { "Broiler", 0 },
+        { "Combuster", 0 },
+        { "Torcher", 0 },
+        { "Scorcher", 0 },
+        { "Incinerator", 0 },
+        { "Disintegrator", 0 },
+        { "Flame-Master", 0 } },
+      "Earth", "Fire", "Ash", /* Special */
+      "Fla",
+      "the great Circle of Flame",
+      "the Water Mage's Cave",
+      PM_FLAME_MAGE,
+      PM_HELL_HOUND_PUP,
+      PM_HIGH_FLAME_MAGE,
+      PM_IGNITER,
+      PM_WATER_MAGE,
+      PM_ICE_ELEMENTAL,
+      PM_RUST_MONSTER,
+      S_ELEMENTAL,
+      S_RUSTMONST,
+      ART_CANDLE_OF_ETERNAL_FLAME,
+      MH_HUMAN | MH_ELF | MH_DWARF | MH_GNOME | MH_GIANT | ROLE_MALE
+          | ROLE_FEMALE | ROLE_LAWFUL | ROLE_NEUTRAL,
+      /* Str Int Wis Dex Con Cha */
+      { 7, 9, 11, 7, 7, 7 },
+      { 12, 15, 20, 20, 20, 10 },
+      /* Init   Lower  Higher */
+      { 10, 0, 0, 8, 1, 0 }, /* Hit points */
+      { 4, 3, 0, 2, 0, 3 },
+      12, /* Energy */
+      0,
+      1,
+      0,
+      2,
+      10,
+      A_WIS,
+      SPE_ENLIGHTEN,
+      -4 },
     { { "Healer", 0 },
       { { "Rhizotomist", 0 },
         { "Empiric", 0 },
@@ -233,6 +274,86 @@ const struct Role roles[NUM_ROLES+1] = {
       10,
       A_WIS,
       SPE_CURE_SICKNESS,
+      -4 },
+    { { "Ice Mage", 0 },
+      { { "Cooler", 0 },
+        { "Condenser", 0 },
+        { "Chiller", 0 },
+        { "Froster", 0 },
+        { "Permafroster", 0 },
+        { "Icer", 0 },
+        { "Freezer", 0 },
+        { "Sublimer", 0 },
+        { "Ice-Master", 0 } },
+      "Air", "Frost", "Smoke", /* Special */
+      "Ice",
+      "the great Ring of Ice",
+      "the Earth Mage's Cave",
+      PM_ICE_MAGE,
+      PM_WINTER_WOLF_CUB,
+      PM_HIGH_ICE_MAGE,
+      PM_FROSTER,
+      PM_RAGNAROS,
+      PM_RUST_MONSTER,
+      PM_XORN,
+      S_RUSTMONST,
+      S_XORN,
+      ART_STORM_WHISTLE,
+      MH_HUMAN | MH_ELF | MH_ORC | MH_CENTAUR | MH_ILLITHID | MH_DRAUGR
+          | MH_VAMPIRE | ROLE_MALE | ROLE_FEMALE | ROLE_NEUTRAL
+          | ROLE_CHAOTIC,
+      /* Str Int Wis Dex Con Cha */
+      { 7, 10, 7, 7, 7, 7 },
+      { 10, 30, 10, 20, 20, 10 },
+      /* Init   Lower  Higher */
+      { 10, 0, 0, 8, 1, 0 }, /* Hit points */
+      { 4, 3, 0, 2, 0, 3 },
+      12, /* Energy */
+      0,
+      1,
+      0,
+      2,
+      10,
+      A_INT,
+      SPE_REFLECTION,
+      -4 },
+    { { "Jedi", 0 },
+      { { "Youngling", 0 },
+        { "Padawan", 0 },
+        { "Jedi Apprentice", 0 },
+        { "Jedi Knight", 0 },
+        { "Jedi Hero", 0 },
+        { "Jedi Master", 0 } },
+      "the Light Side", "the Force", "the Dark Side", /* Star Wars */
+      "Jed",
+      "the Jedi Temple",
+      "the Outer Rim",
+      PM_JEDI,
+      PM_DROID,
+      PM_JEDI_MASTER,
+      PM_PADAWAN,
+      PM_LORD_SIDIOUS,
+      PM_STORMTROOPER,
+      PM_STORMTROOPER,
+      S_HUMAN,
+      S_HUMAN,
+      ART_LIGHTSABER_PROTOTYPE,
+      MH_HUMAN | MH_ELF | MH_DWARF | MH_TORTLE | ROLE_MALE | ROLE_FEMALE
+          | ROLE_LAWFUL,
+      /* Str Int Wis Dex Con Cha */
+      { 10, 7, 14, 12, 10, 14 },
+      { 30, 15, 15, 10, 20, 10 },
+      /* Init   Lower  Higher */
+      { 20, 4, 0, 8, 2, 4 }, /* Hit points */
+      { 5, 4, 0, 1, 0, 4 },
+      10, /* Energy */
+      0,
+      12,
+      -1,
+      2,
+      10,
+      A_INT,
+      SPE_CHARM_MONSTER,
       -4 },
     { { "Knight", 0 },
       { { "Gallant", 0 },
@@ -314,6 +435,48 @@ const struct Role roles[NUM_ROLES+1] = {
       20,
       A_WIS,
       SPE_RESTORE_ABILITY,
+      -4 },
+    { { "Necromancer", 0 },
+      { { "Gravedigger", 0 },
+        { "Embalmer", 0 },
+        { "Mortician", 0 },
+        { "Zombie Lord", 0 },
+        { "Ghoul Master", 0 },
+        { "Necromancer", 0 },
+        { "Necromancer", 0 },
+        { "Undead Master", 0 },
+        { "Lich Lord", 0 } },
+      "Nyarlathotep", "Zugguthobal", "Gothuulbe", /* Assorted slimy things */
+      "Nec",
+      "the Tower of the Dark Lord",
+      "the Lair of Maugneshaagar",
+      PM_NECROMANCER,
+      PM_GHOUL,
+      PM_DARK_LORD,
+      PM_EMBALMER,
+      PM_MAUGNESHAAGAR,
+      PM_NUPPERIBO,
+      PM_MONGBAT,
+      S_BAT,
+      S_IMP,
+      ART_GREAT_DAGGER_OF_GLAURGNAA,
+      MH_HUMAN | MH_ELF | MH_GNOME | MH_ORC | MH_CENTAUR | MH_GIANT
+          | MH_ILLITHID | MH_DRAUGR | MH_VAMPIRE | MH_GHOST | ROLE_MALE
+          | ROLE_FEMALE | ROLE_CHAOTIC,
+      /* Str Int Wis Dex Con Cha */
+      { 7, 10, 7, 7, 7, 7 },
+      { 10, 30, 10, 20, 20, 10 },
+      /* Init   Lower  Higher */
+      { 10, 0, 0, 8, 1, 0 }, /* Hit points */
+      { 4, 3, 0, 2, 0, 3 },
+      12, /* Energy */
+      0,
+      1,
+      0,
+      2,
+      10,
+      A_INT,
+      SPE_SUMMON_UNDEAD,
       -4 },
     { { "Priest", "Priestess" },
       { { "Aspirant", 0 },
@@ -748,6 +911,7 @@ staticfn int randrole_filtered(void);
 staticfn char *promptsep(char *, int);
 staticfn int role_gendercount(int);
 staticfn int race_alignmentcount(int);
+staticfn boolean role_race_ok(int, int);
 
 /* used by str2XXX() */
 static char NEARDATA randomstr[] = "random";
@@ -822,8 +986,7 @@ validrace(int rolenum, int racenum)
 {
     /* Assumes validrole */
     return (boolean) (IndexOkT(racenum, races)
-                      && (roles[rolenum].allow & races[racenum].allow
-                          & ROLE_RACEMASK));
+                      && role_race_ok(rolenum, racenum));
 }
 
 int
@@ -833,7 +996,7 @@ randrace(int rolenum)
 
     /* Count the number of valid races */
     for (i = 0; races[i].noun; i++)
-        if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK)
+        if (role_race_ok(rolenum, i))
             n++;
 
     /* Pick a random race */
@@ -841,7 +1004,7 @@ randrace(int rolenum)
     if (n)
         n = rn2(n * 100) / 100;
     for (i = 0; races[i].noun; i++)
-        if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK) {
+        if (role_race_ok(rolenum, i)) {
             if (n)
                 n--;
             else
@@ -1009,6 +1172,17 @@ str2align(const char *str)
     return ROLE_NONE;
 }
 
+/* a role and race can be combined if the role allows the race and the
+   two have at least one alignment in common (without the latter check,
+   character selection could offer a pair that has no valid alignment) */
+staticfn boolean
+role_race_ok(int rolenum, int racenum)
+{
+    unsigned long allow = roles[rolenum].allow & races[racenum].allow;
+
+    return ((allow & ROLE_RACEMASK) != 0 && (allow & ROLE_ALIGNMASK) != 0);
+}
+
 /* is rolenum compatible with any racenum/gendnum/alignnum constraints? */
 boolean
 ok_role(int rolenum, int racenum, int gendnum, int alignnum)
@@ -1020,8 +1194,7 @@ ok_role(int rolenum, int racenum, int gendnum, int alignnum)
         if (gr.rfilter.roles[rolenum])
             return FALSE;
         allow = roles[rolenum].allow;
-        if (IndexOkT(racenum, races)
-            && !(allow & races[racenum].allow & ROLE_RACEMASK))
+        if (IndexOkT(racenum, races) && !role_race_ok(rolenum, racenum))
             return FALSE;
         if (gendnum >= 0 && gendnum < ROLE_GENDERS
             && !(allow & genders[gendnum].allow & ROLE_GENDMASK))
@@ -1036,8 +1209,7 @@ ok_role(int rolenum, int racenum, int gendnum, int alignnum)
             if (gr.rfilter.roles[i])
                 continue;
             allow = roles[i].allow;
-            if (IndexOkT(racenum, races)
-                && !(allow & races[racenum].allow & ROLE_RACEMASK))
+            if (IndexOkT(racenum, races) && !role_race_ok(i, racenum))
                 continue;
             if (gendnum >= 0 && gendnum < ROLE_GENDERS
                 && !(allow & genders[gendnum].allow & ROLE_GENDMASK))
@@ -1086,8 +1258,7 @@ ok_race(int rolenum, int racenum, int gendnum, int alignnum)
         if (gr.rfilter.mask & races[racenum].selfmask)
             return FALSE;
         allow = races[racenum].allow;
-        if (IndexOkT(rolenum, roles)
-            && !(allow & roles[rolenum].allow & ROLE_RACEMASK))
+        if (IndexOkT(rolenum, roles) && !role_race_ok(rolenum, racenum))
             return FALSE;
         if (gendnum >= 0 && gendnum < ROLE_GENDERS
             && !(allow & genders[gendnum].allow & ROLE_GENDMASK))
@@ -1102,8 +1273,7 @@ ok_race(int rolenum, int racenum, int gendnum, int alignnum)
             if (gr.rfilter.mask & races[i].selfmask)
                 continue;
             allow = races[i].allow;
-            if (IndexOkT(rolenum, roles)
-                && !(allow & roles[rolenum].allow & ROLE_RACEMASK))
+            if (IndexOkT(rolenum, roles) && !role_race_ok(rolenum, i))
                 continue;
             if (gendnum >= 0 && gendnum < ROLE_GENDERS
                 && !(allow & genders[gendnum].allow & ROLE_GENDMASK))
@@ -1784,8 +1954,7 @@ role_selection_prolog(int which, winid where)
         allowmask = roles[r].allow;
         if ((allowmask & ROLE_RACEMASK) == MH_HUMAN)
             c = 0; /* races[human] */
-        else if (IndexOkT(c, races)
-                 && !(allowmask & ROLE_RACEMASK & races[c].allow))
+        else if (IndexOkT(c, races) && !role_race_ok(r, c))
             c = ROLE_RANDOM;
         if ((allowmask & ROLE_GENDMASK) == ROLE_MALE)
             gend = 0; /* role forces male (hypothetical) */

@@ -1634,6 +1634,18 @@ trapmove(
             pline("Sting cuts through the web!");
             break;
         }
+        if (uwep && is_lightsaber(uwep) && uwep->lamplit) {
+            /* a lightsaber burns right through the web */
+            struct trap *web = t_at(u.ux, u.uy);
+
+            u.utrap = 0; /* caller will call reset_utrap() */
+            pline("%s cuts through the web!", Yname2(uwep));
+            if (web && web->ttyp == WEB) {
+                deltrap(web);
+                newsym(u.ux, u.uy);
+            }
+            break;
+        }
         if (--u.utrap) {
             if (flags.verbose) {
                 predicament = "stuck to the web";
@@ -2459,6 +2471,7 @@ slippery_ice_fumbling(void)
 
     if (on_ice) {
         if ((uarmf && objdescr_is(uarmf, "snow boots"))
+            || (Role_if(PM_ICE_MAGE) && iceskater == &gy.youmonst)
             || resists_cold(iceskater) || Flying
             || is_floater(iceskater->data) || is_clinger(iceskater->data)
             || is_whirly(iceskater->data)) {

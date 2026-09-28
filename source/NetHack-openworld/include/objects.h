@@ -212,6 +212,9 @@ WEAPON("silver dagger", NoDes,
 WEAPON("athame", NoDes,
        1, 1, 0,  0,  10,   4,  4,  3, 2, S,   P_DAGGER, IRON, HI_METAL,
                                                         ATHAME),
+WEAPON("great dagger", NoDes,
+       1, 0, 0,  0,  20,  30,  6,  7, 2, P,   P_DAGGER, METAL, CLR_BLACK,
+                                                        GREAT_DAGGER),
 WEAPON("scalpel", NoDes,
        1, 1, 0,  0,   5,   6,  3,  3, 2, S,   P_KNIFE, METAL, HI_METAL,
                                                         SCALPEL),
@@ -391,6 +394,38 @@ WEAPON("bullwhip", NoDes,
        1, 0, 0,  2,  20,   4,  2,  1, 0, 0,   P_WHIP, LEATHER, CLR_BROWN,
                                                         BULLWHIP),
 
+/* lightsabers (from Slash'EM, as weapons as in Hack'EM);
+ * they are magical, are applied to ignite or extinguish them, give light
+ * while lit, burn their charge (kept in obj->age, like lamp oil) while lit
+ * and only do damage when lit; see weapon.c for the extra damage:
+ *   green : 9 + d3, 13 + d5
+ *   blue  : 8 + d5, 12 + d7
+ *   red   : 6 + d9, 10 + d11
+ *   red double: 6 + d9 + d9, 10 + d11 + d11 (15/21) in double mode
+ * Lightsabers are -3 to hit, the double lightsaber -4 */
+#define LIGHTSABER(name,desc,bi,prob,wt,cost,sdam,ldam,hitbon,metal,color,sn) \
+    OBJECT(OBJ(name, desc),                                               \
+           BITS(0, 0, 1, 0, 1, 1, 0, 0, bi, 0, SLASH, P_LIGHTSABER, metal), \
+           0, WEAPON_CLASS, prob, 0, wt,                                  \
+           cost, sdam, ldam, hitbon, 0, wt, color, sn)
+LIGHTSABER("green lightsaber", "lightsaber",
+           0, 1, 60,  500, 3,  5, -3, PLASTIC, HI_METAL, GREEN_LIGHTSABER),
+LIGHTSABER("blue lightsaber", "lightsaber",
+           0, 1, 60,  500, 5,  7, -3, PLATINUM, HI_METAL, BLUE_LIGHTSABER),
+LIGHTSABER("red lightsaber", "lightsaber",
+           0, 1, 60,  500, 9, 11, -3, PLATINUM, HI_METAL, RED_LIGHTSABER),
+LIGHTSABER("red double lightsaber", "double lightsaber",
+           1, 0, 60, 1000, 9, 11, -4, PLATINUM, HI_METAL,
+                                                    RED_DOUBLE_LIGHTSABER),
+#undef LIGHTSABER
+
+/* bombs (from Slash'EM); apply to light the fuse, or throw one to have it
+   go off where it lands; see explode.c */
+OBJECT(OBJ("fire bomb", "bomb"),
+       BITS(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, WHACK, P_NONE, IRON),
+       0, WEAPON_CLASS, 1, 0, 10, 50, 0, 0, 0, 0, 10, CLR_GREEN,
+                                                        FIRE_BOMB),
+
 /* bows */
 BOW("bow", NoDes,               1, 24, 30, 60, 0, WOOD, P_BOW, HI_WOOD,
                                                         BOW),
@@ -467,6 +502,9 @@ HELM("dunce cap", "conical hat",
 HELM("dented pot", NoDes,
      1, 0,           0,  2, 0, 10,  8,  9, 0, IRON, CLR_BLACK,
                                                         DENTED_POT),
+HELM("plasteel helm", NoDes,
+     1, 0,           0,  1, 1,  6, 20,  7, 0, PLASTIC, CLR_WHITE,
+                                                        PLASTEEL_HELM),
 HELM("helm of brilliance", "crystal helmet",
      0, 1,           0,  6, 1, 40, 50,  9, 0, GLASS, CLR_WHITE,
         /* used to be iron and shuffled as "etched helmet" but required
@@ -568,6 +606,9 @@ ARMOR("splint mail", NoDes,
 ARMOR("banded mail", NoDes,
       1, 0, 1,  0, 66, 5, 350,  90,  4, 1,  ARM_SUIT, IRON, HI_METAL,
                                                         BANDED_MAIL),
+ARMOR("plasteel armor", NoDes,
+      1, 0, 1,  0,  5, 5, 150,  80,  4, 0,  ARM_SUIT, PLASTIC, CLR_WHITE,
+                                                        PLASTEEL_ARMOR),
 /* the dwarvish and elven mithril-coats are gone: mithril is a material
    (see objclass.h); a dwarvish chain mail made of mithril has the stats
    of the old dwarvish mithril-coat (AC 6, MC 2, weight 150) and an elven
@@ -699,10 +740,16 @@ GLOVES("gauntlets of power", "riding gloves",
 GLOVES("gauntlets of dexterity", "fencing gloves",
        0, 1,        0,  8, 1, 10, 50, 9, 0,  LEATHER, HI_LEATHER,
                                                     GAUNTLETS_OF_DEXTERITY),
+GLOVES("plasteel gloves", "white gloves",
+       0, 0,        0,  1, 1,  9, 25, 8, 0,  PLASTIC, CLR_WHITE,
+                                                    PLASTEEL_GLOVES),
 
 /* boots */
 BOOTS("low boots", "walking shoes",
       0, 0,          0, 23, 2, 10,  8, 9, 0, LEATHER, HI_LEATHER, LOW_BOOTS),
+BOOTS("plasteel boots", "white boots",
+      0, 0,          0,  1, 2,  8, 25, 8, 0, PLASTIC, CLR_WHITE,
+                                                        PLASTEEL_BOOTS),
 BOOTS("iron shoes", "hard shoes",
       0, 0,          0,  7, 2, 50, 16, 8, 0, IRON, HI_METAL, IRON_SHOES),
 BOOTS("high boots", "jackboots",
@@ -928,6 +975,8 @@ TOOL("tallow candle",   "candle", 0, 1, 0, 0, 20,  2, 10, WAX, CLR_WHITE,
                                                                 TALLOW_CANDLE),
 TOOL("wax candle",      "candle", 0, 1, 0, 0,  5,  2, 20, WAX, CLR_WHITE,
                                                                 WAX_CANDLE),
+TOOL("magic candle",    "candle", 0, 1, 1, 0,  7,  2,500, WAX, CLR_WHITE,
+                                                                MAGIC_CANDLE),
 TOOL("brass lantern",       NoDes, 1, 0, 0, 0, 30, 30, 12, COPPER, CLR_YELLOW,
                                                                 BRASS_LANTERN),
 TOOL("oil lamp",          "lamp", 0, 0, 0, 0, 45, 20, 10, COPPER, CLR_YELLOW,
@@ -1237,6 +1286,8 @@ SCROLL("punishment",            "VE FORBRYDERNE",  1,  15, 300,
                                                         SCR_PUNISHMENT),
 SCROLL("charging",                "HACKEM MUCHE",  1,  15, 300,
                                                         SCR_CHARGING),
+SCROLL("ice",                     "OOBID IBBOB",  1,  10, 200,
+                                                        SCR_ICE),
 SCROLL("stinking cloud",             "VELOX NEB",  1,  15, 300,
                                                         SCR_STINKING_CLOUD),
     /* Extra descriptions, shuffled into use at start of new game.
@@ -1423,16 +1474,34 @@ SPELL("chain lightning", "checkered",
       P_ATTACK_SPELL,      25,  4, 2, 1, NODIR, CLR_GRAY,
                                                         SPE_CHAIN_LIGHTNING),
 
-#if 0 /* DEFERRED */
 /* from slash'em, create a tame critter which explodes when attacking,
    damaging adjacent creatures--friend or foe--and dying in the process */
 SPELL("flame sphere",    "canvas",
-      P_MATTER_SPELL,      20,  2, 1, 1, NODIR, CLR_BROWN,
+      P_MATTER_SPELL,      15,  2, 1, 1, NODIR, CLR_BROWN,
                                                         SPE_FLAME_SPHERE),
 SPELL("freeze sphere",   "hardcover",
-      P_MATTER_SPELL,      20,  2, 1, 1, NODIR, CLR_BROWN,
+      P_MATTER_SPELL,      15,  2, 1, 1, NODIR, CLR_BROWN,
                                                         SPE_FREEZE_SPHERE),
-#endif
+/* the Flame Mage's bolt of fire (Hack'EM) */
+SPELL("fire bolt",       "feathered",
+      P_MATTER_SPELL,      15,  2, 1, 1, IMMEDIATE, CLR_YELLOW,
+                                                        SPE_FIRE_BOLT),
+/* the Necromancer's spells (Slash'EM); Hack'EM files these under its own
+   necromancy school, here they are attack spells like drain life */
+SPELL("summon undead",   "black",
+      P_ATTACK_SPELL,      10,  7, 5, 1, NODIR, CLR_BLACK,
+                                                        SPE_SUMMON_UNDEAD),
+SPELL("command undead",  "dark",
+      P_ATTACK_SPELL,      10,  7, 3, 1, NODIR, CLR_BRIGHT_GREEN,
+                                                        SPE_COMMAND_UNDEAD),
+/* self-enlightenment (Slash'EM) */
+SPELL("enlighten",       "faded",
+      P_DIVINATION_SPELL,  15,  5, 4, 1, NODIR, CLR_GRAY,
+                                                        SPE_ENLIGHTEN),
+/* temporary reflection (EvilHack/Hack'EM) */
+SPELL("reflection",      "decrepit",
+      P_MATTER_SPELL,      15,  3, 5, 1, NODIR, CLR_BROWN,
+                                                        SPE_REFLECTION),
 /* books with fixed descriptions
  */
 SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER,
@@ -1468,6 +1537,8 @@ WAND("enlightenment", "crystal", 15, 150, 1, NODIR, GLASS, HI_GLASS,
                                                     WAN_ENLIGHTENMENT),
 WAND("create monster",  "maple", 50, 200, 1, NODIR, WOOD, HI_WOOD,
                                                     WAN_CREATE_MONSTER),
+WAND("fear",           "crusty", 25, 200, 1, NODIR, IRON, CLR_RED,
+                                                    WAN_FEAR),
 WAND("wishing",          "pine",  5, 500, 1, NODIR, WOOD, HI_WOOD,
                                                     WAN_WISHING),
 WAND("stasis",        "redwood", 45, 150, 1, NODIR, WOOD, CLR_RED,
@@ -1484,6 +1555,8 @@ WAND("speed monster",   "brass", 50, 150, 1, IMMEDIATE, COPPER, HI_COPPER,
                                                     WAN_SPEED_MONSTER),
 WAND("undead turning", "copper", 50, 150, 1, IMMEDIATE, COPPER, HI_COPPER,
                                                     WAN_UNDEAD_TURNING),
+WAND("draining",      "ceramic", 20, 175, 1, IMMEDIATE, GLASS, HI_MINERAL,
+                                                    WAN_DRAINING),
 WAND("polymorph",      "silver", 45, 200, 1, IMMEDIATE, SILVER, HI_SILVER,
                                                     WAN_POLYMORPH),
 WAND("cancellation", "platinum", 45, 200, 1, IMMEDIATE, PLATINUM, CLR_WHITE,

@@ -660,7 +660,8 @@ xname_flags(
         obj->known = 0;
     if (!Blind && !gd.distantname)
         observe_object(obj);
-    if (Role_if(PM_CLERIC))
+    /* priests, and necromancers (Slash'EM), see the B/U/C of things */
+    if (Role_if(PM_CLERIC) || Role_if(PM_NECROMANCER))
         obj->bknown = 1; /* avoid set_bknown() to bypass update_inventory() */
 
     if (iflags.override_ID) {
@@ -1396,7 +1397,7 @@ doname_base(
 #endif
                      && obj->otyp != FAKE_AMULET_OF_YENDOR
                      && obj->otyp != AMULET_OF_YENDOR
-                     && !Role_if(PM_CLERIC)))
+                     && !Role_if(PM_CLERIC) && !Role_if(PM_NECROMANCER)))
             Strcat(prefix, "uncursed ");
     }
 
@@ -1474,6 +1475,11 @@ doname_base(
         if (known) {
             Sprintf(eos(prefix), "%+d ", obj->spe); /* sitoa(obj->spe)+" " */
         }
+        if (is_lightsaber(obj) && obj->lamplit)
+            Concat(bp, 0, (obj->otyp == RED_DOUBLE_LIGHTSABER && obj->altmode)
+                              ? " (lit, double bladed)" : " (lit)");
+        if (is_bomb(obj) && obj->oarmed)
+            Concat(bp, 0, " (armed)");
         break;
     case TOOL_CLASS:
         if (obj->owornmask & (W_TOOL | W_SADDLE)) { /* blindfold */
@@ -1506,7 +1512,7 @@ doname_base(
             break;
         } else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP
                    || obj->otyp == BRASS_LANTERN || Is_candle(obj)) {
-            if (Is_candle(obj)) {
+            if (Is_candle(obj) && obj->otyp != MAGIC_CANDLE) {
                 anything timer;
                 long full_burn_time = 20L * (long) objects[obj->otyp].oc_cost,
                      turns_left = obj->age;
@@ -3441,6 +3447,8 @@ static NEARDATA const struct o_range o_ranges[] = {
     { "dragon scale mail", ARMOR_CLASS, GRAY_DRAGON_SCALE_MAIL,
       YELLOW_DRAGON_SCALE_MAIL },
     { "sword", WEAPON_CLASS, SHORT_SWORD, KATANA },
+    { "lightsaber", WEAPON_CLASS, GREEN_LIGHTSABER, RED_DOUBLE_LIGHTSABER },
+    { "bomb", WEAPON_CLASS, FIRE_BOMB, FIRE_BOMB },
     { "venom", VENOM_CLASS, BLINDING_VENOM, ACID_VENOM },
     { "gray stone", GEM_CLASS, LUCKSTONE, FLINT },
     { "grey stone", GEM_CLASS, LUCKSTONE, FLINT },

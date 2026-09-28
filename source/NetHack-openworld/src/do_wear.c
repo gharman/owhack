@@ -191,6 +191,7 @@ Boots_on(void)
 
     switch (uarmf->otyp) {
     case LOW_BOOTS:
+    case PLASTEEL_BOOTS:
     case IRON_SHOES:
     case HIGH_BOOTS:
     case JUMPING_BOOTS:
@@ -310,6 +311,7 @@ Boots_off(void)
         }
         break;
     case LOW_BOOTS:
+    case PLASTEEL_BOOTS:
     case IRON_SHOES:
     case HIGH_BOOTS:
     case JUMPING_BOOTS:
@@ -440,6 +442,7 @@ Helmet_on(void)
         break;
     case HELMET:
     case DENTED_POT:
+    case PLASTEEL_HELM:
     case ELVEN_LEATHER_HELM:
     case DWARVISH_IRON_HELM:
     case ORCISH_HELM:
@@ -526,6 +529,7 @@ Helmet_off(void)
         break;
     case HELMET:
     case DENTED_POT:
+    case PLASTEEL_HELM:
     case ELVEN_LEATHER_HELM:
     case DWARVISH_IRON_HELM:
     case ORCISH_HELM:
@@ -583,6 +587,7 @@ Gloves_on(void)
 
     switch (uarmg->otyp) {
     case LEATHER_GLOVES:
+    case PLASTEEL_GLOVES:
         break;
     case GAUNTLETS_OF_FUMBLING:
         if (!oldprop && !(HFumbling & ~TIMEOUT))
@@ -657,6 +662,7 @@ Gloves_off(void)
 
     switch (uarmg->otyp) {
     case LEATHER_GLOVES:
+    case PLASTEEL_GLOVES:
         break;
     case GAUNTLETS_OF_FUMBLING:
         if (!oldprop && !(HFumbling & ~TIMEOUT))

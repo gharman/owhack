@@ -89,7 +89,9 @@ enum prop_types {
     FREE_ACTION       = 66,
     FIXED_ABIL        = 67,
     LIFESAVED         = 68,
-    LAST_PROP = LIFESAVED
+    VULN_FIRE         = 69, /* extra damage from unresisted fire */
+    VULN_COLD         = 70, /* extra damage from unresisted cold */
+    LAST_PROP = VULN_COLD
 };
 
 /*** Where the properties come from ***/

@@ -79,7 +79,10 @@ enum invoke_prop_types {
     DEATH_GAZE,    /* Slash'EM: the Eye of the Beholder */
     SUMMON_UNDEAD, /* Slash'EM: the Hand of Vecna */
     CHARTING,      /* map the neighborhood and the nearby portal rings */
-    PATHFINDING    /* controlled level teleport */
+    PATHFINDING,   /* controlled level teleport */
+    SUMMON_FIRE_ELEMENTAL,  /* Candle of Eternal Flame */
+    SUMMON_WATER_ELEMENTAL, /* Storm Whistle: a creature of the storm */
+    CONJURE_SPHERE          /* Firewall, Deep Freeze: elemental spheres */
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items

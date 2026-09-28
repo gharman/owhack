@@ -191,6 +191,13 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
+        case PM_FLAME_MAGE:
+            if (!rn2(2))
+                weapon = rn2(2) ? QUARTERSTAFF : AXE;
+            if (rn2(2))
+                armor = RED_DRAGON_SCALE_MAIL;
+            cloak = ROBE;
+            break;
         case PM_HEALER:
             if (rn2(4))
                 weapon = QUARTERSTAFF;
@@ -200,6 +207,22 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
                 helm = rn2(2) ? HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
             if (rn2(2))
                 shield = STRANGE_OBJECT;
+            break;
+        case PM_ICE_MAGE:
+            if (!rn2(2))
+                weapon = rn2(2) ? STILETTO : ATHAME;
+            if (rn2(2))
+                armor = WHITE_DRAGON_SCALE_MAIL;
+            cloak = ROBE;
+            break;
+        case PM_JEDI:
+            weapon = !rn2(3) ? RED_LIGHTSABER
+                     : rn2(2) ? BLUE_LIGHTSABER : GREEN_LIGHTSABER;
+            /* a Jedi fights in robes, without armor */
+            armor = STRANGE_OBJECT;
+            cloak = ROBE;
+            helm = STRANGE_OBJECT;
+            shield = STRANGE_OBJECT;
             break;
         case PM_KNIGHT:
             if (rn2(4))
@@ -213,6 +236,16 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             cloak = ROBE;
             if (rn2(2))
                 shield = STRANGE_OBJECT;
+            break;
+        case PM_NECROMANCER:
+            if (rn2(2))
+                weapon = rn2(2) ? DWARVISH_MATTOCK : ATHAME;
+            if (rn2(2))
+                cloak = ROBE;
+            else if (rn2(4))
+                cloak = CLOAK_OF_PROTECTION;
+            if (!rn2(4))
+                (void) mongets(mtmp, PICK_AXE); /* for digging up graves */
             break;
         case PM_CLERIC:
             if (rn2(2))

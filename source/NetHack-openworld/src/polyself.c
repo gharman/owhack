@@ -25,6 +25,8 @@ staticfn void check_strangling(boolean);
 staticfn void polyman(const char *, const char *);
 staticfn void dropp(struct obj *);
 staticfn void break_armor(void);
+staticfn int mage_transform(void);
+staticfn void mage_merge_armor(void);
 staticfn void drop_weapon(int);
 staticfn int armor_to_dragon(int);
 staticfn void newman(void);
@@ -1158,6 +1160,9 @@ break_armor(void)
 {
     struct obj *otmp;
     struct permonst *uptr = gy.youmonst.data;
+    /* an elemental mage willingly taking draconic form sheds armor
+       instead of bursting out of it (Slash'EM) */
+    boolean controlled_change = mage_draconic_form();
 
     if (breakarm(uptr)) {
         if ((otmp = uarm) != 0) {
@@ -1168,12 +1173,23 @@ break_armor(void)
             if (otmp->lamplit)
                 end_burn(otmp, FALSE);
 
-            You("break out of your armor!");
-            exercise(A_STR, FALSE);
-            (void) Armor_gone();
-            useup(otmp);
+            if (controlled_change && !otmp->cursed) {
+                You("quickly remove your armor as you start to change.");
+                (void) Armor_gone();
+                dropx(otmp);
+            } else {
+                You("break out of your armor!");
+                exercise(A_STR, FALSE);
+                (void) Armor_gone();
+                useup(otmp);
+            }
         }
-        if ((otmp = uarmc) != 0
+        if ((otmp = uarmc) != 0 && controlled_change && !otmp->cursed) {
+            You("remove your %s before you transform.",
+                cloak_simple_name(otmp));
+            (void) Cloak_off();
+            dropx(otmp);
+        } else if ((otmp = uarmc) != 0
             /* mummy wrapping adapts to small and very big sizes */
             && (otmp->otyp != MUMMY_WRAPPING || !WrappingAllowed(uptr))) {
             if (otmp->otyp == MUMMY_WRAPPING) {
@@ -1191,7 +1207,11 @@ break_armor(void)
                 dropp(otmp);
             }
         }
-        if (uarmu) {
+        if ((otmp = uarmu) != 0 && controlled_change && !otmp->cursed) {
+            You("take off your shirt just before it starts to rip.");
+            setworn((struct obj *) 0, W_ARMU);
+            dropx(otmp);
+        } else if (uarmu) {
             Your("shirt rips to shreds!");
             useup(uarmu);
         }
@@ -1871,6 +1891,169 @@ dohide(void)
     newsym(u.ux, u.uy);
     youhiding(FALSE, 0); /* "you are now hiding" */
     return ECMD_TIME;
+}
+
+/*
+ * Slash'EM: flame mages and ice mages can take draconic form at will
+ * (#youpoly).  From experience level 8 on (sooner in matching dragon scale
+ * mail) they can turn into the baby dragon of their element, and from level
+ * 15 on into the adult dragon; energy is used up unless their own dragon's
+ * scales help.  Taking the form again turns them back for free.
+ *
+ * Adult form:  wearing matching scale mail (no charge); wearing matching
+ *              scales with more than 20 energy (charge 20); otherwise
+ *              level 15 and more than 40 energy (charge 40).
+ * Baby form:   wearing matching scales (no charge); otherwise level 8
+ *              and more than 20 energy (charge 20).
+ */
+#define EN_BABY_DRAGON 20
+#define EN_ADULT_DRAGON 40
+#define YOUPOLY_SMALL 8
+#define YOUPOLY_LARGE 15
+
+static struct {
+    int mon;     /* dragon to become */
+    int reqtime; /* turns left in the transformation ritual */
+    boolean merge; /* merge with worn dragon armor */
+} draconic;
+
+/* is the hero an elemental mage in (or turning into) draconic form? */
+boolean
+mage_draconic_form(void)
+{
+    if (Role_if(PM_FLAME_MAGE))
+        return (u.umonnum == PM_RED_DRAGON
+                || u.umonnum == PM_BABY_RED_DRAGON
+                || (go.occupation == mage_transform
+                    && (draconic.mon == PM_RED_DRAGON
+                        || draconic.mon == PM_BABY_RED_DRAGON)));
+    if (Role_if(PM_ICE_MAGE))
+        return (u.umonnum == PM_WHITE_DRAGON
+                || u.umonnum == PM_BABY_WHITE_DRAGON
+                || (go.occupation == mage_transform
+                    && (draconic.mon == PM_WHITE_DRAGON
+                        || draconic.mon == PM_BABY_WHITE_DRAGON)));
+    return FALSE;
+}
+
+/* occupation callback for the draconic transformation ritual */
+staticfn int
+mage_transform(void)
+{
+    if (--draconic.reqtime > 0)
+        return 1; /* still busy */
+    if (draconic.merge)
+        mage_merge_armor();
+    polymon(draconic.mon);
+    return 0;
+}
+
+/* worn scales or scale mail of the mage's own dragon become the skin */
+staticfn void
+mage_merge_armor(void)
+{
+    char buf[BUFSZ];
+    unsigned was_lit;
+    int arm_light;
+
+    if (!uarm || !Is_dragon_armor(uarm)
+        || armor_to_dragon(uarm->otyp) != draconic.mon
+        || (svm.mvitals[draconic.mon].mvflags & G_GENOD))
+        return;
+    was_lit = uarm->lamplit;
+    arm_light = artifact_light(uarm) ? arti_light_radius(uarm) : 0;
+    if (Is_dragon_scales(uarm)) {
+        You("merge with your scaly armor.");
+    } else {
+        Strcpy(buf, simpleonames(uarm));
+        (void) strsubst(buf, " dragon ", " ");
+        Your("%s reverts to scales as you merge with them.", buf);
+        uarm->otyp += GRAY_DRAGON_SCALES - GRAY_DRAGON_SCALE_MAIL;
+        observe_object(uarm);
+        disp.botl = TRUE;
+    }
+    uskin = uarm;
+    uarm = (struct obj *) 0;
+    uskin->owornmask |= I_SPECIAL; /* save/restore hack */
+    if (was_lit)
+        maybe_adjust_light(uskin, arm_light);
+    update_inventory();
+}
+
+/* #youpoly: polymorph under conscious control */
+int
+dopolyatwill(void)
+{
+    int red = Role_if(PM_FLAME_MAGE), adult_pm, baby_pm;
+    boolean scales, scale_mail;
+
+    if (!Role_if(PM_FLAME_MAGE) && !Role_if(PM_ICE_MAGE)) {
+        You_cant("polymorph at will.");
+        return ECMD_OK;
+    }
+    if (Unchanging) {
+        You_cant("change your form.");
+        return ECMD_OK;
+    }
+    /* already in draconic form: turn back for free */
+    if (Upolyd && mage_draconic_form()) {
+        rehumanize();
+        return ECMD_TIME;
+    }
+    adult_pm = red ? PM_RED_DRAGON : PM_WHITE_DRAGON;
+    baby_pm = red ? PM_BABY_RED_DRAGON : PM_BABY_WHITE_DRAGON;
+    scales = (uarm && Is_dragon_scales(uarm)
+              && armor_to_dragon(uarm->otyp) == adult_pm);
+    scale_mail = (uarm && Is_dragon_mail(uarm)
+                  && armor_to_dragon(uarm->otyp) == adult_pm);
+    if (u.ulevel < YOUPOLY_SMALL && !scale_mail) {
+        You_cant("polymorph at will yet.");
+        return ECMD_OK;
+    }
+    if (y_n("Transform into your draconic form?") != 'y')
+        return ECMD_OK;
+    if (!scales && !scale_mail && u.uen <= EN_BABY_DRAGON) {
+        You("don't have the energy to polymorph.  You need more than %d!",
+            EN_BABY_DRAGON);
+        return ECMD_OK;
+    }
+    if ((u.ulevel >= YOUPOLY_LARGE && u.uen > EN_ADULT_DRAGON)
+        || (scales && u.uen > EN_BABY_DRAGON) || scale_mail) {
+        /* scales lower the cost, scale mail removes it */
+        if (!scale_mail)
+            u.uen -= scales ? EN_BABY_DRAGON : EN_ADULT_DRAGON;
+        draconic.mon = adult_pm;
+        draconic.merge = (scales || scale_mail);
+    } else {
+        if (!scales)
+            u.uen -= EN_BABY_DRAGON;
+        draconic.mon = baby_pm;
+        draconic.merge = FALSE; /* adult armor won't fit a baby */
+    }
+    disp.botl = TRUE;
+    draconic.reqtime = 2;
+    if (svm.mvitals[draconic.mon].mvflags & G_GENOD) {
+        You_feel("a strange emptiness where your dragon kin used to be.");
+        return ECMD_TIME;
+    }
+    set_occupation(mage_transform, "transforming into your draconic form",
+                   0);
+    You("begin the transformation ritual.");
+    return ECMD_TIME;
+}
+
+/* tell elemental mages when they can take (bigger) draconic form */
+void
+mage_youpoly_msg(int oldlevel, int newlevel)
+{
+    if (!Role_if(PM_FLAME_MAGE) && !Role_if(PM_ICE_MAGE))
+        return;
+    if (oldlevel < YOUPOLY_SMALL && newlevel >= YOUPOLY_SMALL)
+        Your("powers grow!  (Use #youpoly to take baby dragon form.)");
+    else if (oldlevel >= YOUPOLY_SMALL && newlevel < YOUPOLY_SMALL)
+        Your("powers diminish!");
+    if (oldlevel < YOUPOLY_LARGE && newlevel >= YOUPOLY_LARGE)
+        Your("powers grow!  (Use #youpoly to take adult dragon form.)");
 }
 
 int

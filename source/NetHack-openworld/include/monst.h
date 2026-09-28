@@ -205,6 +205,8 @@ struct monst {
     xint16 weapon_check;   /* flag for whether to try switching weapons */
 
     int meating;           /* monster is eating timeout */
+    short msummoned;       /* turns left for a monster conjured by a spell
+                            * or artifact; 0 = an ordinary monster */
     struct mextra *mextra; /* point to mextra struct */
 };
 

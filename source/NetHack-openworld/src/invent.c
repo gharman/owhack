@@ -1008,6 +1008,9 @@ addinv_core1(struct obj *obj)
             artitouch(obj);
         }
         set_artifact_intrinsic(obj, 1, W_ART);
+        /* the Candle of Eternal Flame lights itself in its bearer's hand */
+        if (is_art(obj, ART_CANDLE_OF_ETERNAL_FLAME) && !obj->lamplit)
+            begin_burn(obj, FALSE);
     }
 
     /* "special achievements"; revealed in end of game disclosure and
@@ -4527,6 +4530,10 @@ mergable(
 
     /* burning potions of oil never merge */
     if (obj->otyp == POT_OIL && obj->lamplit)
+        return FALSE;
+
+    /* nor do bombs with lit fuses */
+    if (is_bomb(obj) && (obj->oarmed || otmp->oarmed))
         return FALSE;
 
     /* don't merge surcharged item with base-cost item */

@@ -948,6 +948,16 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_BLACK_MARKETEER: case PM_MUGGER: case PM_SHADOW: case PM_BABAU:
     case PM_GIANT_CRAB: case PM_RHAUMBUSUN: case PM_STATUE_GARGOYLE:
     case PM_GOBLIN_KING:
+    /* Slash'EM roles and their quests (roles-a) */
+    case PM_LAVA_BLOB: case PM_BLOOD_IMP:
+    case PM_ICE_NYMPH: case PM_MONGBAT:
+    case PM_ICE_ELEMENTAL: case PM_MAGMA_ELEMENTAL: case PM_WATER_HULK:
+    case PM_FIRE_VAMPIRE: case PM_DROID: case PM_STORMTROOPER:
+    case PM_FLAME_MAGE: case PM_ICE_MAGE: case PM_JEDI: case PM_NECROMANCER:
+    case PM_HIGH_FLAME_MAGE: case PM_HIGH_ICE_MAGE: case PM_JEDI_MASTER:
+    case PM_DARK_LORD: case PM_WATER_MAGE: case PM_RAGNAROS:
+    case PM_LORD_SIDIOUS: case PM_MAUGNESHAAGAR: case PM_IGNITER:
+    case PM_FROSTER: case PM_PADAWAN: case PM_JEDI_TRAINER: case PM_EMBALMER:
 #else
     default:
 #endif
@@ -1011,7 +1021,8 @@ minliquid(struct monst *mtmp)
     int res;
 
     /* set up flag for mondead() and xkilled() */
-    iflags.sad_feeling = (mtmp->mtame && !canseemon(mtmp));
+    iflags.sad_feeling = (mtmp->mtame && !mtmp->msummoned
+                          && !canseemon(mtmp));
     res = minliquid_core(mtmp);
     /* always clear the flag */
     iflags.sad_feeling = FALSE;
@@ -1261,6 +1272,22 @@ m_calcdistress(struct monst *mtmp)
     if (ismnum(mtmp->cham))
         decide_to_shapeshift(mtmp);
     were_change(mtmp);
+
+    /* conjured monsters don't last */
+    if (mtmp->msummoned && !--mtmp->msummoned) {
+        if (canseemon(mtmp)) {
+            if (Hallucination)
+                pline("%s %s", Monnam(mtmp),
+                      rn2(2) ? "folds in on itself!"
+                             : "explodes into multicolored polygons!");
+            else
+                pline("%s %s", Monnam(mtmp),
+                      rn2(2) ? "winks out of existence."
+                             : "vanishes in a puff of smoke.");
+        }
+        mongone(mtmp);
+        return;
+    }
 
     /* gradually time out temporary problems */
     if (mtmp->mblinded && !--mtmp->mblinded)
@@ -2523,6 +2550,17 @@ mm_aggression(
     if ((mndx == PM_PURPLE_WORM || mndx == PM_BABY_PURPLE_WORM)
         && mdef->data == &mons[PM_SHRIEKER])
         return ALLOW_M | ALLOW_TM;
+    /* the Empire's stormtroopers and the Jedi are at war, and Lord
+       Sidious fights the Jedi knights (SlashTHEM) */
+    if (mndx == PM_STORMTROOPER
+        && (mdef->data == &mons[PM_PADAWAN] || mdef->data == &mons[PM_JEDI]))
+        return ALLOW_M | ALLOW_TM;
+    if ((mndx == PM_PADAWAN || mndx == PM_JEDI)
+        && mdef->data == &mons[PM_STORMTROOPER])
+        return ALLOW_M | ALLOW_TM;
+    if ((mndx == PM_LORD_SIDIOUS && mdef->data == &mons[PM_JEDI])
+        || (mndx == PM_JEDI && mdef->data == &mons[PM_LORD_SIDIOUS]))
+        return ALLOW_M | ALLOW_TM;
     /* Various other combinations such as dog vs cat, cat vs rat, and
        elf vs orc have been suggested.  For the time being we don't
        support those. */
@@ -3472,7 +3510,8 @@ monkilled(
               *fltxt ? " by the " : "", fltxt);
     else
         /* sad feeling is deferred until after potential life-saving */
-        iflags.sad_feeling = mdef->mtame ? TRUE : FALSE;
+        iflags.sad_feeling = (mdef->mtame && !mdef->msummoned) ? TRUE
+                                                                : FALSE;
 
     /* no corpse if digested or disintegrated or flammable golem burnt up;
        no corpse for a paper golem means no scrolls; golems that rust or

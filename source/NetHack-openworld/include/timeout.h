@@ -43,6 +43,7 @@ enum timeout_types {
     HATCH_EGG,
     FIG_TRANSFORM,
     SHRINK_GLOB,
+    BOMB_BLOW,
     MELT_ICE_AWAY,
 
     NUM_TIME_FUNCS
@@ -56,7 +57,8 @@ enum timeout_types {
                              || (ttype) == BURN_OBJECT   \
                              || (ttype) == HATCH_EGG     \
                              || (ttype) == FIG_TRANSFORM \
-                             || (ttype) == SHRINK_GLOB)
+                             || (ttype) == SHRINK_GLOB   \
+                             || (ttype) == BOMB_BLOW)
 
 /* used in timeout.c */
 typedef struct fe {

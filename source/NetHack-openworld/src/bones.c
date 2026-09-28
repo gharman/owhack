@@ -295,9 +295,18 @@ drop_upon_death(
         if (!mtmp || is_undead(mtmp->data))
             obj_no_longer_held(otmp);
 
-        /* lamps don't go out when dropped */
-        if ((cont || artifact_light(otmp)) && obj_is_burning(otmp))
+        /* lamps don't go out when dropped (lightsabers do) */
+        if ((cont || artifact_light(otmp) || is_lightsaber(otmp))
+            && obj_is_burning(otmp)) {
+            if (is_lightsaber(otmp))
+                otmp->altmode = 0;
             end_burn(otmp, TRUE); /* smother in statue */
+        }
+        /* bombs' fuses don't keep burning into the bones file */
+        if (is_bomb(otmp) && otmp->oarmed) {
+            (void) stop_timer(BOMB_BLOW, obj_to_any(otmp));
+            otmp->oarmed = 0;
+        }
         otmp->owornmask = 0L;
 
         if (otmp->otyp == SLIME_MOLD)

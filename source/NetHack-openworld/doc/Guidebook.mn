@@ -161,11 +161,23 @@ the map.
 \fICavemen\fP and \fICavewomen\fP start with exceptional strength but,
 unfortunately, with neolithic weapons.
 .pg
+\fIFlame Mages\fP are elemental wizards sworn to fire.  They shrug off flames, cast fire
+bolts and fireballs, and can take the form of a red dragon when they are
+experienced enough, but they suffer from the cold.
+.pg
 \fIHealers\fP are wise in medicine and apothecary.  They know the
 herbs and simples that can restore vitality, ease pain, anesthetize,
 and neutralize poisons; and with their instruments, they can divine a
 being's state of health or sickness.  Their medical practice earns them
 quite reasonable amounts of money, with which they enter the dungeon.
+.pg
+\fIIce Mages\fP are the Flame Mages' wintry counterparts: immune to cold, casters of
+freezing spheres and cones of cold, walkers on water in time, and able to
+become white dragons, but they burn easily.
+.pg
+\fIJedi\fP are warriors of the Force armed with a lightsaber, a blade of light
+that must be kept charged.  They fight best in robes, and a skilled Jedi can
+throw a lit lightsaber and call it back to hand.
 .pg
 \fIKnights\fP are distinguished from the common skirmisher by their
 devotion to the ideals of chivalry and by the surpassing excellence of
@@ -174,6 +186,10 @@ their armor.
 \fIMonks\fP are ascetics, who by rigorous practice of physical and mental
 disciplines have become capable of fighting as effectively without weapons
 as with.  They wear no armor but make up for it with increased mobility.
+.pg
+\fINecromancers\fP are masters of the dead.  Undead are often peaceful towards them and
+are the only creatures they can tame; they summon and command the undead,
+drain life, and dig up graves without shame.
 .pg
 \fIPriests\fP and \fIPriestesses\fP are clerics militant, crusaders
 advancing the cause of righteousness with arms, armor, and arts
@@ -1966,6 +1982,10 @@ Precede this command with the \(oq\f(CRm\fP\(cq prefix to show a wish history me
 Show wall modes.
 Autocompletes.
 Debug mode only.
+.lp "#youpoly "
+Polymorph at will: an experienced Flame Mage or Ice Mage takes (or
+leaves) the form of a dragon of their element, at a cost in energy.
+Autocompletes.
 .lp "#zap     "
 Zap a wand.
 Default key is \(oqz\(cq.

@@ -1549,6 +1549,10 @@ attributes_enlightenment(
     if (Cold_resistance)
         you_are("cold resistant", from_what(COLD_RES));
     item_resistance_message(AD_COLD, " protected from cold", final);
+    if (Vulnerable_fire)
+        you_are("vulnerable to fire", from_what(VULN_FIRE));
+    if (Vulnerable_cold)
+        you_are("vulnerable to cold", from_what(VULN_COLD));
     if (Sleep_resistance)
         you_are("sleep resistant", from_what(SLEEP_RES));
     if (Disint_resistance)

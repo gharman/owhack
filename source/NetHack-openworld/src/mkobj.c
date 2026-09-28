@@ -897,6 +897,13 @@ mksobj_init(struct obj **obj, boolean artif)
             blessorcurse(otmp, 10);
         if (is_poisonable(otmp) && !rn2(100))
             otmp->opoisoned = 1;
+        if (is_lightsaber(otmp)) {
+            /* charge of its power cell */
+            otmp->altmode = 0;
+            otmp->lamplit = 0;
+            otmp->age = (long) rn1(500, 1000);
+            blessorcurse(otmp, 2);
+        }
 
         if (artif && !rn2(20 + (10 * nartifact_exist()))) {
             /* mk_artifact() with otmp and A_NONE will never return NULL */
@@ -1015,6 +1022,7 @@ mksobj_init(struct obj **obj, boolean artif)
             blessorcurse(otmp, 5);
             break;
         case MAGIC_LAMP:
+        case MAGIC_CANDLE:
             otmp->spe = 1;
             otmp->lamplit = 0;
             blessorcurse(otmp, 2);

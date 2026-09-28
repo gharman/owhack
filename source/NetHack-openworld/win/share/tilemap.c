@@ -123,7 +123,9 @@ struct tiles_used {
     char tilenam[MAX_TILENAM];
     char references[1024];
 };
-#define MAX_TILELIST 6000 /* room for the variant's extra monsters/objects */
+/* every monster has male, female and statue tiles in each gender, so the
+   variants' additional monsters need more room than vanilla's 2500 */
+#define MAX_TILELIST 6000
 struct tiles_used *tilelist[MAX_TILELIST] = { 0 };
 
 /* Some special tiles used for init of some things */

@@ -231,7 +231,12 @@ forcelock(void)
         return ((gx.xlock.usedtime = 0));
     }
 
-    if (gx.xlock.picktyp) { /* blade */
+    if (gx.xlock.picktyp == 2) { /* lightsaber */
+        if (!uwep->lamplit) {
+            Your("%s is deactivated!", simpleonames(uwep));
+            return ((gx.xlock.usedtime = 0));
+        }
+    } else if (gx.xlock.picktyp) { /* blade */
         /* for a +0 iron weapon, probability that it survives an
          * unsuccessful attempt to force the lock is (.992)^50 = .67;
          * a metal box is more likely to be tougher than the blade, and
@@ -713,9 +718,10 @@ u_have_forceable_weapon(void)
 {
     if (!uwep /* proper type test */
         || ((uwep->oclass == WEAPON_CLASS || is_weptool(uwep))
-            ? (objects[uwep->otyp].oc_skill < P_DAGGER
-               || objects[uwep->otyp].oc_skill == P_FLAIL
-               || objects[uwep->otyp].oc_skill > P_LANCE)
+            ? ((objects[uwep->otyp].oc_skill < P_DAGGER
+                || objects[uwep->otyp].oc_skill == P_FLAIL
+                || objects[uwep->otyp].oc_skill > P_LANCE)
+               && !is_lightsaber(uwep))
             : uwep->oclass != ROCK_CLASS))
         return FALSE;
     return TRUE;
@@ -755,8 +761,13 @@ doforce(void)
         cant_reach_floor(u.ux, u.uy, FALSE, TRUE, FALSE);
         return ECMD_OK;
     }
+    if (is_lightsaber(uwep) && !uwep->lamplit) {
+        Your("%s is deactivated!", simpleonames(uwep));
+        return ECMD_OK;
+    }
 
-    picktyp = is_blade(uwep) && !is_pick(uwep);
+    /* 2: lightsaber melts the lock; 1: blade pries; 0: blunt bashes */
+    picktyp = is_lightsaber(uwep) ? 2 : (is_blade(uwep) && !is_pick(uwep));
     if (gx.xlock.usedtime && gx.xlock.box && picktyp == gx.xlock.picktyp) {
         You("resume your attempt to force the lock.");
         set_occupation(forcelock, "forcing the lock", 0);
@@ -788,22 +799,49 @@ doforce(void)
             if (c == 'n')
                 continue;
 
-            if (picktyp)
+            if (picktyp == 2)
+                You("begin melting it with %s.", yname(uwep));
+            else if (picktyp)
                 You("force %s into a crack and pry.", yname(uwep));
             else
                 You("start bashing it with %s.", yname(uwep));
             gx.xlock.box = otmp;
-            gx.xlock.chance = objects[uwep->otyp].oc_wldam * 2;
+            gx.xlock.chance = (picktyp == 2) ? uwep->spe * 2 + 75
+                              : objects[uwep->otyp].oc_wldam * 2;
             gx.xlock.picktyp = picktyp;
             gx.xlock.magic_key = FALSE;
             gx.xlock.usedtime = 0;
             break;
         }
 
-    if (gx.xlock.box)
+    if (gx.xlock.box) {
         set_occupation(forcelock, "forcing the lock", 0);
-    else
+    } else if (picktyp == 2) {
+        /* a lit lightsaber cuts through doors (and trees) */
+        struct monst *mtmp;
+
+        if (!getdir((char *) 0))
+            return ECMD_CANCEL;
+        if (u.dz) {
+            You_cant("cut that way.");
+            return ECMD_OK;
+        }
+        if ((mtmp = m_at(u.ux + u.dx, u.uy + u.dy)) != 0 && canseemon(mtmp)
+            && M_AP_TYPE(mtmp) != M_AP_FURNITURE
+            && M_AP_TYPE(mtmp) != M_AP_OBJECT) {
+            if (mtmp->isshk || mtmp->data == &mons[PM_ORACLE])
+                verbalize(Role_if(PM_JEDI)
+                          ? "Your puny Jedi tricks won't work on me!"
+                          : "What do you think you are, a Jedi?");
+            else
+                pline("I don't think %s would appreciate that.",
+                      mon_nam(mtmp));
+            return ECMD_OK;
+        }
+        return use_pick_axe2(uwep);
+    } else {
         You("decide not to force the issue.");
+    }
     return ECMD_TIME;
 }
 
@@ -1170,6 +1208,7 @@ doorlock(struct obj *otmp, coordxy x, coordxy y)
         case SPE_KNOCK:
         case WAN_STRIKING:
         case SPE_FORCE_BOLT:
+        case SPE_FIRE_BOLT:
             door->typ = DOOR;
             door->doormask = D_CLOSED | (door->doormask & D_TRAPPED);
             newsym(x, y);
@@ -1254,6 +1293,7 @@ doorlock(struct obj *otmp, coordxy x, coordxy y)
         break;
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
+    case SPE_FIRE_BOLT:
         if (door->doormask & (D_LOCKED | D_CLOSED)) {
             /* sawit: closed door location is more visible than open */
             boolean sawit, seeit;

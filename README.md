@@ -124,6 +124,43 @@ down the stairs).
 
 ## New roles
 
+Besides NetHack's thirteen roles, four roles from Slash'EM (in the form
+Hack'EM gives them; the Jedi comes from SlashTHEM) can be chosen, each with
+its own quest (entered, like every quest here, through the portals on its
+ring), quest artifact, sacrifice gift and pet.
+
+* **Necromancer** (chaotic).  A caster of the dark arts who starts with
+  the spells of summon undead, command undead and drain life, wands of
+  draining and fear, and a pick-axe for digging up graves.  Undead are
+  sometimes peaceful to a necromancer and are the only creatures one can
+  tame; zombies can be charmed with an ancient chant (#chat).
+  Necromancers see whether things are blessed or cursed, resist level
+  drain and sickness, and are warned of undead.  The quest: recover the
+  Great Dagger of Glaurgnaa from the demon Maugneshaagar for the Dark Lord.
+  Gift: Serpent's Tongue, a poisonous dagger.
+* **Flame Mage** (lawful or neutral).  A master of fire: fire resistant
+  (which also protects the flame mage's belongings), casts fire bolt,
+  fireball and flame sphere more easily, carries a wand of fire and a fire
+  bomb; from experience level 5 on vulnerable to cold, and unable to learn
+  cold spells.  The quest: retrieve the Candle of Eternal Flame from the
+  Water Mage for the High Flame Mage.  Gift: Firewall, a burning staff.
+* **Ice Mage** (neutral or chaotic).  The cold counterpart: cold resistant,
+  casts freeze sphere and cone of cold, reads scrolls of ice, walks on
+  water from level 15 on and never slips on ice; vulnerable to fire from
+  level 5.  The quest: take the Storm Whistle back from Ragnaros, lord of
+  fire elementals, for the High Ice Mage.  Gift: Deep Freeze, an icy staff.
+* **Jedi** (lawful).  A warrior of the Force armed with a lightsaber,
+  which has to be applied to switch it on, lights the area, uses up its
+  charge while lit (a scroll of charging refills it, and from experience
+  level 5 so does the charge saber technique, which pours the Jedi's
+  energy into it) and only cuts when lit; it can melt locks and cut
+  through doors (#force).  A skilled Jedi deflects missiles, cuts foes'
+  weapons in half and can throw the lit lightsaber and call it back with
+  the Force.  Jedi fight in robes, not armor, and must not attack the
+  peaceful.  The quest: find the Lightsaber Prototype in the Outer Rim
+  before Lord Sidious does.
+  Gift: the cloak Deluder.
+
 ### The Cartographer
 
 A mapmaker and explorer, made for a world of compass, rings and portals

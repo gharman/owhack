@@ -106,6 +106,8 @@ staticfn int tech_haunt(void);
 staticfn int tech_slipfree(void);
 staticfn int tech_mindblast(int);
 staticfn int tech_holdbreath(int);
+staticfn int tech_chargesaber(void);
+staticfn int charge_saber_occ(void);
 staticfn boolean tele_trap_handle(struct trap *);
 staticfn boolean waymark_spot_ok(coordxy, coordxy);
 staticfn boolean waymark_teleport(void);
@@ -171,6 +173,7 @@ static const char *const tech_names[NUM_TECHS] = {
     "slip free",
     "mind blast",
     "hold breath",
+    "charge saber",
 };
 
 /*
@@ -211,6 +214,7 @@ static const struct innate_tech
                    { 5, T_DRAW_ENERGY, 1 },
                    { 0, 0, 0 } },
     jed_tech[] = { { 1, T_JEDI_JUMP, 1 },
+                   { 5, T_CHARGE_SABER, 1 },
                    { 8, T_TELEKINESIS, 1 },
                    { 14, T_FORCE_PUSH, 1 },
                    { 0, 0, 0 } },
@@ -1351,6 +1355,11 @@ techeffects(int tech_no)
         if (res)
             t_timeout = rn1(500, 500);
         break;
+    case T_CHARGE_SABER:
+        res = tech_chargesaber();
+        if (res)
+            t_timeout = rn1(500, 1000);
+        break;
     default:
         impossible("No such technique effect (%d)", tid);
         return 0;
@@ -1478,6 +1487,8 @@ tech_occupation(void)
         return draw_energy_occ();
     case T_BREAK_ROCK:
         return ma_break_occ();
+    case T_CHARGE_SABER:
+        return charge_saber_occ();
     default:
         return 0;
     }
@@ -3420,6 +3431,64 @@ tech_drawenergy(void)
     tech_occ_id = T_DRAW_ENERGY;
     set_occupation(tech_occupation, "drawing energy", 0);
     return 1;
+}
+
+/* charge saber (Jedi; Slash'EM, SlashTHEM, Hack'EM): ten turns of
+   concentration pour all of the hero's energy into the wielded lightsaber
+   (see charge_saber_occ()) */
+staticfn int
+tech_chargesaber(void)
+{
+    if (!uwep || !is_lightsaber(uwep)) {
+        You("are not holding a lightsaber!");
+        return 0;
+    }
+    if (is_art(uwep, ART_LIGHTSABER_PROTOTYPE)) {
+        pline("%s power cell never needs charging.",
+              s_suffix(The(xname(uwep))));
+        return 0;
+    }
+    if (u.uen < 5) {
+        You("lack the concentration to charge %s.  "
+            "You need at least 5 points of energy!", the(xname(uwep)));
+        return 0;
+    }
+    You("start charging %s.", the(xname(uwep)));
+    tech_delay = -10;
+    tech_occ_id = T_CHARGE_SABER;
+    set_occupation(tech_occupation, "charging", 0);
+    return 1;
+}
+
+/* the end of charge saber: the charge depends on the energy spent and the
+   technique level; an experienced Jedi sometimes gets a big bonus */
+staticfn int
+charge_saber_occ(void)
+{
+    int tlevel = tech_level(T_CHARGE_SABER);
+    long amount;
+
+    if (tech_delay) {
+        tech_delay++;
+        return 1; /* still busy */
+    }
+    if (!uwep || !is_lightsaber(uwep)
+        || is_art(uwep, ART_LIGHTSABER_PROTOTYPE)) {
+        /* disarmed meanwhile */
+        You("have nothing to channel the Force into.");
+        return 0;
+    }
+    amount = (long) u.uen * (long) ((tlevel / rnd(10)) + 51);
+    if (tlevel >= 10 && !rn2(5)) {
+        You("manage to channel the Force perfectly!");
+        amount += 1500L; /* jackpot */
+    } else {
+        You("channel the Force into %s.", the(xname(uwep)));
+    }
+    (void) charge_lightsaber(uwep, amount, 0L);
+    u.uen = 0;
+    disp.botl = TRUE;
+    return 0;
 }
 
 staticfn int

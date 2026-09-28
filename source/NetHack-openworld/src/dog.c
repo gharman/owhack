@@ -214,6 +214,37 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
     return mtmp;
 }
 
+/* conjure a (tame) monster near <x,y> that vanishes again after
+   'lifetime' turns (flame and freeze spheres, ...); it comes without
+   inventory and doesn't count as born */
+struct monst *
+make_msummoned(
+    struct permonst *pm,
+    coordxy x, coordxy y,
+    boolean tame,
+    int lifetime)
+{
+    struct monst *mtmp;
+    coord cc;
+
+    if (!enexto(&cc, x, y, pm))
+        return (struct monst *) 0;
+    mtmp = makemon(pm, cc.x, cc.y,
+                   (tame ? MM_EDOG : NO_MM_FLAGS) | NO_MINVENT
+                       | MM_NOCOUNTBIRTH | MM_NOMSG | MM_NOGRP);
+    if (!mtmp)
+        return (struct monst *) 0; /* genocided or no room */
+    if (tame)
+        initedog(mtmp, TRUE);
+    mtmp->msleeping = 0;
+    mtmp->msummoned = (short) max(lifetime, 2);
+    set_malign(mtmp);
+    newsym(mtmp->mx, mtmp->my);
+    if (canseemon(mtmp))
+        pline("%s appears!", Amonnam(mtmp));
+    return mtmp;
+}
+
 /* despite rather general name, used exclusively for hero's starting pet */
 struct monst *
 makedog(void)
@@ -689,8 +720,9 @@ mon_catchup_elapsed_time(
     else
         mtmp->mspec_used -= imv;
 
-    /* reduce tameness for every 150 moves you are separated */
-    if (mtmp->mtame) {
+    /* reduce tameness for every 150 moves you are separated; the Jedi's
+       droid never forgets its master */
+    if (mtmp->mtame && mtmp->data != &mons[PM_DROID]) {
         int wilder = (imv + 75) / 150;
         if (mtmp->mtame > wilder)
             mtmp->mtame -= wilder; /* less tame */
@@ -1201,6 +1233,14 @@ tamedog(
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj
         && mtmp->data->mlet == S_DOG)
         return FALSE;
+
+    /* necromancers can only tame the undead (Hack'EM) */
+    if (Role_if(PM_NECROMANCER) && !is_undead(mtmp->data)
+        && !mtmp->mtame) {
+        if (givemsg && canspotmon(mtmp))
+            pline_mon(mtmp, "%s still looks wary of you.", Monnam(mtmp));
+        return FALSE;
+    }
 
     /* If we cannot tame it, at least it's no longer afraid. */
     mtmp->mflee = 0;

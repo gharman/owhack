@@ -36,13 +36,14 @@ staticfn void add_skills_to_menu(winid, boolean, boolean);
 #define PN_CLERIC_SPELL (-12)
 #define PN_ESCAPE_SPELL (-13)
 #define PN_MATTER_SPELL (-14)
+#define PN_LIGHTSABER (-15)
 
 static NEARDATA const short skill_names_indices[P_NUM_SKILLS] = {
     /* Weapon */
     0, DAGGER, KNIFE, AXE, PICK_AXE, SHORT_SWORD, BROADSWORD, LONG_SWORD,
     TWO_HANDED_SWORD, PN_SABER, CLUB, MACE, MORNING_STAR, FLAIL, PN_HAMMER,
-    QUARTERSTAFF, PN_POLEARMS, SPEAR, TRIDENT, LANCE, BOW, SLING, CROSSBOW,
-    DART, SHURIKEN, BOOMERANG, PN_WHIP, UNICORN_HORN,
+    QUARTERSTAFF, PN_POLEARMS, SPEAR, TRIDENT, LANCE, PN_LIGHTSABER, BOW, SLING,
+    CROSSBOW, DART, SHURIKEN, BOOMERANG, PN_WHIP, UNICORN_HORN,
     /* Spell */
     PN_ATTACK_SPELL, PN_HEALING_SPELL, PN_DIVINATION_SPELL,
     PN_ENCHANTMENT_SPELL, PN_CLERIC_SPELL, PN_ESCAPE_SPELL, PN_MATTER_SPELL,
@@ -56,6 +57,7 @@ static NEARDATA const char *const odd_skill_names[] = {
     "two weapon combat", "riding", "polearms", "saber", "hammer", "whip",
     "attack spells", "healing spells", "divination spells",
     "enchantment spells", "clerical spells", "escape spells", "matter spells",
+    "lightsaber",
 };
 /* indexed via is_martial() */
 static NEARDATA const char *const barehands_or_martial[] = {
@@ -273,6 +275,9 @@ dmgval(struct obj *otmp, struct monst *mon)
 
     if (otyp == CREAM_PIE)
         return 0;
+    /* a lightsaber that isn't lit is just a metal tube */
+    if (is_lightsaber(otmp) && !otmp->lamplit)
+        return (ptr == &mons[PM_SHADE]) ? 0 : rnd(2);
 
     if (bigmonst(ptr)) {
         if (objects[otyp].oc_wldam)
@@ -311,6 +316,23 @@ dmgval(struct obj *otmp, struct monst *mon)
         case TWO_HANDED_SWORD:
             tmp += d(2, 6);
             break;
+
+        case GREEN_LIGHTSABER:
+            tmp += 13;
+            break;
+        case BLUE_LIGHTSABER:
+            tmp += 12;
+            break;
+        case RED_DOUBLE_LIGHTSABER:
+            if (otmp->altmode) {
+                tmp += rnd(11) + 10;
+                break;
+            }
+            FALLTHROUGH;
+            /*FALLTHRU*/
+        case RED_LIGHTSABER:
+            tmp += 10;
+            break;
         }
     } else {
         if (objects[otyp].oc_wsdam)
@@ -343,6 +365,23 @@ dmgval(struct obj *otmp, struct monst *mon)
 
         case ACID_VENOM:
             tmp += rnd(6);
+            break;
+
+        case GREEN_LIGHTSABER:
+            tmp += 9;
+            break;
+        case BLUE_LIGHTSABER:
+            tmp += 8;
+            break;
+        case RED_DOUBLE_LIGHTSABER:
+            if (otmp->altmode) {
+                tmp += rnd(9) + 6;
+                break;
+            }
+            FALLTHROUGH;
+            /*FALLTHRU*/
+        case RED_LIGHTSABER:
+            tmp += 6;
             break;
         }
     }
@@ -638,13 +677,18 @@ oselect(struct monst *mtmp, int type)
         if (!can_touch_safely(mtmp, otmp))
             continue;
 
+        /* a lightsaber without charge is useless */
+        if (is_lightsaber(otmp) && !otmp->age
+            && !is_art(otmp, ART_LIGHTSABER_PROTOTYPE))
+            continue;
+
         return otmp;
     }
     return (struct obj *) 0;
 }
 
 static NEARDATA const int rwep[] = {
-    DWARVISH_SPEAR, SILVER_SPEAR, ELVEN_SPEAR, SPEAR, ORCISH_SPEAR, JAVELIN,
+    FIRE_BOMB, DWARVISH_SPEAR, SILVER_SPEAR, ELVEN_SPEAR, SPEAR, ORCISH_SPEAR, JAVELIN,
     SHURIKEN, YA, SILVER_ARROW, ELVEN_ARROW, ARROW, ORCISH_ARROW,
     CROSSBOW_BOLT, SILVER_DAGGER, ELVEN_DAGGER, DAGGER, ORCISH_DAGGER, KNIFE,
     FLINT, ROCK, LOADSTONE, LUCKSTONE, DART, CREAM_PIE,
@@ -834,6 +878,7 @@ monmightthrowwep(struct obj *obj)
 /* Weapons in order of preference */
 static const NEARDATA short hwep[] = {
     CORPSE, /* cockatrice corpse */
+    RED_DOUBLE_LIGHTSABER, RED_LIGHTSABER, BLUE_LIGHTSABER, GREEN_LIGHTSABER,
     TSURUGI, RUNESWORD, DWARVISH_MATTOCK, TWO_HANDED_SWORD, BATTLE_AXE,
     KATANA, UNICORN_HORN, CRYSKNIFE, TRIDENT, LONG_SWORD, ELVEN_BROADSWORD,
     BROADSWORD, SCIMITAR, SILVER_SABER, MORNING_STAR, ELVEN_SHORT_SWORD,
@@ -992,6 +1037,8 @@ mon_wield_item(struct monst *mon)
 
         if (mw_tmp && mw_tmp->otyp == obj->otyp) {
             /* already wielding it */
+            if (is_lightsaber(mw_tmp))
+                mon_ignite_lightsaber(mw_tmp, mon);
             mon->weapon_check = NEED_WEAPON;
             return 0;
         }
@@ -1069,10 +1116,43 @@ mon_wield_item(struct monst *mon)
                       (mdistu(mon) <= 5 * 5) ? "nearby" : "in the distance");
         }
         obj->owornmask = W_WEP;
+        if (is_lightsaber(obj))
+            mon_ignite_lightsaber(obj, mon);
         return 1;
     }
     mon->weapon_check = NEED_WEAPON;
     return 0;
+}
+
+/* a monster wielding a lightsaber turns it on (and uses both blades of a
+   double lightsaber) */
+void
+mon_ignite_lightsaber(struct obj *obj, struct monst *mon)
+{
+    if (!obj || !is_lightsaber(obj))
+        return;
+    /* (the prototype's power cell never runs down) */
+    if (!obj->age && !is_art(obj, ART_LIGHTSABER_PROTOTYPE))
+        return;
+    if (!obj->lamplit) {
+        if (obj->cursed && !rn2(2)) {
+            if (canseemon(mon))
+                pline("%s %s flickers and goes out.", s_suffix(Monnam(mon)),
+                      xname(obj));
+        } else {
+            if (canseemon(mon)) {
+                makeknown(obj->otyp);
+                pline("%s ignites %s.", Monnam(mon), an(xname(obj)));
+            }
+            begin_burn(obj, FALSE);
+        }
+    } else if (obj->otyp == RED_DOUBLE_LIGHTSABER && !obj->altmode
+               && (!obj->cursed || rn2(4))) {
+        if (canseemon(mon))
+            pline("%s ignites the second blade of %s.", Monnam(mon),
+                  an(xname(obj)));
+        obj->altmode = TRUE;
+    }
 }
 
 /* force monster to stop wielding current weapon, if any */
@@ -1829,6 +1909,10 @@ weapon_hit_bonus(struct obj *weapon)
             bonus -= 2;
     }
 
+    /* Jedi are trained with lightsabers: no to-hit penalty for them */
+    if (weapon && is_lightsaber(weapon) && Role_if(PM_JEDI))
+        bonus -= objects[weapon->otyp].oc_hitbon;
+
     return bonus;
 }
 
@@ -1922,6 +2006,23 @@ weapon_dam_bonus(struct obj *weapon)
         }
     }
 
+    /* Jedi are simply better with lightsabers */
+    if (weapon && is_lightsaber(weapon) && Role_if(PM_JEDI)) {
+        switch (P_SKILL(P_LIGHTSABER)) {
+        case P_EXPERT:
+            bonus += 4;
+            break;
+        case P_SKILLED:
+            bonus += 2;
+            break;
+        case P_BASIC:
+            bonus += 1;
+            break;
+        default:
+            break;
+        }
+    }
+
     return bonus;
 }
 
@@ -1967,6 +2068,10 @@ skill_init(const struct def_skill *class_skill)
         P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;
     } else if (Role_if(PM_CARTOGRAPHER)) {
         P_SKILL(P_DIVINATION_SPELL) = P_BASIC;
+    } else if (Role_if(PM_FLAME_MAGE) || Role_if(PM_ICE_MAGE)) {
+        P_SKILL(P_MATTER_SPELL) = P_BASIC;
+    } else if (Role_if(PM_NECROMANCER)) {
+        P_SKILL(P_ATTACK_SPELL) = P_BASIC; /* their necromancy */
     }
 
     /* walk through array to set skill maximums */
@@ -2021,6 +2126,8 @@ setmnotwielded(struct monst *mon, struct obj *obj)
                   s_suffix(mon_nam(mon)), mbodypart(mon, HAND),
                   otense(obj, "stop"));
     }
+    if (is_lightsaber(obj) && obj->lamplit)
+        lightsaber_deactivate(obj, TRUE);
     if (MON_WEP(mon) == obj)
         MON_NOWEP(mon);
     obj->owornmask &= ~W_WEP;
