@@ -27,6 +27,7 @@
 staticfn const struct innate_tech *role_tech(void);
 staticfn const struct innate_tech *race_tech(void);
 staticfn int get_tech_no(int);
+staticfn boolean techs_unlettered(void);
 staticfn boolean gettech(int *);
 staticfn boolean dotechmenu(int, int *);
 staticfn const char *tech_status(int);
@@ -106,6 +107,7 @@ staticfn int tech_slipfree(void);
 staticfn int tech_mindblast(int);
 staticfn int tech_holdbreath(int);
 staticfn boolean tele_trap_handle(struct trap *);
+staticfn boolean waymark_spot_ok(coordxy, coordxy);
 staticfn boolean waymark_teleport(void);
 staticfn boolean find_way_out(coordxy *, coordxy *, const char **);
 
@@ -615,16 +617,11 @@ tech_skill_advanced(int skill)
 void
 tech_skills_lost(void)
 {
-    int i, skill;
+    int skill;
 
     if (!tech_known(T_DISARM)
         || !(u.tech_list[get_tech_no(T_DISARM)].t_intrinsic & FROMOUTSIDE))
         return;
-    for (i = u.skills_advanced - 1; i >= 0; i--) {
-        skill = u.skill_record[i];
-        if (disarm_skill(skill) && P_SKILL(skill) >= P_SKILLED)
-            return;
-    }
     for (skill = P_FIRST_WEAPON; skill <= P_LAST_WEAPON; skill++)
         if (disarm_skill(skill) && P_SKILL(skill) >= P_SKILLED)
             return;
@@ -649,8 +646,23 @@ tech_status(int i)
                  : "Soon";
 }
 
-/* menu letter of technique slot i (letters are assigned in slot order) */
-#define techlet(i) ((char) (((i) < 26) ? ('a' + (i)) : ('A' + (i) - 26)))
+/* menu letter of technique slot i (letters are assigned in slot order);
+   only the first 52 slots have one (only wizard mode can know more
+   techniques than that) */
+#define techlet(i) \
+    ((char) (((i) < 26) ? ('a' + (i)) : ((i) < 52) ? ('A' + (i) - 26) : 0))
+
+/* are technique slots beyond the lettered ones in use? */
+staticfn boolean
+techs_unlettered(void)
+{
+    int i;
+
+    for (i = 52; i < MAXTECH; i++)
+        if (techid(i) != NO_TECH)
+            return TRUE;
+    return FALSE;
+}
 
 /*
  * Choose a technique: TRUE with the slot in *tech_no if one was picked.
@@ -685,16 +697,12 @@ gettech(int *tech_no)
         return TRUE;
     }
 
-    if (flags.menu_style == MENU_TRADITIONAL) {
-        /* letters follow slots, and slots are filled from the start */
-        if (ntechs == 1)
-            Strcpy(lets, "a");
-        else if (ntechs < 27)
-            Sprintf(lets, "a-%c", 'a' + ntechs - 1);
-        else if (ntechs == 27)
-            Strcpy(lets, "a-zA");
-        else
-            Sprintf(lets, "a-zA-%c", 'A' + ntechs - 27);
+    if (flags.menu_style == MENU_TRADITIONAL && !techs_unlettered()) {
+        /* letters follow the slots, which can have gaps */
+        for (idx = 0, i = 0; i < MAXTECH && i < 52; i++)
+            if (techid(i) != NO_TECH)
+                lets[idx++] = techlet(i);
+        lets[idx] = '\0';
 
         Sprintf(qbuf, "Perform which technique? [%s *?]", lets);
         for (retry_limit = 0;; ++retry_limit) {
@@ -732,7 +740,8 @@ dotechmenu(int how, int *tech_no)
     const char *prefix;
     menu_item *selected;
     anything any;
-    boolean dumping = (tech_no == (int *) 0);
+    boolean dumping = (tech_no == (int *) 0),
+            autolet = techs_unlettered(); /* let the menu pick letters */
 
     tmpwin = create_nhwindow(NHW_MENU);
     start_menu(tmpwin, MENU_BEHAVE_STANDARD);
@@ -782,7 +791,8 @@ dotechmenu(int how, int *tech_no)
                     (u.tech_list[i].t_intrinsic & FROMOUTSIDE) ? 'O' : '-',
                     techtout(i));
         add_menu(tmpwin, &nul_glyphinfo, &any,
-                 any.a_int ? techlet(i) : 0, 0, ATR_NONE, NO_COLOR, buf,
+                 (any.a_int && !autolet) ? techlet(i) : 0, 0, ATR_NONE,
+                 NO_COLOR, buf,
                  MENU_ITEMFLAGS_NONE);
     }
     if (!techs_useable)
@@ -813,7 +823,8 @@ dotech(void)
 
     if (!gettech(&tech_no))
         return ECMD_OK;
-    cmdq_add_key(CQ_REPEAT, techlet(tech_no));
+    if (techlet(tech_no) && !techs_unlettered())
+        cmdq_add_key(CQ_REPEAT, techlet(tech_no));
     res = techeffects(tech_no);
     return res ? ECMD_TIME : ECMD_OK;
 }
@@ -2507,6 +2518,9 @@ blitz_dash(void)
     } else if (u.ustuck) {
         You("cannot dash while you are held.");
         return 0;
+    } else if (u.usteed) {
+        You("cannot dash while riding.");
+        return 0;
     }
     if (Stunned || Confusion || Fumbling)
         confdir(TRUE);
@@ -3046,6 +3060,11 @@ tech_liquidleap(int tech_no)
     }
     if (u.uswallow) {
         You("slosh around a little.");
+        return 0;
+    }
+    if (u.usteed) {
+        You_cant("flow away from %s while you are riding.",
+                 mon_nam(u.usteed));
         return 0;
     }
     pline("Where do you want to leap to?");
@@ -4418,6 +4437,29 @@ tech_triangulate(void)
     return 1;
 }
 
+/* can the hero land at <x,y> when returning to the waymark? */
+staticfn boolean
+waymark_spot_ok(coordxy x, coordxy y)
+{
+    struct trap *t;
+
+    if (!isok(x, y) || u_at(x, y))
+        return FALSE;
+    if (!In_overworld)
+        return teleok(x, y, FALSE);
+    /* the open world: the mark can be far away, beyond the reach of an
+       ordinary teleport, but not on the far side of the Gehennom barrier
+       until the hero has been there */
+    if (!ow_generated(x, y)
+        || (ow_past_barrier(u.ux, u.uy) != ow_past_barrier(x, y)
+            && !u.uevent.gehennom_entered))
+        return FALSE;
+    if ((t = t_at(x, y)) != 0 && t->ttyp != VIBRATING_SQUARE
+        && !((is_pit(t->ttyp) || is_hole(t->ttyp)) && (Levitation || Flying)))
+        return FALSE;
+    return (boolean) (goodpos(x, y, &gy.youmonst, 0) && in_out_region(x, y));
+}
+
 /* Cartographer: teleport to the waymark; TRUE if it happened */
 staticfn boolean
 waymark_teleport(void)
@@ -4442,12 +4484,27 @@ waymark_teleport(void)
         ow_ensure_generated(x, y); /* the mark may be far away */
     if (!isok(x, y))
         return FALSE;
-    cc.x = x, cc.y = y;
-    if (!goodpos(x, y, &gy.youmonst, 0) || (t_at(x, y) && !u_at(x, y))) {
-        if (!enexto(&cc, x, y, gy.youmonst.data)) {
-            You_feel("disoriented for a moment.");
-            return FALSE;
-        }
+    /* land on the mark, or as close to it as is safe */
+    cc.x = cc.y = 0;
+    if (waymark_spot_ok(x, y)) {
+        cc.x = x, cc.y = y;
+    } else {
+        int r, dx, dy;
+
+        for (r = 1; r <= 4 && !cc.x; r++)
+            for (dx = -r; dx <= r && !cc.x; dx++)
+                for (dy = -r; dy <= r; dy++) {
+                    if (max(abs(dx), abs(dy)) != r)
+                        continue;
+                    if (waymark_spot_ok(x + dx, y + dy)) {
+                        cc.x = x + dx, cc.y = y + dy;
+                        break;
+                    }
+                }
+    }
+    if (!cc.x) {
+        You_feel("disoriented for a moment.");
+        return FALSE;
     }
     You("step back along your own trail...");
     teleds(cc.x, cc.y, TELEDS_TELEPORT);
