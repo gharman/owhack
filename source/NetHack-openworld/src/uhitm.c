@@ -5925,6 +5925,23 @@ passive(
     int mhit = mhitb ? M_ATTK_HIT : M_ATTK_MISS;
     int malive = maliveb ? M_ATTK_HIT : M_ATTK_MISS;
 
+    /* the Candle of Eternal Flame guards its bearer with magical fire */
+    if (mhitb && m_carrying_arti(mon, ART_CANDLE_OF_ETERNAL_FLAME)
+        && monnear(mon, u.ux, u.uy)) {
+        tmp = d(2, 10);
+        pline("Magical fire suddenly surrounds you!");
+        if (Fire_resistance) {
+            shieldeff(u.ux, u.uy);
+            pline_The("fire doesn't feel hot.");
+            ugolemeffects(AD_FIRE, tmp);
+        } else {
+            mdamageu(mon, elem_vulnerable_dmg(AD_FIRE, tmp));
+        }
+        (void) destroy_items(&gy.youmonst, AD_FIRE, tmp);
+        if (u.uhp < 1 || (Upolyd && u.mh < 1))
+            return (malive | mhit);
+    }
+
     for (i = 0;; i++) {
         if (i >= NATTK)
             return (malive | mhit); /* no passive attacks */

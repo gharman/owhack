@@ -960,7 +960,8 @@ minliquid(struct monst *mtmp)
     int res;
 
     /* set up flag for mondead() and xkilled() */
-    iflags.sad_feeling = (mtmp->mtame && !canseemon(mtmp));
+    iflags.sad_feeling = (mtmp->mtame && !mtmp->msummoned
+                          && !canseemon(mtmp));
     res = minliquid_core(mtmp);
     /* always clear the flag */
     iflags.sad_feeling = FALSE;
@@ -1210,6 +1211,22 @@ m_calcdistress(struct monst *mtmp)
     if (ismnum(mtmp->cham))
         decide_to_shapeshift(mtmp);
     were_change(mtmp);
+
+    /* conjured monsters don't last */
+    if (mtmp->msummoned && !--mtmp->msummoned) {
+        if (canseemon(mtmp)) {
+            if (Hallucination)
+                pline("%s %s", Monnam(mtmp),
+                      rn2(2) ? "folds in on itself!"
+                             : "explodes into multicolored polygons!");
+            else
+                pline("%s %s", Monnam(mtmp),
+                      rn2(2) ? "winks out of existence."
+                             : "vanishes in a puff of smoke.");
+        }
+        mongone(mtmp);
+        return;
+    }
 
     /* gradually time out temporary problems */
     if (mtmp->mblinded && !--mtmp->mblinded)
@@ -3415,7 +3432,8 @@ monkilled(
               *fltxt ? " by the " : "", fltxt);
     else
         /* sad feeling is deferred until after potential life-saving */
-        iflags.sad_feeling = mdef->mtame ? TRUE : FALSE;
+        iflags.sad_feeling = (mdef->mtame && !mdef->msummoned) ? TRUE
+                                                                : FALSE;
 
     /* no corpse if digested or disintegrated or flammable golem burnt up;
        no corpse for a paper golem means no scrolls; golems that rust or

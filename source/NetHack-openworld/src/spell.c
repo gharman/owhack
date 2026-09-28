@@ -46,6 +46,8 @@ staticfn char *spellretention(int, char *);
 staticfn int throwspell(void);
 staticfn void cast_protection(void);
 staticfn void cast_chain_lightning(void);
+staticfn void cast_summon_undead(struct obj *);
+staticfn void cast_command_undead(struct obj *);
 staticfn void spell_backfire(int);
 staticfn boolean spelleffects_check(int, int *, int *);
 staticfn const char *spelltypemnemonic(int);
@@ -505,6 +507,21 @@ study_book(struct obj *spellbook)
         /* KMH -- Simplified this code */
         if (booktype == SPE_BLANK_PAPER) {
             pline("This spellbook is all blank.");
+            makeknown(booktype);
+            return 1;
+        }
+
+        /* elemental mages are not receptive to the opposite element's
+           teachings; the book gets identified as compensation */
+        if ((Role_if(PM_FLAME_MAGE)
+             && (booktype == SPE_CONE_OF_COLD
+                 || booktype == SPE_FREEZE_SPHERE))
+            || (Role_if(PM_ICE_MAGE)
+                && (booktype == SPE_FIREBALL
+                    || booktype == SPE_FLAME_SPHERE
+                    || booktype == SPE_FIRE_BOLT))) {
+            pline("This spellbook is tainted by %s magic!",
+                  Role_if(PM_FLAME_MAGE) ? "cold" : "fire");
             makeknown(booktype);
             return 1;
         }
@@ -1100,6 +1117,141 @@ cast_chain_lightning(void)
 }
 
 
+/* Slash'EM: conjure tame elemental spheres (which explode when they
+   attack); they vanish again after a while; also used by the invoked
+   powers of Firewall and Deep Freeze */
+void
+cast_sphere(short otyp)
+{
+    struct monst *mtmp;
+    struct permonst *pm = &mons[(otyp == SPE_FLAME_SPHERE)
+                                ? PM_FLAMING_SPHERE : PM_FREEZING_SPHERE];
+    int role_skill = P_SKILL(P_MATTER_SPELL), n, cnt;
+
+    You("conjure elemental energy...");
+    cnt = max(role_skill - 1, 1);
+    for (n = 0; n < cnt; n++) {
+        mtmp = make_msummoned(pm, u.ux, u.uy, TRUE,
+                              (role_skill >= P_SKILLED) ? rnd(100) + 100
+                                                        : rnd(50) + 50);
+        if (!mtmp) {
+            pline("But it quickly fades away.");
+            break;
+        }
+        mtmp->mhpmax = mtmp->mhp = 1;
+    }
+}
+
+/* the Necromancer's summon undead (Slash'EM): undead rise around the
+   caster; a necromancer tries to dominate them, anyone else had better
+   know command undead */
+staticfn void
+cast_summon_undead(struct obj *pseudo)
+{
+    int cnt = 1, sp_no;
+    struct permonst *pm;
+    struct monst *mtmp;
+
+    if (!rn2(73) && !pseudo->blessed)
+        cnt += rnd(4);
+    if (Confusion || pseudo->cursed)
+        cnt += 12;
+    while (cnt--) {
+        switch (rnd(10)) {
+        case 1:
+            pm = mkclass(S_VAMPIRE, 0);
+            break;
+        case 2: case 3: case 4: case 5:
+        default:
+            pm = mkclass(S_ZOMBIE, 0);
+            break;
+        case 6: case 7: case 8:
+            pm = mkclass(S_MUMMY, 0);
+            break;
+        case 9:
+            pm = &mons[PM_GHOST];
+            break;
+        case 10:
+            pm = mkclass(S_WRAITH, 0);
+            break;
+        }
+        if (!pm)
+            pm = mkclass(S_ZOMBIE, 0);
+        if (!pm || !(mtmp = makemon(pm, u.ux, u.uy, MM_NOGRP)))
+            continue;
+        if (!pseudo->cursed && Role_if(PM_NECROMANCER)) {
+            if (!resist(mtmp, pseudo->oclass, 0, TELL)
+                && tamedog(mtmp, (struct obj *) 0, FALSE)
+                && canspotmon(mtmp))
+                You("dominate %s!", mon_nam(mtmp));
+        } else {
+            setmangry(mtmp, FALSE);
+        }
+    }
+    /* those who know command undead get a shot at controlling them;
+       since it has an area effect, do this after all are summoned */
+    if (!Role_if(PM_NECROMANCER) && !pseudo->cursed) {
+        for (sp_no = 0; sp_no < MAXSPELL; sp_no++)
+            if (spellid(sp_no) == SPE_COMMAND_UNDEAD)
+                break;
+        if (sp_no < MAXSPELL && spellid(sp_no) == SPE_COMMAND_UNDEAD) {
+            You("try to command the undead!");
+            cast_command_undead(pseudo);
+        } else {
+            You("don't know how to command undead...");
+        }
+    }
+    flush_screen(0);
+}
+
+/* command undead: tame the undead around the caster */
+staticfn void
+cast_command_undead(struct obj *pseudo)
+{
+    struct monst *mtmp;
+    int i, j, bd = Confusion ? 5 : 1, n = 0;
+
+    if (u.uswallow) {
+        if (is_undead(u.ustuck->data))
+            n += command_undead_mon(u.ustuck, pseudo);
+    } else {
+        for (i = -bd; i <= bd; i++)
+            for (j = -bd; j <= bd; j++) {
+                if (!isok(u.ux + i, u.uy + j))
+                    continue;
+                if ((mtmp = m_at(u.ux + i, u.uy + j)) != 0
+                    && is_undead(mtmp->data))
+                    n += command_undead_mon(mtmp, pseudo);
+            }
+    }
+    if (!n)
+        pline("Nothing interesting seems to happen.");
+}
+
+/* the reflection spell (EvilHack): a temporary shimmering globe; the
+   higher the skill in matter spells, the longer it lasts */
+void
+cast_reflection(void)
+{
+    int skill = P_SKILL(spell_skilltype(SPE_REFLECTION)),
+        base = (skill >= P_EXPERT) ? 750 : (skill == P_SKILLED) ? 500
+               : (skill == P_BASIC) ? 250 : 100;
+
+    if (HReflecting & TIMEOUT) {
+        if (!Blind)
+            pline_The("shimmering globe around you becomes brighter.");
+        else
+            You_feel("slightly more smooth.");
+        incr_itimeout(&HReflecting, rn1(10, base / 5));
+    } else {
+        if (!Blind)
+            pline("A shimmering globe appears around you!");
+        else
+            You_feel("smooth.");
+        incr_itimeout(&HReflecting, rn1(10, base));
+    }
+}
+
 staticfn void
 cast_protection(void)
 {
@@ -1335,7 +1487,14 @@ spelleffects_check(int spell, int *res, int *energy)
              * understand quite well how to cast spells.
              */
             int intell = acurr(A_INT);
-            if (!Role_if(PM_WIZARD))
+
+            /* elemental mages get a smaller hungerless casting bonus;
+               flame mages cast with wisdom */
+            if (Role_if(PM_FLAME_MAGE))
+                intell = acurr(A_WIS) - 2;
+            else if (Role_if(PM_ICE_MAGE))
+                intell -= 2;
+            else if (!Role_if(PM_WIZARD))
                 intell = 10;
             switch (intell) {
             case 25:
@@ -1476,6 +1635,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
+    case SPE_FIRE_BOLT:
         if (objects[otyp].oc_dir != NODIR) {
             if (otyp == SPE_HEALING || otyp == SPE_EXTRA_HEALING) {
                 /* healing and extra healing are actually potion effects,
@@ -1587,6 +1747,26 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
         break;
     case SPE_CHAIN_LIGHTNING:
         cast_chain_lightning();
+        break;
+    case SPE_FLAME_SPHERE:
+    case SPE_FREEZE_SPHERE:
+        cast_sphere(otyp);
+        break;
+    case SPE_SUMMON_UNDEAD:
+        cast_summon_undead(pseudo);
+        break;
+    case SPE_COMMAND_UNDEAD:
+        cast_command_undead(pseudo);
+        break;
+    case SPE_ENLIGHTEN:
+        You_feel("self-knowledgeable...");
+        display_nhwindow(WIN_MESSAGE, FALSE);
+        enlightenment(MAGICENLIGHTENMENT, ENL_GAMEINPROGRESS);
+        pline_The("feeling subsides.");
+        exercise(A_WIS, TRUE);
+        break;
+    case SPE_REFLECTION:
+        cast_reflection();
         break;
     default:
         impossible("Unknown spell %d attempted.", spell);
@@ -2210,6 +2390,16 @@ percent_success(int spell)
 
     if (spellid(spell) == gu.urole.spelspec)
         splcaster += gu.urole.spelsbon;
+
+    /* elemental mages are at home with their element */
+    if ((Role_if(PM_FLAME_MAGE)
+         && (spellid(spell) == SPE_FLAME_SPHERE
+             || spellid(spell) == SPE_FIREBALL
+             || spellid(spell) == SPE_FIRE_BOLT))
+        || (Role_if(PM_ICE_MAGE)
+            && (spellid(spell) == SPE_FREEZE_SPHERE
+                || spellid(spell) == SPE_CONE_OF_COLD)))
+        splcaster -= 1;
 
     /* `healing spell' bonus */
     if (spellid(spell) == SPE_HEALING || spellid(spell) == SPE_EXTRA_HEALING

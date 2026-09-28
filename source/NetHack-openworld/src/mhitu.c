@@ -2443,6 +2443,29 @@ passiveum(
     int i, tmp;
     struct attack *oldu_mattk = 0;
 
+    /* the Candle of Eternal Flame sets whoever hits its bearer on fire */
+    if (u_carrying_arti(ART_CANDLE_OF_ETERNAL_FLAME)
+        && monnear(mtmp, u.ux, u.uy)) {
+        if (canseemon(mtmp))
+            pline("%s is suddenly on fire!", Monnam(mtmp));
+        if (resists_fire(mtmp)) {
+            shieldeff(mtmp->mx, mtmp->my);
+            if (canseemon(mtmp))
+                pline_The("fire doesn't burn %s.", mon_nam(mtmp));
+            golemeffects(mtmp, AD_FIRE, d(2, 10));
+        } else {
+            tmp = d(2, 10);
+            if (resists_cold(mtmp))
+                tmp += 3;
+            tmp += destroy_items(mtmp, AD_FIRE, tmp);
+            mtmp->mhp -= tmp;
+            if (DEADMONSTER(mtmp)) {
+                xkilled(mtmp, XKILL_GIVEMSG);
+                return (DEADMONSTER(mtmp) ? M_ATTK_AGR_DIED : M_ATTK_HIT);
+            }
+        }
+    }
+
     /*
      * mattk      == mtmp's attack that hit you;
      * oldu_mattk == your passive counterattack (even if mtmp's attack

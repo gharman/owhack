@@ -989,6 +989,9 @@ addinv_core1(struct obj *obj)
             artitouch(obj);
         }
         set_artifact_intrinsic(obj, 1, W_ART);
+        /* the Candle of Eternal Flame lights itself in its bearer's hand */
+        if (is_art(obj, ART_CANDLE_OF_ETERNAL_FLAME) && !obj->lamplit)
+            begin_burn(obj, FALSE);
     }
 
     /* "special achievements"; revealed in end of game disclosure and

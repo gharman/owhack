@@ -4088,6 +4088,14 @@ do_break_wand(struct obj *obj)
     case WAN_UNDEAD_TURNING:
         affects_objects = TRUE;
         break;
+    case WAN_DRAINING: /* Slash'EM */
+        dmg *= 2;
+        affects_objects = TRUE;
+        break;
+    case WAN_FEAR:
+        (void) wandfear(obj);
+        discard_broken_wand();
+        return ECMD_TIME;
     default:
         break;
     }

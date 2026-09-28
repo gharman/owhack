@@ -731,6 +731,24 @@ nh_timeout(void)
                     You_feel("yourself slow down%s.",
                              Fast ? " a bit" : "");
                 break;
+            case REFLECTING:
+                /* the reflection spell has worn off */
+                if (Reflecting)
+                    break;
+                if (!Blind)
+                    pline_The(
+                          "shimmering globe around you flickers and vanishes.");
+                else
+                    You("don't feel very smooth anymore.");
+                break;
+            case VULN_FIRE:
+                if (!Vulnerable_fire)
+                    You("are no longer vulnerable to fire.");
+                break;
+            case VULN_COLD:
+                if (!Vulnerable_cold)
+                    You("are no longer vulnerable to cold.");
+                break;
             case CONFUSION:
                 /* So make_confused works properly */
                 set_itimeout(&HConfusion, 1L);
@@ -2021,6 +2039,11 @@ long
 charge_lightsaber(struct obj *obj, long amount, long maxcharge)
 {
     long charge = obj->age + amount;
+
+    /* the prototype has an inexhaustible power cell (and its age is used
+       for its invocation timeout) */
+    if (is_art(obj, ART_LIGHTSABER_PROTOTYPE))
+        return obj->age;
 
     if (maxcharge > 0L && charge > maxcharge)
         charge = maxcharge;

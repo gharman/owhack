@@ -38,6 +38,7 @@ staticfn void seffect_fire(struct obj **);
 staticfn void seffect_earth(struct obj **);
 staticfn void seffect_punishment(struct obj **);
 staticfn void seffect_stinking_cloud(struct obj **);
+staticfn void seffect_ice(struct obj **);
 staticfn void seffect_blank_paper(struct obj **);
 staticfn void seffect_teleportation(struct obj **);
 staticfn void seffect_gold_detection(struct obj **);
@@ -1081,6 +1082,14 @@ maybe_tame(struct monst *mtmp, struct obj *sobj)
     return 0;
 }
 
+/* command undead (Slash'EM): like taming magic, for the undead only;
+   returns 1 if the monster became friendlier */
+int
+command_undead_mon(struct monst *mtmp, struct obj *sobj)
+{
+    return (maybe_tame(mtmp, sobj) > 0) ? 1 : 0;
+}
+
 /* Can a stinking cloud physically exist at a certain position?
  * NOT the same thing as can_center_cloud.
  */
@@ -2022,6 +2031,106 @@ seffect_stinking_cloud(struct obj **sobjp)
     do_stinking_cloud(sobj, already_known);
 }
 
+/* ZT_SPELL(ZT_COLD) = ZT_SPELL(AD_COLD-1) = 10+(3-1) = 12 */
+#define ZT_SPELL_O_COLD 12 /* value kludge, see zap.c */
+
+/* scroll of ice (SlashTHEM, as in Hack'EM): freezes the water around the
+   reader and blasts nearby monsters (and an unblessed reader) with a
+   freezing mist */
+staticfn void
+seffect_ice(struct obj **sobjp)
+{
+    struct obj *sobj = *sobjp;
+    boolean sblessed = sobj->blessed, scursed = sobj->cursed,
+            confused = (Confusion != 0), shopdamage = FALSE;
+    int dam = d(4, 8), radius = 5 - 2 * bcsign(sobj), x, y, froze = 0,
+        reach = sblessed ? 5 : 3;
+    struct monst *mtmp;
+    struct trap *ttmp;
+
+    if (Underwater) {
+        pline_The("%s is quickly turning to ice!", hliquid("water"));
+        (void) zap_over_floor(u.ux, u.uy, ZT_SPELL_O_COLD, &shopdamage,
+                              TRUE, 0);
+        losehp(Maybe_Half_Phys(d(8, 8)), "turning into a block of ice",
+               KILLED_BY);
+        gk.known = TRUE;
+        return;
+    }
+    if (confused) {
+        /* could be a scroll of create monster, so don't set known */
+        (void) create_critters(d(1, 3),
+                               !scursed ? &mons[PM_FREEZING_SPHERE]
+                                        : &mons[PM_ICE_ELEMENTAL],
+                               TRUE);
+        return;
+    }
+    gk.known = TRUE;
+    /* freeze water and lava around the reader */
+    for (x = u.ux - radius; x <= u.ux + radius; x++)
+        for (y = u.uy - radius; y <= u.uy + radius; y++) {
+            if (!isok(x, y) || !couldsee(x, y)
+                || rn2(1 + distmin(u.ux, u.uy, x, y)))
+                continue;
+            if ((ttmp = t_at(x, y)) != 0 && ttmp->ttyp == FIRE_TRAP) {
+                deltrap(ttmp); /* the flames are snuffed */
+                newsym(x, y);
+                froze++;
+            }
+            if (is_pool_or_lava(x, y) || IS_WATERWALL(levl[x][y].typ)
+                || levl[x][y].typ == LAVAWALL) {
+                (void) zap_over_floor(x, y, ZT_SPELL_O_COLD, &shopdamage,
+                                      TRUE, 0);
+                froze++;
+            }
+        }
+    if (shopdamage)
+        pay_for_damage("freeze", TRUE);
+    if (froze)
+        pline(Hallucination ? "Damn, this is giving you the chills!"
+                            : "The ground crackles with ice!");
+    /* the reader of an unblessed scroll gets caught in it too */
+    if (!sblessed) {
+        if (Cold_resistance) {
+            shieldeff(u.ux, u.uy);
+            monstseesu(M_SEEN_COLD);
+            You_feel("a little chill.");
+        } else {
+            pline_The("scroll blasts your %s with freezing mist!",
+                      makeplural(body_part(HAND)));
+            monstunseesu(M_SEEN_COLD);
+            losehp(elem_vulnerable_dmg(AD_COLD, dam), "scroll of ice",
+                   KILLED_BY_AN);
+        }
+    }
+    /* and so do the monsters close by */
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        int mdam = dam;
+
+        if (DEADMONSTER(mtmp) || !cansee(mtmp->mx, mtmp->my)
+            || distmin(u.ux, u.uy, mtmp->mx, mtmp->my) > reach)
+            continue;
+        if (resists_cold(mtmp)) {
+            if (canseemon(mtmp)) {
+                shieldeff(mtmp->mx, mtmp->my);
+                pline("%s is uninjured.", Monnam(mtmp));
+            }
+            continue;
+        }
+        if (canspotmon(mtmp))
+            pline("A freezing cloud surrounds %s!", mon_nam(mtmp));
+        if (resists_fire(mtmp))
+            mdam += d(3, 3);
+        if (!rn2(3))
+            mdam += destroy_items(mtmp, AD_COLD, mdam);
+        mtmp->mhp -= mdam;
+        if (DEADMONSTER(mtmp))
+            killed(mtmp);
+        else
+            wakeup(mtmp, TRUE);
+    }
+}
+
 staticfn void
 seffect_blank_paper(struct obj **sobjp UNUSED)
 {
@@ -2298,6 +2407,9 @@ seffects(
         break;
     case SCR_PUNISHMENT:
         seffect_punishment(&sobj);
+        break;
+    case SCR_ICE:
+        seffect_ice(&sobj);
         break;
     case SCR_STINKING_CLOUD:
         seffect_stinking_cloud(&sobj);
@@ -2932,6 +3044,15 @@ do_genocide(
                 adjalign(-sgn(u.ualign.type));
             if (is_demon(ptr))
                 adjalign(sgn(u.ualign.type));
+            /* elemental mages are spiritually connected to their dragons */
+            if ((Role_if(PM_FLAME_MAGE)
+                 && (mndx == PM_RED_DRAGON || mndx == PM_BABY_RED_DRAGON))
+                || (Role_if(PM_ICE_MAGE)
+                    && (mndx == PM_WHITE_DRAGON
+                        || mndx == PM_BABY_WHITE_DRAGON))) {
+                You_feel("extremely guilty.");
+                adjalign(-99);
+            }
 
             if (!(ptr->geno & G_GENO)) {
                 if (!Deaf) {

@@ -176,6 +176,8 @@ extern boolean artifact_hit(struct monst *, struct monst *, struct obj *,
 extern int doinvoke(void);
 extern boolean finesse_ahriman(struct obj *);
 extern int arti_speak(struct obj *);
+extern boolean u_carrying_arti(int);
+extern boolean m_carrying_arti(struct monst *, int) NONNULLARG1;
 extern boolean artifact_light(struct obj *);
 extern long spec_m2(struct obj *);
 extern boolean artifact_has_invprop(struct obj *, uchar);
@@ -815,6 +817,8 @@ extern void newedog(struct monst *) NONNULLARG1;
 extern void free_edog(struct monst *) NONNULLARG1;
 extern void initedog(struct monst *, boolean) NONNULLARG1;
 extern struct monst *make_familiar(struct obj *, coordxy, coordxy, boolean);
+extern struct monst *make_msummoned(struct permonst *, coordxy, coordxy,
+                                    boolean, int) NONNULLARG1;
 extern struct monst *makedog(void);
 extern void update_mlstmv(void);
 extern void losedogs(void);
@@ -2741,6 +2745,7 @@ extern int doread(void);
 extern int charge_ok(struct obj *) NO_NNARGS;
 extern void recharge(struct obj *, int) NONNULLARG1;
 extern boolean valid_cloud_pos(coordxy, coordxy);
+extern int command_undead_mon(struct monst *, struct obj *) NONNULLPTRS;
 extern int seffects(struct obj *) NONNULLARG1;
 extern void drop_boulder_on_player(boolean, boolean, boolean, boolean);
 extern boolean drop_boulder_on_monster(coordxy, coordxy, boolean, boolean);
@@ -3181,6 +3186,8 @@ extern int get_table_objtype(lua_State *) NONNULLARG1;
 
 extern void book_cursed(struct obj *) NONNULLARG1;
 extern int study_book(struct obj *) NONNULLARG1;
+extern void cast_sphere(short);
+extern void cast_reflection(void);
 extern void book_disappears(struct obj *) NONNULLARG1;
 extern void book_substitution(struct obj *, struct obj *) NONNULLARG12;
 extern void age_spells(void);
@@ -4091,6 +4098,7 @@ extern int bhitpile(struct obj *, int(*)(struct obj *, struct obj *),
 extern int zappable(struct obj *) NONNULLARG1;
 extern void do_enlightenment_effect(void);
 extern void zapnodir(struct obj *) NONNULLARG1;
+extern int wandfear(struct obj *) NONNULLARG1;
 extern int dozap(void);
 extern int zapyourself(struct obj *, boolean) NONNULLARG1;
 extern void ubreatheu(struct attack *) NONNULLARG1;

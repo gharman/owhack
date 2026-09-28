@@ -215,6 +215,56 @@ bhitm(struct monst *mtmp, struct obj *otmp)
             learn_it = FALSE;
         }
         break;
+    case SPE_FIRE_BOLT:
+        reveal_invis = TRUE;
+        learn_it = cansee(gb.bhitpos.x, gb.bhitpos.y);
+        if (disguised_mimic)
+            seemimic(mtmp);
+        if (resists_fire(mtmp)) { /* match effect on player */
+            shieldeff(mtmp->mx, mtmp->my);
+            golemeffects(mtmp, AD_FIRE, d(1, 10));
+            pline("Swoosh!");
+        } else if (u.uswallow || rnd(20) < 14 + find_mac(mtmp)) {
+            if (completelyburns(mtmp->data)) { /* paper or straw golem */
+                if (canseemon(mtmp))
+                    pline("%s burns completely!", Monnam(mtmp));
+                else
+                    You("smell burning%s.",
+                        (mtmp->data == &mons[PM_PAPER_GOLEM]) ? " paper"
+                        : (mtmp->data == &mons[PM_STRAW_GOLEM]) ? " straw"
+                          : "");
+                xkilled(mtmp, XKILL_NOMSG | XKILL_NOCORPSE);
+                break;
+            }
+            dmg = d(1, 10);
+            /* flame mages are the true masters of this spell */
+            if (Role_if(PM_FLAME_MAGE)) {
+                if (u.ulevel >= 4)
+                    dmg += d(1, 8);
+                if (u.ulevel >= 8)
+                    dmg += d(1, 8);
+                if (u.ulevel >= 12)
+                    dmg += d(1, 8);
+                if (P_SKILL(P_MATTER_SPELL) >= P_SKILLED)
+                    dmg += d(1, 4);
+                if (P_SKILL(P_MATTER_SPELL) >= P_EXPERT)
+                    dmg += d(1, 4);
+            }
+            if (dbldam)
+                dmg *= 2;
+            dmg = spell_damage_bonus(dmg);
+            /* a chance of setting the monster's stuff on fire */
+            if (!rn2(3))
+                (void) burnarmor(mtmp);
+            if (!rn2(3))
+                dmg += destroy_items(mtmp, AD_FIRE, dmg);
+            hit("fire bolt", mtmp, exclam(dmg));
+            (void) resist(mtmp, otmp->oclass, dmg, TELL);
+        } else {
+            miss("fire bolt", mtmp);
+            learn_it = FALSE;
+        }
+        break;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
         if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
@@ -518,6 +568,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
             wake = FALSE;
         }
         break;
+    case WAN_DRAINING: /* Slash'EM */
     case SPE_DRAIN_LIFE:
         if (disguised_mimic)
             seemimic(mtmp);
@@ -537,8 +588,11 @@ bhitm(struct monst *mtmp, struct obj *otmp)
                 killed(mtmp);
             } else {
                 mtmp->m_lev--;
-                if (canseemon(mtmp))
+                if (canseemon(mtmp)) {
                     pline("%s suddenly seems weaker!", Monnam(mtmp));
+                    if (otyp == WAN_DRAINING)
+                        learn_it = TRUE;
+                }
             }
         }
         break;
@@ -2330,6 +2384,7 @@ bhito(struct obj *obj, struct obj *otmp)
             newsym(obj->ox, obj->oy); /* might change color */
             break;
         case SPE_DRAIN_LIFE:
+        case WAN_DRAINING:
             (void) drain_item(obj, TRUE);
             break;
         case WAN_TELEPORTATION:
@@ -2602,6 +2657,10 @@ zapnodir(struct obj *obj)
         /* do_enlightenmnt_effect() always describes enlightenment */
         do_enlightenment_effect();
         break;
+    case WAN_FEAR:
+        if (wandfear(obj))
+            known = TRUE;
+        break;
     default:
         break;
     }
@@ -2765,8 +2824,9 @@ zapyourself(struct obj *obj, boolean ordinary)
         break;
     case WAN_FIRE:
     case FIRE_HORN:
+    case SPE_FIRE_BOLT:
         learn_it = TRUE;
-        orig_dmg = d(12, 6);
+        orig_dmg = (obj->otyp == SPE_FIRE_BOLT) ? d(1, 10) : d(12, 6);
         if (Fire_resistance) {
             shieldeff(u.ux, u.uy);
             You_feel("rather warm.");
@@ -2828,6 +2888,7 @@ zapyourself(struct obj *obj, boolean ordinary)
         (void) cancel_monst(&gy.youmonst, obj, TRUE, TRUE, TRUE);
         break;
 
+    case WAN_DRAINING:
     case SPE_DRAIN_LIFE:
         if (!Drain_resistance) {
             learn_it = TRUE; /* (no effect for spells...) */
@@ -3135,12 +3196,14 @@ zap_steed(struct obj *obj) /* wand or spell */
     case SPE_POLYMORPH:
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
+    case SPE_FIRE_BOLT:
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
     case WAN_SPEED_MONSTER:
     case SPE_HEALING:
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
+    case WAN_DRAINING:
     case WAN_OPENING:
     case SPE_KNOCK:
         (void) bhitm(u.usteed, obj);
@@ -3152,6 +3215,38 @@ zap_steed(struct obj *obj) /* wand or spell */
         break;
     }
     return steedhit;
+}
+
+/* the wand of fear (Slash'EM): nearby monsters panic and flee; a cursed
+   one instead rouses them; returns the number of monsters affected
+   that the hero could see */
+int
+wandfear(struct obj *obj)
+{
+    struct monst *mtmp;
+    int ct = 0;
+
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp) || mtmp->mtame)
+            continue;
+        if (mdistu(mtmp) >= 25) /* ~5 spaces */
+            continue;
+        if (obj->cursed) {
+            mtmp->mflee = mtmp->mfleetim = 0;
+            mtmp->mfrozen = 0;
+            mtmp->msleeping = 0;
+            mtmp->mcanmove = 1;
+        } else if (!resist(mtmp, obj->oclass, 0, NOTELL)) {
+            monflee(mtmp, 0, FALSE, FALSE);
+            if (canseemon(mtmp)) {
+                pline("%s suddenly panics!", Monnam(mtmp));
+                ct++;
+            }
+        }
+    }
+    if (!ct && !obj->cursed)
+        You_hear("sad wailing %s.", !Deaf ? "close by" : "in your mind");
+    return ct;
 }
 
 /*
@@ -4067,6 +4162,25 @@ bhit(
                 goto bhit_done; /* result == (struct monst *) 0 */
             }
         }
+        if (weapon == ZAPPED_WAND && obj->otyp == SPE_FIRE_BOLT) {
+            /* the bolt of fire burns what it passes over */
+            struct trap *web = t_at(x, y);
+
+            if (burn_floor_objects(x, y, FALSE, TRUE) && couldsee(x, y))
+                You("%s of smoke.", !Blind ? "see a puff" : "smell a whiff");
+            if (web && web->ttyp == WEB) {
+                if (cansee(x, y))
+                    Norep("A web bursts into flames!");
+                (void) delfloortrap(web);
+                newsym(x, y);
+                range = 0;
+            } else if (IS_FOUNTAIN(typ)) {
+                if (cansee(x, y))
+                    pline("Steam billows from the fountain.");
+                dryup(x, y, TRUE);
+                range = 0;
+            }
+        }
         if (weapon == ZAPPED_WAND && (IS_DOOR(typ) || typ == SDOOR)) {
             switch (obj->otyp) {
             case WAN_OPENING:
@@ -4075,6 +4189,7 @@ bhit(
             case SPE_KNOCK:
             case SPE_WIZARD_LOCK:
             case SPE_FORCE_BOLT:
+            case SPE_FIRE_BOLT:
                 if (doorlock(obj, x, y)) {
                     if (cansee(x, y) || (obj->otyp == WAN_STRIKING && !Deaf))
                         learnwand(obj);
@@ -4625,6 +4740,7 @@ burn_floor_objects(
             || (obj->oclass == FOOD_CLASS
                 && obj->otyp == GLOB_OF_GREEN_SLIME)) {
             if (obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL
+                || obj->otyp == SPE_FIRE_BOLT || obj->otyp == SPE_FLAME_SPHERE
                 || obj_resists(obj, 2, 100))
                 continue;
             scrquan = obj->quan; /* number present */
@@ -5636,7 +5752,8 @@ destroyable(struct obj *obj, int adtyp)
     }
     if (adtyp == AD_FIRE) {
         /* fire-magic items are immune */
-        if (obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL) {
+        if (obj->otyp == SCR_FIRE || obj->otyp == SPE_FIREBALL
+            || obj->otyp == SPE_FIRE_BOLT || obj->otyp == SPE_FLAME_SPHERE) {
             return FALSE;
         }
         if (obj->otyp == GLOB_OF_GREEN_SLIME || obj->oclass == POTION_CLASS

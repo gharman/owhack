@@ -32,6 +32,9 @@ staticfn void nothing_special(struct obj *) NONNULLARG1;
 staticfn int invoke_taming(struct obj *) NONNULLARG1;
 staticfn int invoke_healing(struct obj *) NONNULLARG1;
 staticfn int invoke_energy_boost(struct obj *) NONNULLARG1;
+staticfn int invoke_summon_elemental(struct obj *) NONNULLARG1;
+staticfn int invoke_conjure_sphere(struct obj *) NONNULLARG1;
+staticfn boolean forbidden_artifact(struct obj *) NONNULLARG1;
 staticfn int invoke_untrap(struct obj *) NONNULLARG1;
 staticfn int invoke_charge_obj(struct obj *) NONNULLARG1;
 staticfn int invoke_create_portal(struct obj *) NONNULLARG1;
@@ -959,8 +962,10 @@ touch_artifact(struct obj *obj, struct monst *mon)
         exercise(A_WIS, FALSE);
     }
 
-    /* can pick it up unless you're totally non-synch'd with the artifact */
-    if (badclass && badalign && self_willed) {
+    /* can pick it up unless you're totally non-synch'd with the artifact;
+       elemental mages can't handle the opposing element's artifacts */
+    if ((badclass && badalign && self_willed)
+        || (yours && forbidden_artifact(obj))) {
         if (yours) {
             if (!carried(obj))
                 pline("%s your grasp!", Tobjnam(obj, "evade"));
@@ -971,6 +976,44 @@ touch_artifact(struct obj *obj, struct monst *mon)
     }
 
     return 1;
+}
+
+/* Slash'EM flame mages can't wield the artifacts of cold, ice mages
+   those of fire */
+staticfn boolean
+forbidden_artifact(struct obj *otmp)
+{
+    if (Role_if(PM_FLAME_MAGE)
+        && (is_art(otmp, ART_FROST_BRAND) || is_art(otmp, ART_DEEP_FREEZE)))
+        return TRUE;
+    if (Role_if(PM_ICE_MAGE)
+        && (is_art(otmp, ART_FIRE_BRAND) || is_art(otmp, ART_FIREWALL)))
+        return TRUE;
+    return FALSE;
+}
+
+/* is the hero carrying a particular artifact? */
+boolean
+u_carrying_arti(int artinum)
+{
+    struct obj *otmp;
+
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (otmp->oartifact == artinum)
+            return TRUE;
+    return FALSE;
+}
+
+/* is a monster carrying a particular artifact? */
+boolean
+m_carrying_arti(struct monst *mon, int artinum)
+{
+    struct obj *otmp;
+
+    for (otmp = mon->minvent; otmp; otmp = otmp->nobj)
+        if (otmp->oartifact == artinum)
+            return TRUE;
+    return FALSE;
 }
 
 /* decide whether an artifact itself is vulnerable to a particular type
@@ -1478,10 +1521,42 @@ artifact_hit(
                        /* feel the effect even if not seen */
                        || (youattack && mdef == u.ustuck));
 
+    /* Serpent's Tongue poisons whatever it hits (Slash'EM) */
+    if (is_art(otmp, ART_SERPENTS_TONGUE)) {
+        otmp->dknown = TRUE;
+        if (realizes_damage)
+            pline_The("twisted blade poisons %s!", hittee);
+        if (youdefend ? Poison_resistance : resists_poison(mdef)) {
+            if (youdefend)
+                You("are not affected by the poison.");
+            else if (realizes_damage)
+                pline("%s seems unaffected by the poison.", Monnam(mdef));
+            return realizes_damage;
+        }
+        switch (rnd(10)) {
+        case 1: case 2: case 3: case 4:
+            *dmgptr += d(1, 6) + 2;
+            break;
+        case 5: case 6: case 7:
+            *dmgptr += d(2, 6) + 4;
+            break;
+        case 8: case 9:
+            *dmgptr += d(3, 6) + 6;
+            break;
+        case 10:
+            pline_The("poison was deadly...");
+            *dmgptr = 2 * (youdefend ? (Upolyd ? u.mh : u.uhp) : mdef->mhp)
+                      + FATAL_DAMAGE_MODIFIER;
+            break;
+        }
+        return TRUE;
+    }
+
     /* the four basic attacks: fire, cold, shock and missiles */
     if (attacks(AD_FIRE, otmp)) {
         if (realizes_damage)
-            pline_The("fiery blade %s %s%c",
+            pline_The("fiery %s %s %s%c",
+                      is_art(otmp, ART_FIREWALL) ? "staff" : "blade",
                       !gs.spec_dbon_applies
                           ? "hits"
                           : (mdef->data == &mons[PM_WATER_ELEMENTAL])
@@ -1500,7 +1575,8 @@ artifact_hit(
     }
     if (attacks(AD_COLD, otmp)) {
         if (realizes_damage)
-            pline_The("ice-cold blade %s %s%c",
+            pline_The("ice-cold %s %s %s%c",
+                      is_art(otmp, ART_DEEP_FREEZE) ? "staff" : "blade",
                       !gs.spec_dbon_applies ? "hits" : "freezes", hittee,
                       !gs.spec_dbon_applies ? '.' : '!');
         if (!rn2(4)) {
@@ -1834,6 +1910,68 @@ invoke_energy_boost(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* the Candle of Eternal Flame calls a fire elemental; the Storm Whistle
+   a creature of the storm; either becomes a pet */
+staticfn int
+invoke_summon_elemental(struct obj *obj)
+{
+    struct permonst *pm;
+    struct monst *mtmp;
+
+    if (is_art(obj, ART_CANDLE_OF_ETERNAL_FLAME)) {
+        pm = &mons[PM_FIRE_ELEMENTAL];
+    } else {
+        static const short stormmons[] = {
+            PM_WATER_ELEMENTAL, PM_AIR_ELEMENTAL, PM_ICE_VORTEX,
+            PM_ENERGY_VORTEX, PM_BABY_WHITE_DRAGON, PM_BABY_BLUE_DRAGON,
+            PM_FROST_GIANT, PM_STORM_GIANT, PM_FREEZING_SPHERE,
+            PM_SHOCKING_SPHERE
+        };
+
+        pm = &mons[ROLL_FROM(stormmons)];
+    }
+    mtmp = makemon(pm, u.ux, u.uy, MM_EDOG | MM_IGNOREWATER | MM_NOMSG);
+    if (!mtmp) {
+        pline("%s for a moment, but nothing comes.",
+              is_art(obj, ART_STORM_WHISTLE) ? "The air grows cold"
+                                             : "The flame flares");
+        return ECMD_TIME;
+    }
+    if (is_art(obj, ART_STORM_WHISTLE))
+        You("blow the whistle and %s appears from a storm cloud!",
+            canspotmon(mtmp) ? an(pmname(mtmp->data, Mgender(mtmp)))
+                             : "something");
+    else
+        You("summon %s.", canspotmon(mtmp) ? a_monnam(mtmp)
+                                           : "an elemental");
+    initedog(mtmp, TRUE);
+    u.uconduct.pets++;
+    mtmp->msleeping = 0;
+    newsym(mtmp->mx, mtmp->my);
+    return ECMD_TIME;
+}
+
+/* Firewall conjures flame spheres; Deep Freeze freeze spheres and the
+   effect of a blessed scroll of ice */
+staticfn int
+invoke_conjure_sphere(struct obj *obj)
+{
+    if (is_art(obj, ART_FIREWALL)) {
+        cast_sphere(SPE_FLAME_SPHERE);
+    } else {
+        struct obj *pseudo;
+
+        cast_sphere(SPE_FREEZE_SPHERE);
+        pseudo = mksobj(SCR_ICE, FALSE, FALSE);
+        pseudo->blessed = TRUE;
+        pseudo->cursed = FALSE;
+        pseudo->quan = 20L; /* do not let useup get it */
+        (void) seffects(pseudo);
+        obfree(pseudo, (struct obj *) 0);
+    }
+    return ECMD_TIME;
+}
+
 staticfn int
 invoke_untrap(struct obj *obj)
 {
@@ -2148,6 +2286,13 @@ arti_invoke(struct obj *obj)
 
     /* It's a special power, not "just" a property */
     if (oart->inv_prop > LAST_PROP) {
+        /* Firewall and Deep Freeze answer only to their own mages */
+        if ((is_art(obj, ART_FIREWALL) && !Role_if(PM_FLAME_MAGE))
+            || (is_art(obj, ART_DEEP_FREEZE) && !Role_if(PM_ICE_MAGE))) {
+            You("don't feel that kind of connection with %s.",
+                the(xname(obj)));
+            return ECMD_TIME;
+        }
         if (!arti_invoke_cost(obj))
             return ECMD_TIME;
 
@@ -2170,6 +2315,11 @@ arti_invoke(struct obj *obj)
             /*FALLTHRU*/
         case FIRESTORM: res = invoke_storm_spell(obj); break;
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
+        case SUMMON_FIRE_ELEMENTAL:
+        case SUMMON_WATER_ELEMENTAL:
+            res = invoke_summon_elemental(obj);
+            break;
+        case CONJURE_SPHERE: res = invoke_conjure_sphere(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

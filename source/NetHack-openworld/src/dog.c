@@ -214,6 +214,37 @@ make_familiar(struct obj *otmp, coordxy x, coordxy y, boolean quietly)
     return mtmp;
 }
 
+/* conjure a (tame) monster near <x,y> that vanishes again after
+   'lifetime' turns (flame and freeze spheres, ...); it comes without
+   inventory and doesn't count as born */
+struct monst *
+make_msummoned(
+    struct permonst *pm,
+    coordxy x, coordxy y,
+    boolean tame,
+    int lifetime)
+{
+    struct monst *mtmp;
+    coord cc;
+
+    if (!enexto(&cc, x, y, pm))
+        return (struct monst *) 0;
+    mtmp = makemon(pm, cc.x, cc.y,
+                   (tame ? MM_EDOG : NO_MM_FLAGS) | NO_MINVENT
+                       | MM_NOCOUNTBIRTH | MM_NOMSG | MM_NOGRP);
+    if (!mtmp)
+        return (struct monst *) 0; /* genocided or no room */
+    if (tame)
+        initedog(mtmp, TRUE);
+    mtmp->msleeping = 0;
+    mtmp->msummoned = (short) max(lifetime, 2);
+    set_malign(mtmp);
+    newsym(mtmp->mx, mtmp->my);
+    if (canseemon(mtmp))
+        pline("%s appears!", Amonnam(mtmp));
+    return mtmp;
+}
+
 /* despite rather general name, used exclusively for hero's starting pet */
 struct monst *
 makedog(void)
