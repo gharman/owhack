@@ -72,6 +72,7 @@ enum tech_id {
     T_SLIP_FREE,
     T_MIND_BLAST,
     T_HOLD_BREATH,
+    T_CHARGE_SABER, /* Jedi (Slash'EM/SlashTHEM, as in Hack'EM) */
     NUM_TECHS
 };
 
