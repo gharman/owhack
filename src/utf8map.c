@@ -71,9 +71,10 @@ free_all_glyphmap_u(void)
             glyphmap[glyph].u = 0;
         }
     }
-    /* Prevent use after free from gg.gbuf */
-    for (y = 0; y < ROWNO; ++y) {
-        for (x = 0; x < COLNO; ++x) {
+    /* Prevent use after free from gg.gbuf (open world: the glyph buffer
+       covers the viewport, not the whole map) */
+    for (y = 0; y < VP_MAXROWS; ++y) {
+        for (x = 0; x < VP_MAXCOLS; ++x) {
             gg.gbuf[y][x].glyphinfo.gm.u = NULL;
         }
     }
