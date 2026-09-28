@@ -3308,9 +3308,9 @@
      hit with, while blades of soft gold or platinum are clumsy.
 
           Damage: only iron rusts; iron and copper corrode; wood, leather,
-     cloth, paper and bone burn and rot; glass cracks and eventually shat-
-     ters; steel, silver, gold, platinum, mithril and gemstone are not dam-
-     aged at all.
+     cloth, paper and plastic burn, and all of those but plastic rot; glass
+     cracks and eventually shatters; steel, silver, gold, platinum, mith-
+     ril, bone, stone and gemstone are not damaged at all.
 
           Price: shopkeepers charge (and pay) more for precious materials.
 

@@ -4343,6 +4343,14 @@ not_actually_specifying_material(const char *const str, const char *matstr)
     /* legacy object names like "elven mithril-coat", "silver shield" */
     if (legacy_objname(str, &legmat) != STRANGE_OBJECT)
         return TRUE;
+    /* alternate spellings like "iron ball" */
+    {
+        const struct alt_spellings *as;
+
+        for (as = spellings; as->sp; as++)
+            if (!strncmpi(str, as->sp, strlen(as->sp)))
+                return TRUE;
+    }
     /* does it match some monster? e.g. "silver dragon scale mail" */
     for (i = LOW_PM; i < NUMMONS; ++i) {
         int gend;
