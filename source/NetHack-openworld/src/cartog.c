@@ -366,9 +366,9 @@ invoke_charting(struct obj *obj)
     do_mapping();
     notice_mon_on();
     if (In_overworld && (nmarked = chart_nearby_portals()) > 0)
-        pline("%s magic portal%s of this ring and the next %s marked on"
-              " your map.", (nmarked == 1) ? "The" : "All the",
-              plur(nmarked), (nmarked == 1) ? "is" : "are");
+        pline("The magic portal%s of this ring and of the rings on either"
+              " side of it %s now on your map.", plur(nmarked),
+              (nmarked == 1) ? "is" : "are");
     return ECMD_TIME;
 }
 

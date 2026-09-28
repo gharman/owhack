@@ -2867,6 +2867,22 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
             for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
                 if (!DEADMONSTER(mtmp) && mtmp->data->msound == MS_LEADER)
                     fprintf(fp, "leader %d,%d\n", mtmp->mx, mtmp->my);
+                else if (!DEADMONSTER(mtmp)
+                         && mtmp->data->msound == MS_NEMESIS)
+                    fprintf(fp, "nemesis %d,%d\n", mtmp->mx, mtmp->my);
+        }
+        {
+            struct obj *otmp;
+            struct monst *mtmp;
+
+            for (otmp = fobj; otmp; otmp = otmp->nobj)
+                if (otmp->oartifact && otmp->oartifact == gu.urole.questarti)
+                    fprintf(fp, "questarti %d,%d\n", otmp->ox, otmp->oy);
+            for (mtmp = fmon; mtmp; mtmp = mtmp->nmon)
+                for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+                    if (!DEADMONSTER(mtmp) && otmp->oartifact
+                        && otmp->oartifact == gu.urole.questarti)
+                        fprintf(fp, "questarti %d,%d\n", mtmp->mx, mtmp->my);
         }
         fclose(fp);
         return;
