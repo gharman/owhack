@@ -528,7 +528,7 @@ HACKCSRC ?= allmain.c alloc.c apply.c artifact.c attrib.c ball.c bones.c \
 	   moloch.c mondata.c monmove.c monst.c mplayer.c mthrowu.c muse.c \
 	   music.c \
 	   nhlua.c nhlsel.c nhlobj.c nhmd4.c o_init.c objects.c objnam.c overworld.c \
-	   options.c pager.c pickup.c pline.c polyself.c potion.c pray.c \
+	   options.c pager.c pickup.c pirate.c pline.c polyself.c potion.c pray.c \
 	   priest.c quest.c questpgr.c read.c rect.c region.c report.c \
 	   restore.c revision.c  rip.c rnd.c role.c rumors.c save.c selvar.c \
 	   sfbase.c sfstruct.c shk.c shknam.c sit.c sounds.c sp_lev.c \
@@ -618,7 +618,7 @@ HOBJ ?= $(TARGETPFX)allmain.o $(TARGETPFX)alloc.o \
 	$(TARGETPFX)nhlua.o $(TARGETPFX)nhlsel.o $(TARGETPFX)nhlobj.o \
 	$(TARGETPFX)nhmd4.o $(TARGETPFX)objects.o $(TARGETPFX)o_init.o $(TARGETPFX)overworld.o \
 	$(TARGETPFX)objnam.o $(TARGETPFX)options.o $(TARGETPFX)pager.o \
-	$(TARGETPFX)pickup.o $(TARGETPFX)pline.o $(TARGETPFX)polyself.o \
+	$(TARGETPFX)pickup.o $(TARGETPFX)pirate.o $(TARGETPFX)pline.o $(TARGETPFX)polyself.o \
 	$(TARGETPFX)potion.o $(TARGETPFX)pray.o $(TARGETPFX)priest.o \
 	$(TARGETPFX)quest.o $(TARGETPFX)questpgr.o $(TARGETPFX)read.o \
 	$(TARGETPFX)rect.o $(TARGETPFX)region.o $(TARGETPFX)report.o \
@@ -1267,6 +1267,7 @@ $(TARGETPFX)options.o: options.c $(CONFIG_H) $(HACK_H) ../include/defsym.h \
 		../include/optlist.h ../include/tcap.h
 $(TARGETPFX)pager.o: pager.c $(HACK_H) ../include/dlb.h
 $(TARGETPFX)pickup.o: pickup.c $(HACK_H)
+$(TARGETPFX)pirate.o: pirate.c $(HACK_H)
 $(TARGETPFX)pline.o: pline.c $(HACK_H)
 $(TARGETPFX)polyself.o: polyself.c $(HACK_H)
 $(TARGETPFX)potion.o: potion.c $(HACK_H)

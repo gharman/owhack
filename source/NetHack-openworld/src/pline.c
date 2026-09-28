@@ -223,6 +223,9 @@ vpline(const char *line, va_list the_args)
         pbuf[BUFSZ - 1] = '\0';
         line = pbuf;
     }
+    /* Pirates hear everything in the speech of the sea */
+    if (Role_if(PM_PIRATE))
+        line = piratesay(line);
     msgtyp = MSGTYP_NORMAL;
 
 #ifdef DUMPLOG_CORE

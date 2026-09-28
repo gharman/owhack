@@ -565,6 +565,9 @@ struct _hitmon_data {
 #define Upolyd (u.umonnum != u.umonster)
 /* an escaped convict whose face can be recognized from the wanted posters
    (not while polymorphed or with a blindfold or towel over the face) */
+/* a Pirate who carries off the Treasury of Proteus, the Pirate quest
+   artifact, is hunted by the undead crews of its former owners */
+#define Pirate_kinghill (Role_if(PM_PIRATE) && u.uhave.questart)
 #define Convict_recognizable \
     (Role_if(PM_CONVICT) && !Upolyd                                   \
      && !(ublindf && (ublindf->otyp == TOWEL || ublindf->otyp == BLINDFOLD)))

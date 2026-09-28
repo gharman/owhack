@@ -168,6 +168,7 @@ drop_throw(
     boolean broken;
 
     if (obj->otyp == CREAM_PIE || obj->oclass == VENOM_CLASS
+        || is_bullet(obj) /* a spent bullet is gone */
         || (ohit && obj->otyp == EGG)) {
         broken = TRUE;
     } else {
@@ -266,6 +267,24 @@ monshoot(struct monst *mtmp, struct obj *otmp, struct obj *mwep)
                      mtarg ? mtarg->mx : mtmp->mux,
                      mtarg ? mtarg->my : mtmp->muy),
         multishot = monmulti(mtmp, otmp, mwep);
+    boolean gunning = (mwep && is_firearm(mwep)
+                       && ammo_and_launcher(otmp, mwep));
+
+    /* a cursed firearm loaded with cursed ammunition blows up (Slash'EM) */
+    if (gunning && otmp->cursed && mwep->cursed) {
+        int dmg = d(abs(mwep->spe) + 2, 6) + dmgval(otmp, mtmp);
+        coordxy mx = mtmp->mx, my = mtmp->my;
+
+        if (canseemon(mtmp))
+            pline("%s %s suddenly explodes!", s_suffix(Monnam(mtmp)),
+                  xname(mwep));
+        Sprintf(svk.killer.name, "exploding %s", simpleonames(mwep));
+        svk.killer.format = KILLED_BY_AN;
+        m_useup(mtmp, otmp);
+        m_useup(mtmp, mwep);
+        explode(mx, my, -11, dmg, MON_EXPLODE, EXPL_FIERY);
+        return;
+    }
 
     /*
      * Caller must have called linedup() to set up <gt.tbx, gt.tby>.
@@ -289,14 +308,41 @@ monshoot(struct monst *mtmp, struct obj *otmp, struct obj *mwep)
         Strcpy(trgbuf, mtarg ? some_mon_nam(mtarg) : "");
         set_msg_xy(mtmp->mx, mtmp->my);
         pline("%s %s %s%s%s!", Monnam(mtmp),
-              gm.m_shot.s ? "shoots" : "throws", onm,
+              gm.m_shot.s ? (is_bullet(otmp) ? "fires" : "shoots")
+                          : "throws", onm,
               mtarg ? " at " : "", trgbuf);
         gm.m_shot.o = otmp->otyp;
     } else {
         gm.m_shot.o = STRANGE_OBJECT; /* don't give multishot feedback */
+        if (gunning && !Deaf)
+            You_hear("gunfire.");
     }
     gm.m_shot.n = multishot;
     for (gm.m_shot.i = 1; gm.m_shot.i <= gm.m_shot.n; gm.m_shot.i++) {
+        /* firearms can get jammed (Hack'EM) */
+        if (gunning
+            && ((mwep->cursed && !rn2(2)) || (otmp->cursed && !rn2(2))
+                || ((otmp->oeroded || otmp->oeroded2) && !rn2(4))
+                || ((mwep->oeroded || mwep->oeroded2) && !rn2(4)))) {
+            /* grease is the first level of protection */
+            if (mwep->greased) {
+                if (!rn2(2)) {
+                    if (canseemon(mtmp))
+                        pline_The("grease wears off %s %s.",
+                                  s_suffix(mon_nam(mtmp)), xname(mwep));
+                    mwep->greased = 0;
+                }
+            /* blessed firearms resist 3 times out of 4 */
+            } else if (!mwep->blessed || !rn2(4)) {
+                if (canseemon(mtmp))
+                    pline("%s %s jams!", s_suffix(Monnam(mtmp)),
+                          xname(mwep));
+                mwep->obroken = 1;
+                /* the bullet in the jammed barrel is lost */
+                m_useup(mtmp, otmp);
+                break;
+            }
+        }
         m_throw(mtmp, mtmp->mx, mtmp->my, sgn(gt.tbx), sgn(gt.tby), dm, otmp);
         /* conceptually all N missiles are in flight at once, but
            if mtmp gets killed (shot kills adjacent gas spore and
@@ -1516,6 +1562,7 @@ hits_bars(
 
             hits = (oskill != -P_BOW && oskill != -P_CROSSBOW
                     && oskill != -P_DART && oskill != -P_SHURIKEN
+                    && oskill != -P_FIREARM
                     && oskill != P_SPEAR
                     && oskill != P_KNIFE); /* but not dagger */
             break;

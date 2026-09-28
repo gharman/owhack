@@ -1352,6 +1352,7 @@ extern void delobj_core(struct obj *, boolean) NONNULLARG1;
 extern struct obj *sobj_at(int, coordxy, coordxy);
 extern struct obj *nxtobj(struct obj *, int, boolean) NONNULLARG1;
 extern struct obj *carrying(int);
+extern struct obj *carrying_arti(int);
 extern struct obj *u_carried_gloves(void);
 extern struct obj *u_have_novel(void);
 extern struct obj *o_on(unsigned int, struct obj *);
@@ -2566,6 +2567,13 @@ extern int dotip(void);
 extern struct autopickup_exception *check_autopickup_exceptions(struct obj *) NONNULLARG1;
 extern boolean autopick_testobj(struct obj *, boolean) NONNULLARG1;
 extern boolean u_safe_from_fatal_corpse(struct obj *obj, int) NONNULLARG1;
+
+/* ### pirate.c ### */
+
+extern const char *pirate_item_name(int, const char *);
+extern int pirate_item_otyp(const char *) NONNULLARG1;
+extern const char *piratesay(const char *) NONNULLARG1;
+extern void treasury_of_proteus(void);
 
 /* ### pline.c ### */
 

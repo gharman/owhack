@@ -363,6 +363,8 @@ moveloop_core(void)
                 if (u.ualign.type == A_NONE
                     || u.ualignbase[A_CURRENT] == A_NONE)
                     moloch_demands();
+                /* the Treasury of Proteus changes what it holds */
+                treasury_of_proteus();
                 if (!rn2(40 + (int) (ACURR(A_DEX) * 3)))
                     u_wipe_engr(rnd(3));
                 if (u.uevent.udemigod && !u.uinvulnerable) {

@@ -254,6 +254,12 @@
    horses can be tamed by always-veggy food or lichen corpses but
    not tamed or pacified by other corpses or tins of veggy critters */
 /* rats, which convicts get along with (EvilHack) */
+#define is_pirate(ptr) \
+    ((ptr) == &mons[PM_PIRATE] || (ptr) == &mons[PM_SKELETAL_PIRATE]    \
+     || (ptr) == &mons[PM_DAMNED_PIRATE]                                \
+     || (ptr) == &mons[PM_MAYOR_CUMMERBUND]                             \
+     || (ptr) == &mons[PM_PIRATE_CREWMATE]                              \
+     || (ptr) == &mons[PM_BLACKBEARD_S_GHOST])
 #define is_rat(ptr) \
     ((ptr) == &mons[PM_SEWER_RAT] || (ptr) == &mons[PM_GIANT_RAT]        \
      || (ptr) == &mons[PM_RABID_RAT])

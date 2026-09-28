@@ -121,6 +121,11 @@ use_towel(struct obj *obj)
     } else if (obj->cursed) {
         long old;
 
+        if (uwep && is_firearm(uwep) && !uwep->obroken) {
+            You("cover %s in grime!", ysimple_name(uwep));
+            uwep->obroken = 1;
+            update_inventory();
+        }
         switch (rn2(3)) {
         case 2:
             old = (Glib & TIMEOUT);
@@ -184,6 +189,31 @@ use_towel(struct obj *obj)
         if (is_wet_towel(obj))
             dry_a_towel(obj, -1, drying_feedback);
         return ECMD_TIME;
+    }
+
+    /* a greased towel can clean a jammed or rusty firearm (Hack'EM) */
+    if (obj->greased) {
+        struct obj *otmp;
+
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+            if (!is_firearm(otmp))
+                continue;
+            if (otmp->obroken) {
+                You("unjam %s.", ysimple_name(otmp));
+                otmp->obroken = 0;
+            } else if (otmp->oeroded > 0) {
+                You("remove some rust from %s.", ysimple_name(otmp));
+                otmp->oeroded--;
+            } else {
+                continue;
+            }
+            if (!rn2(2)) {
+                pline_The("grease wears off.");
+                obj->greased = 0;
+            }
+            update_inventory();
+            return ECMD_TIME;
+        }
     }
 
     Your("%s and %s are already clean.", body_part(FACE),
@@ -2661,7 +2691,11 @@ use_grease(struct obj *obj)
         consume_obj_charge(obj, TRUE);
 
         oldglib = (int) (Glib & TIMEOUT);
-        if (otmp != &hands_obj) {
+        if (otmp != &hands_obj && is_firearm(otmp) && otmp->obroken) {
+            /* grease frees a jammed firearm (Hack'EM) */
+            You("unjam %s.", ysimple_name(otmp));
+            otmp->obroken = 0;
+        } else if (otmp != &hands_obj) {
             You("cover %s with a thick layer of grease.", yname(otmp));
             otmp->greased = 1;
             if (obj->cursed && !nohands(gy.youmonst.data)) {

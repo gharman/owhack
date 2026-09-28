@@ -832,6 +832,16 @@ static const char *const random_insult[] = {
     "wittol",     "worm",         "wretch",
 };
 
+/* what the Wizard calls a Pirate (Hack'EM) */
+static const char *const pirate_insult[] = {
+    "bilge-sucker", "scallywag", "scurvy dog", "shark bait",
+    "son of a biscuit eater", "bilge rat", "picaroon", "landlubber",
+    "knave", "interloper",
+};
+
+#define insult() \
+    (Role_if(PM_PIRATE) ? ROLL_FROM(pirate_insult) : ROLL_FROM(random_insult))
+
 static const char *const random_malediction[] = {
     "Hell shall soon claim thy remains,", "I chortle at thee, thou pathetic",
     "Prepare to die, thou", "Resistance is useless,",
@@ -853,12 +863,12 @@ cuss(struct monst *mtmp)
         } else if (u.uhave.amulet && !rn2(SIZE(random_insult))) {
             SetVoice(mtmp, 0, 80, 0);
             verbalize("Relinquish the amulet, %s!",
-                      ROLL_FROM(random_insult));
+                      insult());
         } else if (u.uhp < 5 && !rn2(2)) { /* Panic */
             SetVoice(mtmp, 0, 80, 0);
             verbalize(rn2(2) ? "Even now thy life force ebbs, %s!"
                              : "Savor thy breath, %s, it be thy last!",
-                      ROLL_FROM(random_insult));
+                      insult());
         } else if (mtmp->mhp < 5 && !rn2(2)) { /* Parthian shot */
             SetVoice(mtmp, 0, 80, 0);
             verbalize(rn2(2) ? "I shall return." : "I'll be back.");
@@ -866,7 +876,7 @@ cuss(struct monst *mtmp)
             SetVoice(mtmp, 0, 80, 0);
             verbalize("%s %s!",
                       ROLL_FROM(random_malediction),
-                      ROLL_FROM(random_insult));
+                      insult());
         }
     } else if (is_lminion(mtmp)
                && !(mtmp->isminion && EMIN(mtmp)->renegade)) {

@@ -2476,6 +2476,12 @@ mm_aggression(
     if ((mndx == PM_PURPLE_WORM || mndx == PM_BABY_PURPLE_WORM)
         && mdef->data == &mons[PM_SHRIEKER])
         return ALLOW_M | ALLOW_TM;
+    /* pirates vs mercenaries, and hostile pirates vs the crew of a Pirate
+       who has carried off their treasure (Hack'EM) */
+    if (is_pirate(magr->data)
+        && (is_mercenary(mdef->data)
+            || (!magr->mpeaceful && mdef->mtame && Pirate_kinghill)))
+        return ALLOW_M | ALLOW_TM;
     /* Various other combinations such as dog vs cat, cat vs rat, and
        elf vs orc have been suggested.  For the time being we don't
        support those. */

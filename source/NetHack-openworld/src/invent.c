@@ -1503,6 +1503,18 @@ carrying(int type)
     return otmp;
 }
 
+/* return the artifact 'artinum' if it is in the hero's main inventory */
+struct obj *
+carrying_arti(int artinum)
+{
+    struct obj *otmp;
+
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (otmp->oartifact == artinum)
+            break;
+    return otmp;
+}
+
 /* return inventory object of type that will petrify on touch */
 struct obj *
 carrying_stoning_corpse(void)

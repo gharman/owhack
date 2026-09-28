@@ -211,6 +211,8 @@ obj_typename(int otyp)
         actualn = Japanese_item_name(otyp, actualn);
         if (otyp == WOODEN_HARP || otyp == MAGIC_HARP)
             dn = "koto";
+    } else if (Role_if(PM_PIRATE)) {
+        actualn = pirate_item_name(otyp, actualn);
     }
     /* generic items don't have an actual-name; we shouldn't ever be called
        for those; pacify static analyzer without resorting to impossible() */
@@ -222,7 +224,7 @@ obj_typename(int otyp)
     case COIN_CLASS:
         return strcpy(buf, actualn); /* "gold piece" */
     case POTION_CLASS:
-        Strcpy(buf, "potion");
+        Strcpy(buf, Role_if(PM_PIRATE) ? "bottle" : "potion");
         break;
     case SCROLL_CLASS:
         Strcpy(buf, "scroll");
@@ -606,6 +608,8 @@ xname_flags(
         actualn = Japanese_item_name(typ, actualn);
         if (typ == WOODEN_HARP || typ == MAGIC_HARP)
             dn = "koto";
+    } else if (Role_if(PM_PIRATE)) {
+        actualn = pirate_item_name(typ, actualn);
     }
     /* generic items don't have an actual-name; we shouldn't ever be called
        for those; pacify static analyzer without resorting to impossible() */
@@ -833,7 +837,7 @@ xname_flags(
         if (dknown && obj->odiluted)
             Strcpy(buf, "diluted ");
         if (nn || un || !dknown) {
-            Strcat(buf, "potion");
+            Strcat(buf, Role_if(PM_PIRATE) ? "bottle" : "potion");
             if (!dknown)
                 break;
             if (nn) {
@@ -848,7 +852,7 @@ xname_flags(
             }
         } else {
             Strcat(buf, dn);
-            Strcat(buf, " potion");
+            Strcat(buf, Role_if(PM_PIRATE) ? " bottle" : " potion");
         }
         break;
     case SCROLL_CLASS:
@@ -1426,6 +1430,9 @@ doname_base(
         if (known) {
             Sprintf(eos(prefix), "%+d ", obj->spe); /* sitoa(obj->spe)+" " */
         }
+        /* the hero notices when a firearm they carry has jammed */
+        if (is_firearm(obj) && obj->obroken && obj->where == OBJ_INVENT)
+            Concat(bp, 0, " (jammed)");
         break;
     case TOOL_CLASS:
         if (obj->owornmask & (W_TOOL | W_SADDLE)) { /* blindfold */
@@ -2550,12 +2557,13 @@ static const char *const wrp[] = {
     "amulet", "spellbook", "spell book",
     /* for non-specific wishes */
     "weapon", "armor",     "tool",       "food",   "comestible",
+    "bottle", /* what a Pirate calls a potion */
 };
 static const char wrpsym[] = { WAND_CLASS,   RING_CLASS,   POTION_CLASS,
                                SCROLL_CLASS, GEM_CLASS,    AMULET_CLASS,
                                SPBOOK_CLASS, SPBOOK_CLASS, WEAPON_CLASS,
                                ARMOR_CLASS,  TOOL_CLASS,   FOOD_CLASS,
-                               FOOD_CLASS };
+                               FOOD_CLASS,   POTION_CLASS };
 
 /* return form of the verb (input plural) if xname(otmp) were the subject */
 char *
@@ -2608,6 +2616,10 @@ vtense(const char *subj, const char *verb)
      * Special case: allow null sobj to get the singular 3rd person
      * present tense form so we don't duplicate this code elsewhere.
      */
+    if (Role_if(PM_PIRATE) && !strcmp(verb, "are")) {
+        Strcpy(buf, "be"); /* "the boots be too small" */
+        return buf;
+    }
     if (subj) {
         if (!strncmpi(subj, "a ", 2) || !strncmpi(subj, "an ", 3))
             goto sing;
@@ -4805,6 +4817,8 @@ readobjnam_postparse3(struct _readobjnam_data *d)
             }
             j++;
         }
+        if ((d->typ = pirate_item_otyp(d->actualn)) != STRANGE_OBJECT)
+            return 2; /*goto typfnd;*/
     }
     /* if we've stripped off "armor" and failed to match anything
        in objects[], append "mail" and try again to catch misnamed
@@ -5029,7 +5043,8 @@ readobjnam(char *bp, struct obj *no_wish)
         return ((struct obj *) 0);
  any:
     if (!d.oclass)
-        d.oclass = wrpsym[rn2((int) sizeof wrpsym)];
+        /* (not the final "bottle" entry, which would favor potions) */
+        d.oclass = wrpsym[rn2((int) sizeof wrpsym - 1)];
  typfnd:
     if (d.typ)
         d.oclass = objects[d.typ].oc_class;

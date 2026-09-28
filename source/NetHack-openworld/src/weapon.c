@@ -509,6 +509,10 @@ oselect(struct monst *mtmp, int type)
         if (!can_touch_safely(mtmp, otmp))
             continue;
 
+        /* never select a jammed firearm */
+        if (is_firearm(otmp) && otmp->obroken)
+            continue;
+
         return otmp;
     }
     return (struct obj *) 0;

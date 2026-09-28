@@ -2680,6 +2680,11 @@ potion_dip(struct obj *obj, struct obj *potion)
              */
         } else if ((!is_rustprone(obj) && !is_corrodeable(obj))
                    || is_ammo(obj) || (!obj->oeroded && !obj->oeroded2)) {
+            if (is_firearm(obj) && obj->obroken) {
+                You("unjam %s.", ysimple_name(obj));
+                obj->obroken = 0;
+                exercise(A_INT, TRUE);
+            }
             /* uses up potion, doesn't set obj->greased */
             if (!Blind)
                 pline("%s %s with an oily sheen.", Yname2(obj),

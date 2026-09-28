@@ -1500,10 +1500,16 @@ attributes_enlightenment(
     enlght_out(final ? "Final Attributes:" : "Attributes:");
 
     if (u.uevent.uhand_of_elbereth) {
-        static const char *const hofe_titles[3] = { "the Hand of Elbereth",
+        static const char *const hofe_titles[4] = { "the Hand of Elbereth",
                                                     "the Envoy of Balance",
-                                                    "the Glory of Arioch" };
-        you_are(hofe_titles[u.uevent.uhand_of_elbereth - 1], "");
+                                                    "the Glory of Arioch",
+                                                    "the Emissary of Moloch" };
+
+        if (Role_if(PM_PIRATE))
+            you_are(flags.female ? "the Pirate Queen" : "the Pirate King",
+                    "");
+        else
+            you_are(hofe_titles[u.uevent.uhand_of_elbereth - 1], "");
     }
 
     Sprintf(buf, "%s", piousness(TRUE, "aligned"));

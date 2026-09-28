@@ -1814,6 +1814,11 @@ rndmonst_adj(int minadj, int maxadj)
     int weight, totalweight, selected_mndx, zlevel, minmlev, maxmlev;
     boolean elemlevel, upper;
 
+    if (Pirate_kinghill && rnd(100) > 80) {
+        mndx = Inhell ? PM_DAMNED_PIRATE : PM_SKELETAL_PIRATE;
+        if (!(svm.mvitals[mndx].mvflags & G_GONE))
+            return &mons[mndx];
+    }
     if (u.uz.dnum == quest_dnum && rn2(7) && (ptr = qt_montype()) != 0)
         return ptr;
 

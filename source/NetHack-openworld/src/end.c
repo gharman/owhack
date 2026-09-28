@@ -1352,7 +1352,9 @@ really_done(int how)
         }
     }
 
-    if (ismnum(u.ugrave_arise) && !done_stopprint) {
+    /* (a dead Pirate always rises as a skeletal pirate, so don't tell) */
+    if (ismnum(u.ugrave_arise) && u.ugrave_arise != PM_SKELETAL_PIRATE
+        && !done_stopprint) {
         /* give this feedback even if bones aren't going to be created,
            so that its presence or absence doesn't tip off the player to
            new bones or their lack; it might be a lie if makemon fails */

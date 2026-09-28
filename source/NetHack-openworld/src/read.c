@@ -1701,6 +1701,12 @@ seffect_enchant_weapon(struct obj **sobjp)
         *sobjp = 0; /* nothing enchanted: strange_feeling -> useup */
     if (uwep)
         cap_spe(uwep);
+    /* jam or unjam a wielded firearm as appropriate (silently; there
+       are other messages) (Hack'EM) */
+    if (uwep && is_firearm(uwep)) {
+        uwep->obroken = scursed ? 1 : 0;
+        update_inventory();
+    }
 }
 
 staticfn void

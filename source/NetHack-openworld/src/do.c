@@ -1074,7 +1074,9 @@ menu_drop(int retry)
                            & ECMD_TIME) != 0) ? 1 : 0;
     } else {
         /* should coordinate with perm invent, maybe not show worn items */
-        n = query_objlist("What would you like to drop?", &gi.invent,
+        n = query_objlist(Role_if(PM_PIRATE) ? "What would ye like to drop?"
+                                             : "What would you like to drop?",
+                          &gi.invent,
                           (USE_INVLET | INVORDER_SORT | INCLUDE_VENOM),
                           &pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);

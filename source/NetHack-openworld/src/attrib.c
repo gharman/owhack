@@ -442,7 +442,10 @@ stone_luck(boolean include_uncursed)
 
     for (otmp = gi.invent; otmp; otmp = otmp->nobj)
         if (confers_luck(otmp)) {
-            if (otmp->cursed)
+            /* the Pirates' quest artifact never counts as cursed for
+               them (Hack'EM) */
+            if (otmp->cursed
+                && !(Role_if(PM_PIRATE) && is_quest_artifact(otmp)))
                 bonchance -= otmp->quan;
             else if (otmp->blessed || include_uncursed)
                 bonchance += otmp->quan;
