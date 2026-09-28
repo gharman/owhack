@@ -175,7 +175,8 @@ sanity_check_single_mon(
         if (mtmp == u.ustuck)
             impossible("hiding monster stuck to you (%s)", msg);
         if (m_at(mx, my) == mtmp && hides_under(mptr) && !OBJ_AT(mx, my))
-            impossible("mon hiding under nonexistent obj (%s)", msg);
+            impossible("mon hiding under nonexistent obj (%s: %s at %d,%d)",
+                       msg, pmname(mptr, Mgender(mtmp)), mx, my);
         if (mptr->mlet == S_EEL
             && !(is_pool(mx, my) && !Is_waterlevel(&u.uz)))
             impossible("eel hiding %s (%s)",

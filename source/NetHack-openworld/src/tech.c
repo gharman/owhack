@@ -3862,6 +3862,8 @@ tech_telekinesis(void)
                 continue;
             You("draw %s toward you with the Force.", the(xname(otmp)));
             (void) pickup_object(otmp, otmp->quan, TRUE);
+            /* a monster hiding under it may have lost its cover */
+            maybe_unhide_at(cc.x, cc.y);
             newsym(cc.x, cc.y);
             return 1;
         } else {

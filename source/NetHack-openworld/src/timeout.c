@@ -1981,6 +1981,7 @@ bomb_blow(anything *arg, long timeout)
         break;
     case OBJ_FLOOR:
         obj_extract_self(bomb);
+        maybe_unhide_at(x, y); /* it may have been all a hider hid under */
         newsym(x, y);
         if (!silent) {
             if (u_at(x, y)) {
