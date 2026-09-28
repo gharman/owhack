@@ -1,0 +1,75 @@
+                    The Open World
+                    ==============
+
+This version of NetHack has no staircases leading down from level to
+level.  Instead, the world is one vast stretch of open country, and the
+further you wander from where you started, the more dangerous it becomes.
+
+The center of the world
+    You begin standing on the high altar of your own god, at the center
+    of a marble plaza.  The high altars of the other two gods stand to
+    either side.  When you return here carrying the Amulet of Yendor and
+    offer it (#offer) on your own god's high altar, you will ascend.
+    The high altars accept no lesser sacrifice; offering a corpse there
+    does nothing, and costs you nothing either.
+
+Depth and the compass
+    The land is divided into concentric rings around the center.  Your
+    ring is your depth: "Dlvl" on the status line.  Monsters, treasure,
+    traps, shops and everything else are chosen by depth just as they
+    would be for a dungeon level that deep.  The status line also shows
+    "Home:" followed by the direction and distance to the center, and a
+    compass rose in the corner of the map points the way home.  Both can
+    be turned off with the 'compass' option.
+
+The lands
+    Near the center lie gentle meadows.  Further out are forests and
+    deep woods, hills, mountain ranges (solid rock, which can be dug
+    through, walled by cliffs, with caves winding through the largest),
+    lakes, swamps, frozen tundra, deserts with the occasional oasis, and
+    the ruins of forgotten buildings.  Great roads lead outward from the
+    plaza.  Towns hold shops, temples and houses, guarded by the town
+    watch; in the deep country, towns may be abandoned and haunted.
+    Treasure vaults are sealed inside the mountains; somewhere beyond
+    depth 10, one of them may hold the portal to Fort Ludios.
+
+Portals
+    Special places are reached through magic portals, which stand in
+    circles of standing stones evenly spaced around the ring at the
+    depth where each belongs: the Gnomish Mines, the Oracle, Sokoban,
+    the Big Room (if there is one), your Quest, Medusa's island, and in
+    Gehennom the lairs of the demon lords, the towers of the Wizard and
+    of Vlad, and the Gates of Moloch.  Larger rings have more portals.
+    The name of the destination is engraved beside each portal.
+    Leaving a branch (by its staircase or portal) returns you to the very
+    portal you used to enter it.  #overview lists the portal rings you
+    know about.
+
+Gehennom
+    The outermost rings are Gehennom itself, walled off from the rest of
+    the world by the Barrier, a ring of impassable, undiggable mountains.
+    The only way through is the Valley of the Dead: take the portals to
+    Medusa's island, pass her and the Castle beyond, and fall through the
+    Castle's trap doors into the Valley.  The Valley's way down opens
+    into Gehennom beyond the Barrier; gates there lead back into the
+    Valley.  You cannot level teleport past the Barrier until you have
+    entered Gehennom.  Deep in Gehennom, the invocation at the Gates of
+    Moloch opens the way to the Sanctum.  Carrying the Amulet back up
+    through Gehennom, a mysterious force may push you back out as you
+    cross into a shallower ring.
+
+Getting around
+    The map scrolls so that you stay in the middle of the screen (see
+    the 'centerview' option).  Number pad movement is on by default.
+    Travel (_) works across the open country, and level teleportation
+    moves you from one ring to another.  There is no "down": digging
+    down makes a pit, and there are no trap doors or holes in the open
+    world.  A cursed potion of gain level carries you one ring inward.
+    Teleportation, and effects which normally cover "the whole level"
+    (magic mapping, detection, clairvoyance), cover the surrounding
+    stretch of country.
+
+Monsters
+    Monsters far from you rest where they are; only those within a
+    screen or two of you are active.  So a dragon on the far side of the
+    world will not come looking for you just because you share a level.
