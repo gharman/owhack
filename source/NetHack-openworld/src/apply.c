@@ -4362,6 +4362,9 @@ doapply(void)
     case MAGIC_MARKER:
         res = dowrite(obj);
         break;
+    case SEXTANT:
+        res = use_sextant(obj);
+        break;
     case TIN_OPENER:
         res = use_tin_opener(obj);
         break;

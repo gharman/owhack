@@ -40,6 +40,7 @@ staticfn int invoke_banish(struct obj *) NONNULLARG1;
 staticfn int invoke_fling_poison(struct obj *) NONNULLARG1;
 staticfn int invoke_storm_spell(struct obj *) NONNULLARG1;
 staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
+staticfn int invoke_pathfinding(struct obj *) NONNULLARG1;
 staticfn int arti_invoke_cost_pw(struct obj *) NONNULLARG1;
 staticfn boolean arti_invoke_cost(struct obj *) NONNULLARG1;
 staticfn int arti_invoke(struct obj *);
@@ -875,6 +876,19 @@ set_artifact_intrinsic(
             EProtection |= wp_mask;
         else
             EProtection &= ~wp_mask;
+    }
+    if (spfx & SPFX_FAST) {
+        /* like speed boots; message only if it makes a difference */
+        boolean already = ((EFast & ~wp_mask) != 0L
+                           || (HFast & ~INTRINSIC) != 0L);
+
+        if (on)
+            EFast |= wp_mask;
+        else
+            EFast &= ~wp_mask;
+        if (!already && !program_state.restoring && u.ulevel)
+            You_feel("yourself %s%s.", on ? "speed up" : "slow down",
+                     HFast ? " a bit" : "");
     }
 
     if (wp_mask == W_ART && !on && oart->inv_prop) {
@@ -2050,6 +2064,18 @@ invoke_storm_spell(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* Pathfinder: a level teleport to a destination of the hero's choosing,
+   subject to all the usual restrictions (not while carrying the Amulet or
+   in Sokoban, not past the Barrier before having entered Gehennom, and so
+   on); in the open world, choosing a level means choosing a ring */
+staticfn int
+invoke_pathfinding(struct obj *obj)
+{
+    pline("%s points the way.", The(xname(obj)));
+    controlled_level_tele();
+    return ECMD_TIME;
+}
+
 staticfn int
 invoke_blinding_ray(struct obj *obj)
 {
@@ -2170,6 +2196,8 @@ arti_invoke(struct obj *obj)
             /*FALLTHRU*/
         case FIRESTORM: res = invoke_storm_spell(obj); break;
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
+        case CHARTING: res = invoke_charting(obj); break;
+        case PATHFINDING: res = invoke_pathfinding(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;
