@@ -509,6 +509,16 @@ study_book(struct obj *spellbook)
             return 1;
         }
 
+        /* only illithids can learn the psionic wave (EvilHack) */
+        if (booktype == SPE_PSIONIC_WAVE && !Race_if(PM_ILLITHID)) {
+            You("do not understand the strange language this book is "
+                "written in.");
+            pline_The("inscriptions in the book start to fade away!");
+            spellbook->otyp = booktype = SPE_BLANK_PAPER;
+            makeknown(booktype);
+            return 1;
+        }
+
         /* 3.6 tribute */
         if (booktype == SPE_NOVEL) {
             /* Obtain current Terry Pratchett book title */
@@ -676,7 +686,8 @@ age_spells(void)
      * does not alter the loss of memory.
      */
     for (i = 0; i < MAXSPELL && spellid(i) != NO_SPELL; i++)
-        if (spellknow(i))
+        /* an illithid's psionics are innate and never fade (EvilHack) */
+        if (spellknow(i) && spellid(i) != SPE_PSIONIC_WAVE)
             decrnknow(i);
     return;
 }
@@ -1248,8 +1259,17 @@ spelleffects_check(int spell, int *res, int *energy)
      * Spell casting no longer affects knowledge of the spell. A
      * decrement of spell knowledge is done every turn.
      */
-    if (spellknow(spell) <= 0) {
-        Your("knowledge of this spell is twisted.");
+    if (spellid(spell) == SPE_PSIONIC_WAVE && !u_illithid()) {
+        /* an illithid polymorphed into something other than a mind
+           flayer lacks the brain to use its psionics (EvilHack) */
+        You("lack the psychic ability to use this power.");
+        *res = ECMD_OK;
+        return TRUE;
+    } else if (spellknow(spell) <= 0) {
+        if (spellid(spell) == SPE_PSIONIC_WAVE)
+            You("have somehow lost your psychic ability!");
+        else
+            Your("knowledge of this spell is twisted.");
         pline("It invokes nightmarish images in your mind...");
         spell_backfire(spell);
         u.uen -= rnd(*energy);
@@ -1287,7 +1307,10 @@ spelleffects_check(int spell, int *res, int *energy)
        in and no turn will be consumed; however, when it does kick in,
        the attempt may fail due to lack of energy after the draining, in
        which case a turn will be used up in addition to the energy loss */
-    if (u.uhave.amulet && u.uen >= *energy) {
+    /* psionics use spell power but aren't spells, so the Amulet doesn't
+       interfere with them (EvilHack) */
+    if (u.uhave.amulet && u.uen >= *energy
+        && spellid(spell) != SPE_PSIONIC_WAVE) {
         You_feel("the amulet draining your energy away.");
         /* this used to be 'energy += rnd(2 * energy)' (without 'res'),
            so if amulet-induced cost was more than u.uen, nothing
@@ -1312,10 +1335,13 @@ spelleffects_check(int spell, int *res, int *energy)
          * isn't now (lost energy when losing levels or polymorphing into
          * new person or had some stripped away by traps or monsters).
          */
-        You("don't have enough energy to cast that spell%s.",
-            (u.uen < u.uenmax) ? "" /* not at full energy => normal message */
-            : (*energy > u.uenpeak) ? " yet" /* haven't ever had enough */
-              : " anymore"); /* once had enough but have lost some since */
+        if (spellid(spell) == SPE_PSIONIC_WAVE)
+            Your("mind is fatigued.  You cannot use your psychic energy.");
+        else
+            You("don't have enough energy to cast that spell%s.",
+                (u.uen < u.uenmax) ? "" /* not at full energy */
+                : (*energy > u.uenpeak) ? " yet" /* never had enough */
+                  : " anymore"); /* once had enough but lost some since */
         return TRUE;
     } else {
         if (spellid(spell) != SPE_DETECT_FOOD) {
@@ -1370,7 +1396,10 @@ spelleffects_check(int spell, int *res, int *energy)
 
     chance = percent_success(spell);
     if (confused || (rnd(100) > chance)) {
-        You("fail to cast the spell correctly.");
+        if (spellid(spell) == SPE_PSIONIC_WAVE)
+            You("are too confused to use your psychic abilities.");
+        else
+            You("fail to cast the spell correctly.");
         u.uen -= *energy / 2;
         disp.botl = TRUE;
         *res = ECMD_TIME;
@@ -1476,6 +1505,7 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
     case SPE_EXTRA_HEALING:
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
+    case SPE_PSIONIC_WAVE:
         if (objects[otyp].oc_dir != NODIR) {
             if (otyp == SPE_HEALING || otyp == SPE_EXTRA_HEALING) {
                 /* healing and extra healing are actually potion effects,
@@ -1495,7 +1525,9 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
                  * spelleffects() is organized means that aborting with
                  * "nevermind" is not an option.
                  */
-                pline_The("magical energy is released!");
+                pline_The("%s energy is released!",
+                          (otyp == SPE_PSIONIC_WAVE) ? "psionic"
+                                                     : "magical");
             }
             if (!u.dx && !u.dy && !u.dz) {
                 if ((damage = zapyourself(pseudo, TRUE)) != 0) {
@@ -1574,9 +1606,11 @@ spelleffects(int spell_otyp, boolean atme, boolean force)
             if (role_skill >= P_SKILLED)
                 pseudo->blessed = 1; /* detect monsters as well as map */
             do_vicinity_map(pseudo);
-        /* at present, only one thing blocks clairvoyance */
+        /* at present, only two things block clairvoyance */
         } else if (uarmh && uarmh->otyp == CORNUTHAUM)
             You("sense a pointy hat on top of your %s.", body_part(HEAD));
+        else if (uarmh && uarmh->otyp == TINFOIL_HAT)
+            You("sense a crinkly hat on top of your %s.", body_part(HEAD));
         break;
     case SPE_PROTECTION:
         cast_protection();
@@ -1812,8 +1846,10 @@ losespells(void)
            remaining candidates shrinks, the chance per candidate
            gets bigger; overall, exactly nzap entries are affected */
         if (rn2(n - i) < nzap) {
-            /* lose access to spell [i] */
-            spellknow(i) = 0;
+            /* lose access to spell [i]; an illithid's psionics are part
+               of its nature rather than something learned */
+            if (spellid(i) != SPE_PSIONIC_WAVE)
+                spellknow(i) = 0;
 #if 0
             /* also forget its book */
             forget_single_object(spellid(i));
@@ -2287,6 +2323,10 @@ percent_success(int spell)
         chance = 100;
     if (chance < 0)
         chance = 0;
+
+    /* an illithid can always use its natural psionic ability (EvilHack) */
+    if (spellid(spell) == SPE_PSIONIC_WAVE && Race_if(PM_ILLITHID))
+        chance = 100;
 
     return chance;
 }

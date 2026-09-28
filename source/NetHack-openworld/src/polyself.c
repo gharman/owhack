@@ -2043,6 +2043,13 @@ domindblast(void)
         if (mindless(mtmp->data))
             continue;
         u_sen = telepathic(mtmp->data) && !mtmp->mcansee;
+        /* a psychic resister (or another mind flayer) is aware of the
+           probe but unharmed by it */
+        if (resists_psychic(mtmp) || is_mind_flayer(mtmp->data)) {
+            if (u_sen || canspotmon(mtmp))
+                pline("%s shrugs off your psychic blast.", Monnam(mtmp));
+            continue;
+        }
         if (u_sen || (telepathic(mtmp->data) && rn2(2)) || !rn2(10)) {
             dmg = rnd(15);
             /* wake it up first, to bring hidden monster out of hiding;

@@ -127,6 +127,8 @@ toggle_stealth(
                 You("float imperceptibly.");
             else
                 You("walk very quietly.");
+        } else if (u_giant()) {
+            You("are just as noisy as before.");
         } else {
             boolean riding = (u.usteed != NULL);
 
@@ -226,7 +228,16 @@ Boots_on(void)
         }
         break;
     case ELVEN_BOOTS:
-        toggle_stealth(uarmf, oldprop, TRUE);
+        if (u_giant() && !gi.initial_don) {
+            /* nothing silences a giant's tread (EvilHack) */
+            pline("These %s will not silence someone %s.", xname(uarmf),
+                  rn2(2) ? "as large as you" : "of your stature");
+            EStealth &= ~W_ARMF;
+        } else if (u_giant()) {
+            EStealth &= ~W_ARMF;
+        } else {
+            toggle_stealth(uarmf, oldprop, TRUE);
+        }
         break;
     case FUMBLE_BOOTS:
         if (!oldprop && !(HFumbling & ~TIMEOUT))
@@ -448,6 +459,16 @@ Helmet_on(void)
     case HELM_OF_CAUTION:
         see_monsters();
         break;
+    case TINFOIL_HAT:
+        /* shields the mind: psychic resistance, and it blocks telepathy
+           (via w_blocks()) and clairvoyance (Hack'EM) */
+        if (!gi.initial_don) {
+            Your("thoughts feel much more secure.");
+            makeknown(TINFOIL_HAT);
+        }
+        BClairvoyant |= W_ARMH;
+        see_monsters();
+        break;
     case HELM_OF_BRILLIANCE:
         adj_abon(uarmh, uarmh->spe);
         break;
@@ -539,6 +560,10 @@ Helmet_off(void)
             disp.botl = TRUE;
         }
         break;
+    case TINFOIL_HAT:
+        BClairvoyant &= ~W_ARMH;
+        FALLTHROUGH;
+        /*FALLTHRU*/
     case HELM_OF_TELEPATHY:
     case HELM_OF_CAUTION:
         /* need to update ability before calling see_monsters() */
@@ -1280,7 +1305,14 @@ Ring_on(struct obj *obj)
         /* wearing a meat ring does not affect vegan conduct */
         break;
     case RIN_STEALTH:
-        toggle_stealth(obj, oldprop, TRUE);
+        if (u_giant()) {
+            /* nothing silences a giant's tread (EvilHack) */
+            pline("This %s will not silence someone %s.", xname(obj),
+                  rn2(2) ? "as large as you" : "of your stature");
+            EStealth &= ~(obj->owornmask & W_RING);
+        } else {
+            toggle_stealth(obj, oldprop, TRUE);
+        }
         break;
     case RIN_WARNING:
         see_monsters();

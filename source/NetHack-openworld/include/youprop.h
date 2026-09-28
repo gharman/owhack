@@ -157,8 +157,10 @@
 
 #define HTelepat u.uprops[TELEPAT].intrinsic
 #define ETelepat u.uprops[TELEPAT].extrinsic
-#define Blind_telepat (HTelepat || ETelepat)
-#define Unblind_telepat (ETelepat)
+#define BTelepat u.uprops[TELEPAT].blocked
+/* a tinfoil hat blocks telepathy */
+#define Blind_telepat ((HTelepat || ETelepat) && !BTelepat)
+#define Unblind_telepat (ETelepat && !BTelepat)
 
 #define HBlnd_resist u.uprops[BLND_RES].intrinsic /* from form */
 #define EBlnd_resist u.uprops[BLND_RES].extrinsic /* wielding Sunsword */

@@ -1535,6 +1535,7 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
             } else {
                 You("are burning to a crisp!");
                 monstunseesu(M_SEEN_FIRE);
+                tmp = u_fire_vuln(tmp);
             }
             burn_away_slime();
         } else

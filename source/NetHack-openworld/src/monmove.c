@@ -587,13 +587,21 @@ mind_blast(struct monst *mtmp)
     if (canseemon(mtmp))
         pline_mon(mtmp, "%s concentrates.", Monnam(mtmp));
     if (mdistu(mtmp) > BOLT_LIM * BOLT_LIM) {
-        You("sense a faint wave of psychic energy.");
+        /* a tinfoil hat keeps out even the faintest wave (Hack'EM) */
+        if (!(uarmh && uarmh->otyp == TINFOIL_HAT))
+            You("sense a faint wave of psychic energy.");
         return;
     }
     pline("A wave of psychic energy pours over you!");
     if (mtmp->mpeaceful
         && (!Conflict || resist_conflict(mtmp))) {
         pline("It feels quite soothing.");
+    } else if (u_illithid()) {
+        /* EvilHack */
+        Your("psionic abilities shield your brain.");
+    } else if (Psychic_resistance) {
+        /* Hack'EM */
+        You("are unaffected.");
     } else if (!u.uinvulnerable) {
         int dmg;
         boolean m_sen = sensemon(mtmp);
@@ -631,6 +639,9 @@ mind_blast(struct monst *mtmp)
         if (mindless(m2->data))
             continue;
         if (m2 == mtmp)
+            continue;
+        /* other mind flayers and psychic resisters shrug it off */
+        if (is_mind_flayer(m2->data) || resists_psychic(m2))
             continue;
         if ((telepathic(m2->data) && (rn2(2) || m2->mblinded)) || !rn2(10)) {
             /* wake it up first, to bring hidden monster out of hiding */

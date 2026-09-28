@@ -2744,6 +2744,8 @@ extern boolean u_draugr(void);
 extern boolean u_ghost(void);
 extern boolean u_ghost_passthru(struct monst *, struct obj *);
 extern int u_ghost_dmg(int, struct monst *, struct obj *);
+extern boolean u_fire_vulnerable(void);
+extern int u_fire_vuln(int);
 extern boolean your_race_form(int);
 extern boolean u_vamp_hunger(void);
 extern void vampire_starvation(void);
@@ -2765,6 +2767,7 @@ extern boolean dopp_knows_form(int);
 extern void note_eaten_form(int);
 extern void forget_eaten_forms(void);
 extern boolean u_psionics_blocked(boolean);
+extern int psionic_wave_dmg(void);
 extern int race_monability(void);
 extern void race_form_props(boolean);
 

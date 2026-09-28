@@ -549,6 +549,7 @@ mcast_fire_pillar(struct monst *mtmp, int dmg)
         dmg = 0;
     } else {
         monstunseesu(M_SEEN_FIRE);
+        dmg = u_fire_vuln(dmg);
     }
     if (Half_spell_damage)
         dmg = (dmg + 1) / 2;

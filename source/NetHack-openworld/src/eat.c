@@ -660,7 +660,7 @@ eat_brains(
         return M_ATTK_AGR_DIED;
     }
 
-    if (noncorporeal(pd)) {
+    if (noncorporeal(pd) || (mdef == &gy.youmonst && u_ghost())) {
         if (visflag)
             pline("%s brain is unharmed.",
                   (mdef == &gy.youmonst) ? "Your" : s_suffix(Monnam(mdef)));

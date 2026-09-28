@@ -215,6 +215,49 @@ bhitm(struct monst *mtmp, struct obj *otmp)
             learn_it = FALSE;
         }
         break;
+    case SPE_PSIONIC_WAVE:
+        /* an illithid's mental assault (EvilHack) */
+        learn_it = TRUE;
+        if (!u_illithid()) {
+            Your("mind is not capable of using psionic abilities.");
+            wake = FALSE;
+        } else if (u_psionics_blocked(TRUE)) {
+            wake = FALSE;
+        } else {
+            You("mentally %s %s!", rn2(2) ? "attack" : "assault",
+                mon_nam(mtmp));
+            if (mindless(mtmp->data)) {
+                shieldeff(mtmp->mx, mtmp->my);
+                pline("%s has no mind, and is immune to your mental "
+                      "attack.", Monnam(mtmp));
+            } else if (resists_psychic(mtmp)) {
+                shieldeff(mtmp->mx, mtmp->my);
+                pline("%s resists your mental onslaught!", Monnam(mtmp));
+            } else {
+                dmg = psionic_wave_dmg();
+                if (!rn2(4) && uarmh && uarmh->otyp == HELM_OF_TELEPATHY) {
+                    Your("%s focuses your psychic attack!",
+                         helm_simple_name(uarmh));
+                    dmg += rnd(6) + 2; /* 3..8 extra */
+                }
+                mtmp->mhp -= dmg;
+                if (DEADMONSTER(mtmp)) {
+                    killed(mtmp);
+                } else {
+                    if (canseemon(mtmp))
+                        pline("%s %s in %s!", Monnam(mtmp),
+                              rn2(2) ? "withers" : "trembles",
+                              rn2(2) ? "agony" : "anguish");
+                    if (!rn2(4)) {
+                        mtmp->mconf = 1;
+                        if (canseemon(mtmp))
+                            pline("%s seems %s!", Monnam(mtmp),
+                                  rn2(2) ? "confused" : "disoriented");
+                    }
+                }
+            }
+        }
+        break;
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
         if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
@@ -2421,6 +2464,7 @@ bhito(struct obj *obj, struct obj *otmp)
         case WAN_NOTHING:
         case SPE_HEALING:
         case SPE_EXTRA_HEALING:
+        case SPE_PSIONIC_WAVE:
             res = 0;
             break;
         case SPE_STONE_TO_FLESH:
@@ -2723,6 +2767,22 @@ zapyourself(struct obj *obj, boolean ordinary)
     int orig_dmg = 0; /* for passing to destroy_items() */
 
     switch (obj->otyp) {
+    case SPE_PSIONIC_WAVE:
+        learn_it = TRUE;
+        if (!u_illithid()) {
+            Your("mind is not capable of using psionic abilities.");
+        } else if (u_psionics_blocked(TRUE)) {
+            ; /* message given */
+        } else if (Psychic_resistance) {
+            shieldeff(u.ux, u.uy);
+            Your("wave of psionic energy drifts harmlessly through your "
+                 "mind.");
+        } else {
+            You("assault your own mind!");
+            make_stunned((HStun & TIMEOUT) + (long) rnd(10), FALSE);
+            damage = psionic_wave_dmg();
+        }
+        break;
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
         learn_it = TRUE;
@@ -3135,6 +3195,7 @@ zap_steed(struct obj *obj) /* wand or spell */
     case SPE_POLYMORPH:
     case WAN_STRIKING:
     case SPE_FORCE_BOLT:
+    case SPE_PSIONIC_WAVE:
     case WAN_SLOW_MONSTER:
     case SPE_SLOW_MONSTER:
     case WAN_SPEED_MONSTER:
@@ -4440,7 +4501,7 @@ zhitu(
             monstseesu(M_SEEN_FIRE);
             ugolemeffects(AD_FIRE, orig_dam);
         } else {
-            dam = orig_dam;
+            dam = u_fire_vuln(orig_dam);
             monstunseesu(M_SEEN_FIRE);
         }
         burn_away_slime();

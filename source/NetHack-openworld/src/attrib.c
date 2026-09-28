@@ -932,6 +932,9 @@ race_blocks_abil(const long *ability)
     if ((Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))
         && ability == &HFire_resistance)
         return TRUE;
+    /* a draugr's rotting brain gains no telepathy (EvilHack) */
+    if (Race_if(PM_DRAUGR) && ability == &HTelepat)
+        return TRUE;
     return FALSE;
 }
 

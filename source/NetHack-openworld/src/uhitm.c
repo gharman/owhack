@@ -2743,6 +2743,7 @@ mhitm_ad_fire(
                 mhm->damage = 0;
             } else {
                 monstunseesu(M_SEEN_FIRE);
+                mhm->damage = u_fire_vuln(mhm->damage);
             }
             if ((int) magr->m_lev > rn2(20)) {
                 (void) destroy_items(&gy.youmonst, AD_FIRE, orig_dmg);
@@ -3372,7 +3373,8 @@ mhitm_ad_drin(
         if (m_slips_free(mdef, mattk))
             return;
 
-        if ((helmet = which_armor(mdef, W_ARMH)) != 0 && rn2(8)) {
+        if ((helmet = which_armor(mdef, W_ARMH)) != 0
+            && (rn2(8) || helmet->otyp == TINFOIL_HAT)) {
             pline("%s %s blocks your attack to %s head.",
                   s_suffix(Monnam(mdef)), helm_simple_name(helmet),
                   mhis(mdef));
@@ -3400,10 +3402,17 @@ mhitm_ad_drin(
         if (u_slip_free(magr, mattk))
             return;
 
-        if (uarmh && rn2(8)) {
+        /* a tinfoil hat always keeps the tentacles out (Hack'EM) */
+        if (uarmh && (rn2(8) || uarmh->otyp == TINFOIL_HAT)) {
             /* not body_part(HEAD) */
             Your("%s blocks the attack to your head.",
                  helm_simple_name(uarmh));
+            return;
+        }
+        /* an illithid's psionics ward off another mind flayer (EvilHack) */
+        if (u_illithid()) {
+            Your("psionic abilities shield your brain.");
+            gs.skipdrin = TRUE;
             return;
         }
         /* negative armor class doesn't reduce this damage */
@@ -3426,6 +3435,12 @@ mhitm_ad_drin(
                or shade) so this check for missing is academic */
             if (mhitu == M_ATTK_MISS)
                 return;
+        }
+        /* a shielded mind keeps its memories (Hack'EM) */
+        if (Psychic_resistance) {
+            Your("brain is shielded from memory loss!");
+            gs.skipdrin = TRUE;
+            return;
         }
         /* adjattrib gives dunce cap message when appropriate */
         (void) adjattrib(A_INT, -rnd(2), FALSE);
@@ -3451,7 +3466,9 @@ mhitm_ad_drin(
             gs.skipdrin = TRUE; /* affects mattackm()'s attack loop */
             return;
         }
-        if ((mdef->misc_worn_check & W_ARMH) && rn2(8)) {
+        if ((mdef->misc_worn_check & W_ARMH)
+            && (rn2(8)
+                || which_armor(mdef, W_ARMH)->otyp == TINFOIL_HAT)) {
             if (gv.vis && canspotmon(magr) && canseemon(mdef)) {
                 Strcpy(buf, s_suffix(Monnam(mdef)));
                 pline("%s helmet blocks %s attack to %s head.", buf,
@@ -6282,7 +6299,7 @@ passive(
                 }
                 monstunseesu(M_SEEN_FIRE);
                 You("are suddenly very hot!");
-                mdamageu(mon, tmp); /* fire damage */
+                mdamageu(mon, u_fire_vuln(tmp)); /* fire damage */
             }
             break;
         case AD_ELEC:

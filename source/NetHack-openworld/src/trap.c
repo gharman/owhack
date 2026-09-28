@@ -4292,7 +4292,7 @@ dofiretrap(
     } else {
         int uhpmin = minuhpmax(1), olduhpmax = u.uhpmax;
 
-        num = d(2, 4);
+        num = u_fire_vuln(d(2, 4));
         if (u.uhpmax > uhpmin) {
             u.uhpmax -= rn2(min(u.uhpmax, num + 1)), disp.botl = TRUE;
         } /* note: no 'else' here */

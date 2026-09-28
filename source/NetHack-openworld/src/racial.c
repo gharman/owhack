@@ -185,6 +185,25 @@ u_ghost_dmg(int dmg, struct monst *magr, struct obj *weapon)
     return dmg;
 }
 
+/* are the hero's undead flesh (draugr, vampire; natural form only) and
+   bones vulnerable to fire, taking half again as much fire damage as
+   anyone else?  (EvilHack) */
+boolean
+u_fire_vulnerable(void)
+{
+    return (!Upolyd && (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))
+            && !Fire_resistance);
+}
+
+/* adjust fire damage to the hero for fire vulnerability */
+int
+u_fire_vuln(int dmg)
+{
+    if (dmg > 0 && u_fire_vulnerable())
+        dmg = (dmg * 3 + 1) / 2;
+    return dmg;
+}
+
 /* set while a draugr's bite is being resolved, so that the victim can rise
    as a zombie if it dies of it */
 static boolean racial_bite;
@@ -681,13 +700,26 @@ forget_eaten_forms(void)
 boolean
 u_psionics_blocked(boolean verbose)
 {
-    if (uarmh && is_metallic(uarmh)) {
+    /* a heavy metal helmet (mithril is too light to matter) blocks them;
+       the Mitre of Holiness doesn't (EvilHack) */
+    if (uarmh && is_metallic(uarmh)
+        && objects[uarmh->otyp].oc_material != MITHRIL
+        && !is_art(uarmh, ART_MITRE_OF_HOLINESS)) {
         if (verbose)
-            pline_The("metal of your %s blocks your psionic attack.",
+            pline_The("%s of your %s blocks your psionic attack.",
+                      materialnm[objects[uarmh->otyp].oc_material],
                       helm_simple_name(uarmh));
         return TRUE;
     }
     return FALSE;
+}
+
+/* damage of the psionic wave, growing with experience (EvilHack) */
+int
+psionic_wave_dmg(void)
+{
+    return (u.ulevel >= 26) ? d(4, 6) : (u.ulevel >= 14) ? d(3, 6)
+                                                         : d(2, 6);
 }
 
 /*

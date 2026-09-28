@@ -37,6 +37,7 @@ static const struct worn {
 /* This only allows for one blocking item per property */
 #define w_blocks(o, m) \
     ((o->otyp == MUMMY_WRAPPING && ((m) & W_ARMC) != 0L) ? INVIS        \
+     : (o->otyp == TINFOIL_HAT && ((m) & W_ARMH) != 0L) ? TELEPAT       \
      : (o->otyp == CORNUTHAUM && ((m) & W_ARMH) != 0L                   \
         && !Role_if(PM_WIZARD)) ? CLAIRVOYANT                           \
        : (is_art(o, ART_EYES_OF_THE_OVERWORLD)                          \
