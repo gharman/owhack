@@ -170,7 +170,7 @@ u_ghost_passthru(struct monst *magr, struct obj *weapon)
     if (magr && magr != &gy.youmonst && noncorporeal(magr->data))
         return FALSE;
     if (weapon && (weapon->blessed
-                   || objects[weapon->otyp].oc_material == SILVER))
+                   || weapon->material == SILVER))
         return FALSE;
     return TRUE;
 }
@@ -483,7 +483,7 @@ u_arm_bonus(struct obj *obj)
 staticfn boolean
 rigid_armor(struct obj *obj)
 {
-    int mat = objects[obj->otyp].oc_material;
+    int mat = obj->material;
 
     return (mat == WOOD || mat == BONE || mat == GLASS || mat == MINERAL
             || mat == GEMSTONE || (mat >= IRON && mat <= MITHRIL));
@@ -873,11 +873,11 @@ u_psionics_blocked(boolean verbose)
     /* a heavy metal helmet (mithril is too light to matter) blocks them;
        the Mitre of Holiness doesn't (EvilHack) */
     if (uarmh && is_metallic(uarmh)
-        && objects[uarmh->otyp].oc_material != MITHRIL
+        && uarmh->material != MITHRIL
         && !is_art(uarmh, ART_MITRE_OF_HOLINESS)) {
         if (verbose)
             pline_The("%s of your %s blocks your psionic attack.",
-                      materialnm[objects[uarmh->otyp].oc_material],
+                      materialnm[uarmh->material],
                       helm_simple_name(uarmh));
         return TRUE;
     }

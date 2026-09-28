@@ -107,6 +107,8 @@ staticfn int tech_slipfree(void);
 staticfn int tech_mindblast(int);
 staticfn int tech_holdbreath(int);
 staticfn int tech_chargesaber(void);
+staticfn int drawblood_ok(struct obj *);
+staticfn int tech_drawblood(void);
 staticfn int charge_saber_occ(void);
 staticfn boolean tele_trap_handle(struct trap *);
 staticfn boolean waymark_spot_ok(coordxy, coordxy);
@@ -174,6 +176,7 @@ static const char *const tech_names[NUM_TECHS] = {
     "mind blast",
     "hold breath",
     "charge saber",
+    "draw blood",
 };
 
 /*
@@ -246,6 +249,7 @@ static const struct innate_tech
                    { 17, T_SPIRIT_TEMPEST, 1 },
                    { 0, 0, 0 } },
     pir_tech[] = { { 1, T_TUMBLE, 1 },
+                   { 3, T_HOLD_BREATH, 1 },
                    { 5, T_SUNDER, 1 },
                    { 0, 0, 0 } },
     pri_tech[] = { { 1, T_TURN_UNDEAD, 1 },
@@ -269,9 +273,11 @@ static const struct innate_tech
                    { 0, 0, 0 } },
     /*
      * Race techniques, keyed by the race's filecode.
-     * Dwa Gno Vam Dop follow Hack'EM, Wer follows Slash'EM's lycanthrope;
-     * Gia follows SlashTHEM's ogre; Cen Ill Trt Dra Gho are this
-     * variant's own.  Humans, elves and orcs have none (as in Slash'EM).
+     * Dwa Gno Vam Dop follow Hack'EM (Vam's draw blood is Slash'EM's),
+     * Wer follows Slash'EM's lycanthrope; Gia follows SlashTHEM's ogre;
+     * Cen Ill Dra Gho are this variant's own.  Humans, elves and orcs
+     * have none (as in Slash'EM), nor do tortles, whose shell (#monster)
+     * is their special ability.
      */
     dwa_tech[] = { { 1, T_RAGE, 1 },
                    { 0, 0, 0 } },
@@ -285,11 +291,10 @@ static const struct innate_tech
                    { 0, 0, 0 } },
     ill_tech[] = { { 1, T_MIND_BLAST, 1 },
                    { 0, 0, 0 } },
-    trt_tech[] = { { 1, T_HOLD_BREATH, 1 },
-                   { 0, 0, 0 } },
     dra_tech[] = { { 1, T_BERSERK, 1 },
                    { 0, 0, 0 } },
     vam_tech[] = { { 1, T_DAZZLE, 1 },
+                   { 1, T_DRAW_BLOOD, 1 },
                    { 0, 0, 0 } },
     wer_tech[] = { { 1, T_EVISCERATE, 1 },
                    { 10, T_BERSERK, 1 },
@@ -313,7 +318,7 @@ static const struct techtable {
     { (const char *) 0, (const struct innate_tech *) 0 }
 }, race_techtab[] = {
     { "Dwa", dwa_tech }, { "Gno", gno_tech }, { "Gia", gia_tech },
-    { "Cen", cen_tech }, { "Ill", ill_tech }, { "Trt", trt_tech },
+    { "Cen", cen_tech }, { "Ill", ill_tech },
     { "Dra", dra_tech }, { "Vam", vam_tech }, { "Wer", wer_tech },
     { "Dop", dop_tech }, { "Gho", gho_tech },
     { (const char *) 0, (const struct innate_tech *) 0 }
@@ -1359,6 +1364,11 @@ techeffects(int tech_no)
         res = tech_chargesaber();
         if (res)
             t_timeout = rn1(500, 1000);
+        break;
+    case T_DRAW_BLOOD:
+        res = tech_drawblood();
+        if (res)
+            t_timeout = rn1(1000, 500);
         break;
     default:
         impossible("No such technique effect (%d)", tid);
@@ -4723,6 +4733,9 @@ tech_mindblast(int tech_no)
     struct monst *mtmp;
     int radius = 4 + techlev(tech_no) / 3, dmg, nhit = 0;
 
+    /* a heavy metal helmet stops it, as it does the psychic blast */
+    if (u_psionics_blocked(TRUE))
+        return 0;
     You("unleash a wave of psychic energy!");
     /* strikes the hostile minds around you; you keep it away from your
        pets and from peaceful folk */
@@ -4734,6 +4747,13 @@ tech_mindblast(int tech_no)
         if (mindless(mtmp->data) || mtmp->data->mlet == S_EYE
             || is_mind_flayer(mtmp->data))
             continue;
+        if (resists_psychic(mtmp)) {
+            if (canspotmon(mtmp)) {
+                shieldeff(mtmp->mx, mtmp->my);
+                pline("%s shrugs off your mental assault.", Monnam(mtmp));
+            }
+            continue;
+        }
         dmg = d(2, 6) + techlev(tech_no) / 2;
         if (telepathic(mtmp->data))
             dmg *= 2; /* open minds are hurt the most */
@@ -4768,6 +4788,54 @@ tech_holdbreath(int tech_no)
     You("take a long, deep breath.");
     techt_inuse(tech_no) = dur + 1;
     incr_itimeout(&HMagical_breathing, dur);
+    return 1;
+}
+
+/* getobj callback for draw blood: a potion of water to hold the blood */
+staticfn int
+drawblood_ok(struct obj *obj)
+{
+    if (obj && obj->otyp == POT_WATER)
+        return GETOBJ_SUGGEST;
+    return GETOBJ_EXCLUDE;
+}
+
+/* vampire: draw off a phial of your own blood (Slash'EM).  It costs an
+   experience level, and yields a potion of vampire blood (of the same
+   blessedness as the water it replaces), a meal for a vampire that has
+   nothing else to feed on and a strong healing draught */
+staticfn int
+tech_drawblood(void)
+{
+    struct obj *obj, *otmp;
+
+    if (Upolyd || !Race_if(PM_VAMPIRE)) {
+        You("can only draw blood in your own form.");
+        return 0;
+    }
+    if (u.ulevel <= 1) {
+        You("can't find a vein!");
+        return 0;
+    }
+    if (!(obj = getobj("fill with your blood", drawblood_ok,
+                       GETOBJ_NOFLAGS)))
+        return 0;
+    if (obj->otyp != POT_WATER) {
+        pline("That won't hold your blood.");
+        return 0;
+    }
+    check_unpaid(obj);
+    otmp = mksobj(POT_VAMPIRE_BLOOD, FALSE, FALSE);
+    otmp->blessed = obj->blessed;
+    otmp->cursed = obj->cursed;
+    otmp->odiluted = 0;
+    useup(obj);
+    You("empty the water and draw off a phial of your own blood.");
+    losexp("drawing blood");
+    if (u.uexp > 0)
+        u.uexp = newuexp(u.ulevel) - 1;
+    (void) hold_another_object(otmp, "You fill, but have to drop, %s!",
+                               doname(otmp), (const char *) 0);
     return 1;
 }
 

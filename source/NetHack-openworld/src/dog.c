@@ -291,8 +291,10 @@ makedog(void)
     if (!svc.context.startingpet_mid) {
         svc.context.startingpet_mid = mtmp->m_id;
         if (!u.uroleplay.pauper) {
-            /* initial horses start wearing a saddle (pauper hero excluded) */
-            if (pettype == PM_PONY) {
+            /* initial horses start wearing a saddle (pauper hero excluded,
+               and heroes who can't ride: large races such as centaurs,
+               and ghosts, who would pass right through it) */
+            if (pettype == PM_PONY && u_size() < MZ_LARGE && !u_ghost()) {
                 /* NULL obj arg means put_saddle_on_mon()
                  * will carry out the saddle creation */
                 put_saddle_on_mon((struct obj *) 0, mtmp);

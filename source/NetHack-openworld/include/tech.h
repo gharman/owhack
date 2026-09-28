@@ -73,6 +73,7 @@ enum tech_id {
     T_MIND_BLAST,
     T_HOLD_BREATH,
     T_CHARGE_SABER, /* Jedi (Slash'EM/SlashTHEM, as in Hack'EM) */
+    T_DRAW_BLOOD,   /* vampire (Slash'EM) */
     NUM_TECHS
 };
 

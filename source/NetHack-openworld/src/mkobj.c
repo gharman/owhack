@@ -4166,6 +4166,11 @@ material_list(struct obj *obj)
     case BEARTRAP:
     case AMULET_OF_YENDOR:
     case FAKE_AMULET_OF_YENDOR:
+    /* new objects of the variant's roles and races whose nature fixes
+       their material (lightsabers, plasteel, blood potions and the like
+       are made of materials that have no alternatives anyway) */
+    case TINFOIL_HAT:
+    case FIRE_BOMB:
         return (const struct icp *) 0;
     /* Any other cases for specific object types go here. */
     case SHIELD_OF_REFLECTION:

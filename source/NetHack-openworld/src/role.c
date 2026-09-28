@@ -178,7 +178,7 @@ const struct Role roles[NUM_ROLES+1] = {
       S_HUMANOID,
       S_GIANT,
       ART_SCEPTRE_OF_MIGHT,
-      MH_HUMAN | MH_DWARF | MH_GNOME | MH_GIANT | MH_WERE | ROLE_MALE
+      MH_HUMAN | MH_DWARF | MH_GNOME | MH_GIANT | ROLE_MALE
           | ROLE_FEMALE | ROLE_LAWFUL | ROLE_NEUTRAL,
       /* Str Int Wis Dex Con Cha */
       { 10, 7, 7, 7, 8, 6 },
@@ -219,7 +219,7 @@ const struct Role roles[NUM_ROLES+1] = {
       S_ELEMENTAL,
       S_RUSTMONST,
       ART_CANDLE_OF_ETERNAL_FLAME,
-      MH_HUMAN | MH_ELF | MH_DWARF | MH_GNOME | MH_GIANT | ROLE_MALE
+      MH_HUMAN | MH_DWARF | MH_GNOME | MH_GIANT | ROLE_MALE
           | ROLE_FEMALE | ROLE_LAWFUL | ROLE_NEUTRAL,
       /* Str Int Wis Dex Con Cha */
       { 7, 9, 11, 7, 7, 7 },
@@ -340,7 +340,7 @@ const struct Role roles[NUM_ROLES+1] = {
       S_HUMAN,
       S_HUMAN,
       ART_LIGHTSABER_PROTOTYPE,
-      MH_HUMAN | MH_ELF | MH_DWARF | MH_TORTLE | ROLE_MALE | ROLE_FEMALE
+      MH_HUMAN | MH_DWARF | MH_TORTLE | ROLE_MALE | ROLE_FEMALE
           | ROLE_LAWFUL,
       /* Str Int Wis Dex Con Cha */
       { 10, 7, 14, 12, 10, 14 },
@@ -381,7 +381,7 @@ const struct Role roles[NUM_ROLES+1] = {
       S_IMP,
       S_JELLY,
       ART_MAGIC_MIRROR_OF_MERLIN,
-      MH_HUMAN | MH_CENTAUR | MH_DRAUGR | ROLE_MALE | ROLE_FEMALE
+      MH_HUMAN | ROLE_MALE | ROLE_FEMALE
           | ROLE_LAWFUL,
       /* Str Int Wis Dex Con Cha */
       { 13, 7, 14, 8, 10, 17 },
@@ -463,7 +463,7 @@ const struct Role roles[NUM_ROLES+1] = {
       S_BAT,
       S_IMP,
       ART_GREAT_DAGGER_OF_GLAURGNAA,
-      MH_HUMAN | MH_ELF | MH_GNOME | MH_ORC | MH_CENTAUR | MH_GIANT
+      MH_HUMAN | MH_ELF | MH_ORC | MH_CENTAUR | MH_GIANT
           | MH_ILLITHID | MH_DRAUGR | MH_VAMPIRE | MH_GHOST | ROLE_MALE
           | ROLE_FEMALE | ROLE_CHAOTIC,
       /* Str Int Wis Dex Con Cha */
@@ -727,7 +727,7 @@ const struct Role roles[NUM_ROLES+1] = {
       S_ANT,
       S_GIANT,
       ART_ORB_OF_FATE,
-      MH_HUMAN | MH_DWARF | MH_GIANT | MH_CENTAUR | MH_DRAUGR | ROLE_FEMALE
+      MH_HUMAN | MH_DWARF | MH_GIANT | MH_CENTAUR | ROLE_FEMALE
           | ROLE_LAWFUL | ROLE_NEUTRAL,
       /* Str Int Wis Dex Con Cha */
       { 10, 7, 7, 7, 10, 7 },
