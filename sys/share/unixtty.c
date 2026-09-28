@@ -199,7 +199,8 @@ static void
 setctty(void)
 {
     if (STTY(&curttyb) < 0 || STTY2(&curttyb2) < 0)
-        perror("NetHack (setctty)");
+        if (!getenv("OWHACK_TESTPIPE")) /* playtest harness */
+            perror("NetHack (setctty)");
 }
 
 /*
@@ -211,7 +212,8 @@ void
 gettty(void)
 {
     if (GTTY(&inittyb) < 0 || GTTY2(&inittyb2) < 0)
-        perror("NetHack (gettty)");
+        if (!getenv("OWHACK_TESTPIPE")) /* playtest harness */
+            perror("NetHack (gettty)");
     curttyb = inittyb;
     curttyb2 = inittyb2;
     ospeed = OSPEED(inittyb);
@@ -239,7 +241,8 @@ settty(const char *s)
     if (s)
         raw_print(s);
     if (STTY(&inittyb) < 0 || STTY2(&inittyb2) < 0)
-        perror("NetHack (settty)");
+        if (!getenv("OWHACK_TESTPIPE")) /* playtest harness */
+            perror("NetHack (settty)");
     iflags.echo = (inittyb.echoflgs & ECHO) ? ON : OFF;
     iflags.cbreak = (CBRKON(inittyb.cbrkflgs & CBRKMASK)) ? ON : OFF;
     curttyb.inputflags |= STRIPHI;

@@ -363,6 +363,10 @@ can_make_bones(void)
         return FALSE;
     if (no_bones_level(&u.uz))
         return FALSE; /* no bones for specific levels */
+    /* open world: the overworld is the whole world rather than one level;
+       a bones file for it would have to replace another player's world */
+    if (In_overworld)
+        return FALSE;
     if (u.uswallow) {
         return FALSE; /* no bones when swallowed */
     }

@@ -970,6 +970,13 @@ welcome(boolean new_game) /* false => restoring an old game */
         /* guarantee that 'major' event category is never empty */
         livelog_printf(LL_ACHIEVE, "%s the%s entered the dungeon",
                        svp.plname, buf);
+        if (In_overworld && ow_is_high_altar(u.ux, u.uy)) {
+            /* open world: explain the lay of the land */
+            pline("You stand on the high altar of %s at the heart of the "
+                  "world.", u_gname());
+            pline("The further you roam, the deadlier the land; "
+                  "the compass points home.  (Press ? for more.)");
+        }
     } else {
         /* if restoring in Gehennom, give same hot/smoky message as when
            first entering it */

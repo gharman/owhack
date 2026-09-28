@@ -2237,8 +2237,23 @@ rloco(struct obj *obj)
     oty = obj->oy;
     restricted_fall = (otx == 0 && svd.dndest.lx);
     do {
-        tx = rn1(COLNO - 3, 2);
-        ty = rn2(ROWNO);
+        if (In_overworld) {
+            /* open world: somewhere nearby, on land that exists */
+            coordxy cx = otx ? otx : u.ux, cy = otx ? oty : u.uy;
+
+            tx = cx + rn2(2 * OW_LOCAL_RX + 1) - OW_LOCAL_RX;
+            ty = cy + rn2(2 * OW_LOCAL_RY + 1) - OW_LOCAL_RY;
+            if (!isok(tx, ty) || !ow_generated(tx, ty)
+                || ow_past_barrier(tx, ty) != ow_past_barrier(cx, cy)) {
+                tx = cx, ty = cy;
+                if (!--try_limit)
+                    break;
+                continue;
+            }
+        } else {
+            tx = rn1(COLNO - 3, 2);
+            ty = rn2(ROWNO);
+        }
         if (!--try_limit)
             break;
     } while (!goodpos(tx, ty, (struct monst *) 0, 0)

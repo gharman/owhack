@@ -6,8 +6,6 @@
 #include "selvar.h"
 #include "sp_lev.h"
 
-staticfn boolean sel_flood_havepoint(coordxy, coordxy, coordxy *, coordxy *,
-                                    int);
 staticfn long line_dist_coord(long, long, long, long, long, long);
 
 /* selection */
@@ -377,21 +375,6 @@ set_selection_floodfillchk(int (*f)(coordxy, coordxy))
 }
 
 /* check whethere <x,y> is already in xs[],ys[] */
-staticfn boolean
-sel_flood_havepoint(
-    coordxy x, coordxy y,
-    coordxy xs[], coordxy ys[],
-    int n)
-{
-    coordxy xx = x, yy = y;
-
-    while (n > 0) {
-        --n;
-        if (xs[n] == xx && ys[n] == yy)
-            return TRUE;
-    }
-    return FALSE;
-}
 
 void
 selection_floodfill(
@@ -413,20 +396,40 @@ selection_floodfill(
 #define SEL_FLOOD_CHKDIR(mx, my, sel) \
     do {                                                        \
         if (isok((mx), (my))                                    \
+            && (mx) >= flx && (mx) <= fhx                       \
+            && (my) >= fly && (my) <= fhy                       \
             && (*selection_flood_check_func)((mx), (my))        \
             && !selection_getpoint((mx), (my), (sel))           \
-            && !sel_flood_havepoint((mx), (my), dx, dy, idx))   \
-            SEL_FLOOD((mx), (my));                              \
+            && !selection_getpoint((mx), (my), queued))         \
+            SEL_FLOOD_Q((mx), (my));                            \
+    } while (0)
+#define SEL_FLOOD_Q(nx, ny) \
+    do {                                                        \
+        selection_setpoint((nx), (ny), queued, 1);              \
+        SEL_FLOOD((nx), (ny));                                  \
     } while (0)
     static const char floodfill_stack_overrun[] = "floodfill stack overrun";
     int idx = 0;
-    coordxy dx[SEL_FLOOD_STACK];
-    coordxy dy[SEL_FLOOD_STACK];
+    /* open world: the work stack lives on the heap (it would be far too
+       big for the stack on the overworld), queued points are tracked in
+       a second selection instead of by searching the stack, and on the
+       overworld the flood is confined to the neighborhood of its start */
+    coordxy *dx, *dy;
+    coordxy flx = 0, fly = 0, fhx = COLNO - 1, fhy = ROWNO - 1;
+    struct selectionvar *queued;
 
     if (selection_flood_check_func == (int (*)(coordxy, coordxy)) 0) {
         selection_free(tmp, TRUE);
         return;
     }
+    if (In_overworld) {
+        flx = max(0, x - OW_LOCAL_RX), fhx = min(COLNO - 1, x + OW_LOCAL_RX);
+        fly = max(0, y - OW_LOCAL_RY), fhy = min(ROWNO - 1, y + OW_LOCAL_RY);
+    }
+    dx = (coordxy *) alloc((unsigned) SEL_FLOOD_STACK * sizeof (coordxy));
+    dy = (coordxy *) alloc((unsigned) SEL_FLOOD_STACK * sizeof (coordxy));
+    queued = selection_new();
+    selection_setpoint(x, y, queued, 1);
     SEL_FLOOD(x, y);
     do {
         idx--;
@@ -448,8 +451,12 @@ selection_floodfill(
         }
     } while (idx > 0);
 #undef SEL_FLOOD
+#undef SEL_FLOOD_Q
 #undef SEL_FLOOD_STACK
 #undef SEL_FLOOD_CHKDIR
+    free((genericptr_t) dx);
+    free((genericptr_t) dy);
+    selection_free(queued, TRUE);
     selection_free(tmp, TRUE);
 }
 

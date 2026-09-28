@@ -624,8 +624,39 @@ panictrace_handler(int sig_unused UNUSED)
 void
 panictrace_setsignals(boolean set)
 {
+#if defined(UNIX) && defined(SA_ONSTACK)
+    /* run the handler on an alternate stack so that a crash due to stack
+       exhaustion still gets a backtrace */
+    static char *altstack = 0;
+
+    /* let a sanitizer (testing) handle crashes itself */
+    if (getenv("OWHACK_NOSIGTRAP"))
+        return;
+
+    if (set && !altstack) {
+        stack_t ss;
+
+        altstack = (char *) malloc(256 * 1024);
+        if (altstack) {
+            ss.ss_sp = altstack;
+            ss.ss_size = 256 * 1024;
+            ss.ss_flags = 0;
+            (void) sigaltstack(&ss, (stack_t *) 0);
+        }
+    }
+#define SETSIGNAL(sig) \
+    do {                                                                 \
+        struct sigaction sa;                                             \
+                                                                         \
+        (void) memset((genericptr_t) &sa, 0, sizeof sa);                 \
+        sa.sa_handler = set ? (SIG_RET_TYPE) panictrace_handler : SIG_DFL; \
+        sa.sa_flags = SA_ONSTACK;                                        \
+        (void) sigaction(sig, &sa, (struct sigaction *) 0);              \
+    } while (0);
+#else
 #define SETSIGNAL(sig) \
     (void) signal(sig, set ? (SIG_RET_TYPE) panictrace_handler : SIG_DFL);
+#endif
 # ifdef SIGILL
     SETSIGNAL(SIGILL);
 # endif

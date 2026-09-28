@@ -25,6 +25,7 @@
 #define OPTIONFILE "opthelp"    /* file explaining runtime options */
 #define OPTMENUHELP "optmenu"   /* file explaining #options command */
 #define USAGEHELP "usagehlp"    /* file explaining command line use */
+#define OWHELP "owhelp"         /* open world: about the overworld */
 #define OPTIONS_USED "options"  /* compile-time options, for #version */
 #define SYMBOLS "symbols"       /* replacement symbol sets */
 #define EPITAPHFILE "epitaph"   /* random epitaphs on graves */

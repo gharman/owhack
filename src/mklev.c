@@ -2231,6 +2231,11 @@ mkstairs(
     if (dunlev(&u.uz) == (up ? 1 : dunlevs_in_dungeon(&u.uz))) {
         branch *br = Is_branchlev(&u.uz);
 
+        if (getenv("OWHACK_TIMING"))
+            fprintf(stderr, "mkstairs end: %d,%d up=%d dnum=%d valley=%d br=%p made=%d\n",
+                    x, y, up, u.uz.dnum, Is_valley(&u.uz), (void *) br,
+                    gm.made_branch);
+
         /* open world: most special levels are now alone in their own
            branch dungeon hanging off the overworld; a staircase that
            would lead out of that dungeon becomes the branch's staircase,
@@ -2248,8 +2253,18 @@ mkstairs(
         /* the Valley of the Dead's way down leads out into the burning
            lands of Gehennom (the overworld beyond the barrier) */
         if (!up && Is_valley(&u.uz) && !t_at(x, y)) {
+            struct trap *vp;
+
             levl[x][y].typ = ROOM;
             mkportal(x, y, 0, 1);
+            /* it replaces the Valley's (visible) stairs down */
+            if ((vp = t_at(x, y)) != 0)
+                vp->tseen = 1;
+            if (getenv("OWHACK_TIMING"))
+                fprintf(stderr, "valley portal at %d,%d: %p\n", x, y,
+                        (void *) vp);
+            make_engr_at(x, y, "Abandon hope, all ye who enter here",
+                         NULL, 0L, BURN);
         }
         return;
     }

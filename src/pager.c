@@ -40,6 +40,7 @@ staticfn void dispfile_optmenu(void);
 staticfn void dispfile_license(void);
 staticfn void dispfile_debughelp(void);
 staticfn void dispfile_usagehelp(void);
+staticfn void dispfile_owhelp(void);
 staticfn void hmenu_doextversion(void);
 staticfn void hmenu_dohistory(void);
 staticfn void hmenu_dowhatis(void);
@@ -2793,6 +2794,12 @@ dispfile_debughelp(void)
 }
 
 staticfn void
+dispfile_owhelp(void)
+{
+    display_file(OWHELP, TRUE);
+}
+
+staticfn void
 dispfile_usagehelp(void)
 {
     display_file(USAGEHELP, TRUE);
@@ -2844,6 +2851,7 @@ static const struct {
     const char *text;
 } help_menu_items[] = {
     { hmenu_doextversion, "About NetHack (version information)." },
+    { dispfile_owhelp, "About the open world (read this first)." },
     { dispfile_help, "Long description of the game and commands." },
     { dispfile_shelp, "List of game commands." },
     { hmenu_dohistory, "Concise history of NetHack." },

@@ -1873,6 +1873,19 @@ goto_level(
     if ((mtmp = m_at(u.ux, u.uy)) != 0)
         u_collide_m(mtmp);
 
+    if (getenv("OWHACK_TIMING")) {
+        struct trap *tt;
+        int np = 0;
+
+        for (tt = gf.ftrap; tt; tt = tt->ntrap)
+            if (tt->ttyp == MAGIC_PORTAL)
+                np++, fprintf(stderr, "level %d.%d portal at %d,%d -> %d.%d\n",
+                              u.uz.dnum, u.uz.dlevel, tt->tx, tt->ty,
+                              tt->dst.dnum, tt->dst.dlevel);
+        if (!np)
+            fprintf(stderr, "level %d.%d has no portals\n", u.uz.dnum,
+                    u.uz.dlevel);
+    }
     /* initial movement of bubbles just before vision_recalc */
     if (Is_waterlevel(&u.uz) || Is_airlevel(&u.uz))
         movebubbles();

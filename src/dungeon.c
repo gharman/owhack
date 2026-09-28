@@ -1375,9 +1375,18 @@ deepest_lev_reached(boolean noquest)
         if (tmp.dlevel == 0)
             continue;
         tmp.dnum = i;
+        if (i == 0)
+            continue; /* the overworld: see below */
         if (depth(&tmp) > ret)
             ret = depth(&tmp);
     }
+#ifndef SFCTOOL
+    /* open world: the deepest ring of the overworld reached */
+    if (svow.inited && svow.deepest_ring > ret)
+        ret = svow.deepest_ring;
+#endif
+    if (!ret)
+        ret = 1;
     return ret;
 }
 
@@ -3564,7 +3573,11 @@ print_mapseen(
         depthstart = svd.dungeons[dnum].depth_start;
 
     if (printdun) {
-        if (svd.dungeons[dnum].dunlev_ureached == svd.dungeons[dnum].entry_lev
+        if (Is_overworld(&mptr->lev) && svow.inited)
+            Sprintf(buf, "%s: depths 1 to %d", svd.dungeons[dnum].dname,
+                    (int) svow.deepest_ring);
+        else if (svd.dungeons[dnum].dunlev_ureached
+                     == svd.dungeons[dnum].entry_lev
             /* suppress the negative numbers in the endgame */
             || In_endgame(&mptr->lev))
             Sprintf(buf, "%s:", svd.dungeons[dnum].dname);
@@ -3583,7 +3596,9 @@ print_mapseen(
 
     /* calculate level number */
     i = depthstart + mptr->lev.dlevel - 1;
-    if (In_endgame(&mptr->lev))
+    if (Is_overworld(&mptr->lev) && svow.inited)
+        Sprintf(buf, "%sThe open lands:", (final != -1) ? TAB : "");
+    else if (In_endgame(&mptr->lev))
         Sprintf(buf, "%s%s:", (final != -1) ? TAB : "",
                 endgamelevelname(tmpbuf, i));
     else
@@ -3613,6 +3628,10 @@ print_mapseen(
 
     if (mptr->flags.forgot)
         return;
+
+    /* open world: what the hero knows of the overworld's portal rings */
+    if (Is_overworld(&mptr->lev) && svow.inited)
+        ow_overview_lines(win);
 
     if (OF_INTEREST(mptr->feat)) {
         buf[0] = 0;

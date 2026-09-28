@@ -2395,6 +2395,7 @@ extern int ow_flavor_color(coordxy, coordxy, int);
 extern const char *ow_flavor_desc(coordxy, coordxy, int);
 extern void ow_debug_dump(int, int, int, int);
 extern void ow_local_levelflags(struct levelflags *);
+extern void ow_overview_lines(winid);
 extern boolean xy_in_gehennom(coordxy, coordxy);
 extern struct ow_portalrec *ow_find_portrec(xint16);
 extern void ow_note_portal(xint16, coordxy, coordxy);

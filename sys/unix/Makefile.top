@@ -92,7 +92,7 @@ LUA_VERSION = 5.4.8
 # end of configuration
 #
 
-DATHELP = help hh cmdhelp keyhelp history opthelp optmenu usagehlp wizhelp
+DATHELP = help hh cmdhelp keyhelp history opthelp optmenu usagehlp wizhelp owhelp
 
 SPEC_LEVS = asmodeus.lua baalz.lua bigrm-*.lua castle.lua fakewiz?.lua \
 	juiblex.lua knox.lua medusa-?.lua minend-?.lua minefill.lua \

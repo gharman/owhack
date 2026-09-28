@@ -542,9 +542,18 @@ savelev_core(NHFILE *nhfp, xint8 lev)
     Sfo_int(nhfp, &nh_colno, "lev-colno");
     Sfo_int(nhfp, &nh_rowno, "lev-rowno");
     savelevl(nhfp);
+    /* run-length encoded (the overworld is mostly unexplored) */
     for (c = 0; c < COLNO; ++c) {
-        for (r = 0; r < ROWNO; ++r) {
+        r = 0;
+        while (r < ROWNO) {
+            int run = 1;
+
+            while (r + run < ROWNO && run < 30000
+                   && svl.lastseentyp[c][r + run] == svl.lastseentyp[c][r])
+                run++;
+            Sfo_int(nhfp, &run, "lastseentyp-run");
             Sfo_schar(nhfp, &svl.lastseentyp[c][r], "lastseentyp");
+            r += run;
         }
     }
     /* preserve idle time when copying levels; match getlev()'s
@@ -614,11 +623,22 @@ save_adjust_levelflags(long timestamp)
 staticfn void
 savelevl(NHFILE *nhfp)
 {
-    int x, y;
+    int x, y, run;
 
+    /* open world: run-length encoded, since most of the enormous
+       overworld is unexplored (hence identical) at any given time */
     for (x = 0; x < COLNO; x++) {
-        for (y = 0; y < ROWNO; y++) {
+        y = 0;
+        while (y < ROWNO) {
+            run = 1;
+            while (y + run < ROWNO && run < 30000
+                   && !memcmp((genericptr_t) &levl[x][y + run],
+                              (genericptr_t) &levl[x][y],
+                              sizeof (struct rm)))
+                run++;
+            Sfo_int(nhfp, &run, "location-run");
             Sfo_rm(nhfp, &levl[x][y], "location-rm");
+            y += run;
         }
     }
     return;

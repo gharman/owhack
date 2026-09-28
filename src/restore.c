@@ -1052,9 +1052,19 @@ rest_levl(NHFILE *nhfp)
 {
     int c, r;
 
+    /* run-length encoded; see savelevl() */
     for (c = 0; c < COLNO; ++c) {
-        for (r = 0; r < ROWNO; ++r) {
+        r = 0;
+        while (r < ROWNO) {
+            int run = 0, i;
+
+            Sfi_int(nhfp, &run, "location-run");
             Sfi_rm(nhfp, &levl[c][r], "location-rm");
+            if (run < 1 || r + run > ROWNO)
+                run = 1; /* corrupt file; sanity */
+            for (i = 1; i < run; i++)
+                levl[c][r + i] = levl[c][r];
+            r += run;
         }
     }
 }
@@ -1147,8 +1157,17 @@ getlev(NHFILE *nhfp, int pid, xint8 lev)
     rest_levl(nhfp);
 
     for (c = 0; c < COLNO; ++c) {
-        for (r = 0; r < ROWNO; ++r) {
+        r = 0;
+        while (r < ROWNO) {
+            int run = 0, j;
+
+            Sfi_int(nhfp, &run, "lastseentyp-run");
             Sfi_schar(nhfp, &svl.lastseentyp[c][r], "lastseentyp");
+            if (run < 1 || r + run > ROWNO)
+                run = 1;
+            for (j = 1; j < run; j++)
+                svl.lastseentyp[c][r + j] = svl.lastseentyp[c][r];
+            r += run;
         }
     }
     Sfi_long(nhfp, &svo.omoves, "lev-timestmp");

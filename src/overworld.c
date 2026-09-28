@@ -74,6 +74,7 @@ static int ow_want_ring = 0; /* if nonzero, ow_rndspot_near() must pick a
                                 spot in this ring */
 staticfn void ow_generate_area(int, int, int);
 staticfn int ow_circumference_portals(int);
+void ow_test_hook(void);
 
 /* hero's current depth while in the overworld, or the depth being
    generated; see depth() in dungeon.c */
@@ -932,8 +933,10 @@ ow_maintain(void)
     static int lastcx = -1, lastcy = -1;
     int cx, cy, ring, biome;
 
-    if (!In_overworld || !svow.inited || !u.ux)
+    if (!In_overworld || !svow.inited || !u.ux) {
+        ow_test_hook();
         return;
+    }
     cx = u.ux / OW_CHUNK, cy = u.uy / OW_CHUNK;
     if (cx != lastcx || cy != lastcy || !svow.genmap[cx][cy]) {
         ow_generate_area(u.ux, u.uy, OW_GEN_RADIUS);
@@ -1174,6 +1177,24 @@ ow_gen_chunk(int cx, int cy)
 
     ow_fix_walls(max(x0 - 1, 1), max(y0 - 1, 0), min(x1 + 1, OW_SIZE - 1),
                  min(y1 + 1, OW_SIZE - 1));
+    if (ow_past_barrier(x0, y0) || ow_past_barrier(x1, y1)
+        || ow_past_barrier(x0, y1) || ow_past_barrier(x1, y0)) {
+        /* in Gehennom, molten lava lights up its surroundings */
+        for (x = max(x0, 1); x <= x1; x++)
+            for (y = y0; y <= y1; y++) {
+                int dx, dy;
+
+                if (levl[x][y].lit || !ow_in_gehennom(x, y))
+                    continue;
+                for (dx = -2; dx <= 2 && !levl[x][y].lit; dx++)
+                    for (dy = -2; dy <= 2; dy++)
+                        if (isok(x + dx, y + dy)
+                            && levl[x + dx][y + dy].typ == LAVAPOOL) {
+                            levl[x][y].lit = 1;
+                            break;
+                        }
+            }
+    }
     c3 = clock();
     ow_populate(cx, cy, x0, y0, x1, y1);
     c4 = clock();
@@ -2279,6 +2300,13 @@ ow_arrive(int how)
         if (ow_rndspot_near(x, y, 6, 30, &cc, FALSE))
             x = cc.x, y = cc.y;
     }
+    if (getenv("OWHACK_TIMING")) {
+        struct trap *tt;
+
+        for (tt = gf.ftrap; tt; tt = tt->ntrap)
+            if (tt->ttyp == MAGIC_PORTAL && ow_dist(tt->tx, tt->ty) > 500)
+                fprintf(stderr, "(far portal %d,%d)\n", tt->tx, tt->ty);
+    }
     if (getenv("OWHACK_TIMING"))
         fprintf(stderr, "ow_arrive how=%d from dnum %d -> %d,%d goodpos=%d mon=%d trap=%d\n",
                 how, fromdn, x, y, goodpos(x, y, &gy.youmonst, 0),
@@ -2332,7 +2360,7 @@ ow_rnd_teleport_spot(coordxy fromx, coordxy fromy, coord *cc,
 int
 ow_max_teleport_ring(void)
 {
-    if (!u.uevent.gehennom_entered)
+    if (!u.uevent.gehennom_entered && !wizard)
         return svow.barrier_ring - 1;
     return svow.max_ring - 1;
 }
@@ -2733,10 +2761,28 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
     FILE *fp;
     int x, y;
 
-    if (!fname || !*fname || !In_overworld)
+    if (!fname || !*fname)
         return;
     if (!(fp = fopen(fname, "w")))
         return;
+    if (!In_overworld) {
+        struct trap *tt;
+
+        fprintf(fp, "hero %d,%d dnum %d dlevel %d depth %d\n", u.ux, u.uy,
+                u.uz.dnum, u.uz.dlevel, depth(&u.uz));
+        for (tt = gf.ftrap; tt; tt = tt->ntrap)
+            if (tt->ttyp == MAGIC_PORTAL)
+                fprintf(fp, "portal %d,%d\n", tt->tx, tt->ty);
+        {
+            stairway *st;
+
+            for (st = gs.stairs; st; st = st->next)
+                fprintf(fp, "stairs %d,%d up=%d to %d.%d\n", st->sx, st->sy,
+                        st->up, st->tolev.dnum, st->tolev.dlevel);
+        }
+        fclose(fp);
+        return;
+    }
     fprintf(fp, "hero %d,%d ring %d biome %s seed %lu\n", u.ux, u.uy,
             ow_ring_at(u.ux, u.uy), ow_biome_name(ow_biome_at(u.ux, u.uy)),
             svow.seed);
@@ -2830,4 +2876,54 @@ ow_local_levelflags(struct levelflags *lf)
         }
     if (ow_biome_at(u.ux, u.uy) == OWB_SWAMP)
         lf->has_swamp = 1;
+}
+
+/* #overview: the portal rings that the hero knows about */
+void
+ow_overview_lines(winid win)
+{
+    char buf[BUFSZ];
+    int r, k, px, py, nknown;
+    boolean onow = In_overworld;
+
+    for (r = 0; r < svow.nrings; r++) {
+        struct ow_ringinfo *ri = &svow.rings[r];
+        const char *dname;
+
+        if (ri->dnum < 0 || ri->dnum >= svn.n_dgns)
+            continue;
+        nknown = 0;
+        /* can only consult the map while it's loaded */
+        if (onow)
+            for (k = 0; k < ri->nportals; k++) {
+                ow_portal_pos(ri, k, &px, &py);
+                if (isok(px, py) && glyph_is_trap(levl[px][py].glyph))
+                    nknown++;
+            }
+        if (!nknown && !ow_find_portrec(ri->dnum)
+            && !svd.dungeons[ri->dnum].dunlev_ureached)
+            continue;
+        dname = ow_portal_dest_name(ri->dnum);
+        Sprintf(buf, "%sPortals to %s ring the world at depth %d",
+                "      ", dname, (int) ri->ring);
+        if (nknown)
+            Sprintf(eos(buf), " (%d of %d seen)", nknown, (int) ri->nportals);
+        Strcat(buf, ".");
+        (void) strsubst(buf, "to The ", "to the ");
+        add_menu_str(win, buf);
+    }
+    if (onow && u.ux) {
+        Sprintf(buf, "      Now at depth %d, in the %s.",
+                ow_ring_at(u.ux, u.uy),
+                ow_biome_name(ow_biome_at(u.ux, u.uy)));
+        add_menu_str(win, buf);
+    }
+}
+
+/* test hook: keep the dump current even outside the overworld */
+void
+ow_test_hook(void)
+{
+    if (!In_overworld && getenv("OWHACK_MAPDUMP"))
+        ow_debug_dump(u.ux, u.uy, 0, 0);
 }
