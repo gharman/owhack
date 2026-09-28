@@ -1314,7 +1314,8 @@ pleased(aligntyp g_align)
 
             godvoice(u.ualign.type,
                      "Thou hast pleased me with thy progress,");
-            if (!(HTelepat & INTRINSIC)) {
+            /* a draugr's dead brain can't be made telepathic (EvilHack) */
+            if (!(HTelepat & INTRINSIC) && !Race_if(PM_DRAUGR)) {
                 HTelepat |= FROMOUTSIDE;
                 pline(msg, "Telepathy");
                 if (Blind)
@@ -1347,7 +1348,9 @@ pleased(aligntyp g_align)
             FALLTHROUGH;
             /*FALLTHRU*/
         case 6:
-            give_spell();
+            /* draugr don't mess around with spells (EvilHack) */
+            if (!Race_if(PM_DRAUGR))
+                give_spell();
             break;
         default:
             impossible("Confused deity!");

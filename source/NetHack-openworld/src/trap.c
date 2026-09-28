@@ -5132,6 +5132,18 @@ drown(void)
         gv.vision_full_recalc = 1;
         return FALSE;
     }
+    /* a shapechanged vampire reverts to its breathless natural form
+       rather than drown (Hack'EM) */
+    if (Upolyd && !Unchanging && Race_if(PM_VAMPIRE)) {
+        rehumanize();
+        if (Breathless) {
+            vision_recalc(2); /* unsee old position */
+            set_uinwater(1);
+            under_water(1);
+            gv.vision_full_recalc = 1;
+            return FALSE;
+        }
+    }
     if ((Teleportation || can_teleport(gy.youmonst.data)) && !Unaware
         && (Teleport_control || rn2(3) < Luck + 2)) {
         You("attempt a teleport spell."); /* utcsri!carroll */

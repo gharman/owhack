@@ -365,7 +365,10 @@ learn(void)
     if (svc.context.spbook.delay && ublindf
         && ublindf->otyp == LENSES && rn2(2))
         svc.context.spbook.delay++;
-    if (Confusion) { /* became confused while learning */
+    /* became confused while learning; a draugr's rotting brain can't
+       follow any book but the Book of the Dead (EvilHack) */
+    if (Confusion
+        || (Race_if(PM_DRAUGR) && book->otyp != SPE_BOOK_OF_THE_DEAD)) {
         (void) confused_book(book);
         svc.context.spbook.book = 0; /* no longer studying */
         svc.context.spbook.o_id = 0;

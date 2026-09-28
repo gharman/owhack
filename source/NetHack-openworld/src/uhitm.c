@@ -1815,7 +1815,12 @@ hmon_hitmon_msg_hit(
                 : (obj && (objects[obj->otyp].oc_skill == P_WHIP
                            || is_wet_towel(obj))) ? "lash"
                   : Role_if(PM_BARBARIAN) ? "smite"
-                    : "hit",
+                    /* the clawed races (EvilHack) */
+                    : (!obj && !Upolyd
+                       && (Race_if(PM_ILLITHID) || Race_if(PM_TORTLE)
+                           || Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)))
+                      ? "claw"
+                      : "hit",
                 mon_nam(mon), canseemon(mon) ? exclam(hmd->dmg) : ".");
     }
 }

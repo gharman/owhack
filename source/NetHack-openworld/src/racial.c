@@ -622,6 +622,9 @@ race_timeouts(void)
         if (--u.uvampireshape == 20 && Race_if(PM_VAMPIRE))
             You_feel("your shapechanging ability start to return.");
     }
+    /* a vampire senses when its borrowed shape is about to lapse */
+    if (u_vampire_form() && u.mtimedone == 20)
+        You("are about to revert back to your original form.");
     /* a draugr senses corpses rotting; keep the inventory display of
        carried corpses current (EvilHack) */
     if (Race_if(PM_DRAUGR) && !Upolyd && iflags.perm_invent

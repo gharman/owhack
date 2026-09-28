@@ -383,6 +383,15 @@ Cloak_on(void)
     default:
         impossible(unknown_type, c_cloak, uarmc->otyp);
     }
+    /* vampires cut a fine figure in an opera cloak (Hack'EM) */
+    if (uarmc && Race_if(PM_VAMPIRE) && objdescr_is(uarmc, "opera cloak")) {
+        if (!gi.initial_don)
+            You("%s very impressive in your %s.",
+                (Blind || (Invis && !See_invisible)) ? "feel" : "look",
+                OBJ_DESCR(objects[uarmc->otyp]));
+        ABON(A_CHA) += 1;
+        disp.botl = TRUE;
+    }
     if (uarmc && !uarmc->known) { /* no known instance of !uarmc here */
         uarmc->known = 1; /* cloak's +/- evident because of status line AC */
         update_inventory();
@@ -397,6 +406,12 @@ Cloak_off(void)
     int otyp = otmp->otyp;
     long oldprop = u.uprops[objects[otyp].oc_oprop].extrinsic & ~WORN_CLOAK;
 
+    /* undo a vampire's opera cloak charisma bonus (see Cloak_on()) */
+    if (Race_if(PM_VAMPIRE) && objdescr_is(otmp, "opera cloak")
+        && !svc.context.takeoff.cancelled_don) {
+        ABON(A_CHA) -= 1;
+        disp.botl = TRUE;
+    }
     svc.context.takeoff.mask &= ~W_ARMC;
     /* For mummy wrapping, taking it off first resets `Invisible'. */
     setworn((struct obj *) 0, W_ARMC);

@@ -654,6 +654,13 @@ eat_brains(
     boolean give_nutrit = FALSE;
     int result = M_ATTK_HIT, xtra_dmg = rnd(10);
 
+    /* an illithid or draugr hero's brain-eating grows more damaging with
+       experience (EvilHack) */
+    if (magr == &gy.youmonst && !Upolyd
+        && (Race_if(PM_ILLITHID) || Race_if(PM_DRAUGR)))
+        xtra_dmg = (u.ulevel >= 26) ? rn2(10) + 7
+                   : (u.ulevel >= 14) ? rn2(10) + 1 : rn2(4) + 1;
+
     /* previous tentacle attack might have triggered fatal passive
        counterattack [callers ought to be updated to avoid this situation] */
     if (magr != &gy.youmonst && DEADMONSTER(magr)) {
