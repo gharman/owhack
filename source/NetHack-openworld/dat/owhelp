@@ -91,3 +91,23 @@ Monsters
     Monsters far from you rest where they are; only those within a
     screen or two of you are active.  So a dragon on the far side of the
     world will not come looking for you just because you share a level.
+
+Roles, races and techniques
+    Besides the usual thirteen roles you can play a Necromancer, Flame
+    Mage, Ice Mage, Jedi, Pirate, Convict, Infidel or Cartographer, and
+    besides the usual five races a giant, centaur, illithid, tortle,
+    draugr, vampire, werewolf, doppelganger or ghost.  Every role and most
+    races have techniques, special abilities learned as you gain
+    experience: #technique (or M-x) lists them and uses one.
+
+Materials
+    Objects are made of materials, and many come in several: a silver
+    long sword, a mithril chain mail, a wooden dagger.  The material
+    changes weight, protection, damage, erosion and price.  There are no
+    mithril coats; mithril is a material that body armor can be made of.
+    Silver harms demons and the undead as always, cold iron harms elves,
+    and copper harms molds and bringers of disease.
+
+Skills
+    #enhance shows each skill's training toward the next level as a
+    percentage (100% is one level).
