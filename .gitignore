@@ -1,0 +1,3 @@
+# The installed game: built binaries, data file, and your saves, high
+# scores and sysconf.  Rebuilt by source/NetHack-openworld/build.sh.
+/game/
