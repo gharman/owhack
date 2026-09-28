@@ -2032,6 +2032,8 @@ struct ext_func_tab extcmdlist[] = {
               wiz_wish, IFBURIED | CMD_M_PREFIX | WIZMODECMD, NULL },
     { '\0',   "wmode", "show wall modes",
               wiz_show_wmodes, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
+    { '\0',   "youpoly", "polymorph at will",
+              dopolyatwill, AUTOCOMPLETE, NULL },
     { 'z',    "zap", "zap a wand",
               dozap, 0, NULL },
     /* movement commands will be bound by reset_commands() */

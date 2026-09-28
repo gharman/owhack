@@ -1110,6 +1110,7 @@ adjabil(int oldlevel, int newlevel)
             add_weapon_skill(newlevel - oldlevel);
         else
             lose_weapon_skill(oldlevel - newlevel);
+        mage_youpoly_msg(oldlevel, newlevel);
     }
 }
 

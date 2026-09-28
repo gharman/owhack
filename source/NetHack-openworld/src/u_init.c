@@ -1533,7 +1533,7 @@ ini_inv_use_obj(struct obj *obj)
     if (obj->oclass == WEAPON_CLASS || is_weptool(obj)
         || obj->otyp == TIN_OPENER
         || obj->otyp == FLINT || obj->otyp == ROCK) {
-        if (is_ammo(obj) || is_missile(obj)) {
+        if (is_ammo(obj) || is_missile(obj) || is_bomb(obj)) {
             if (!uquiver)
                 setuqwep(obj);
         } else if (!uwep && (!uarms || !bimanual(obj))) {
