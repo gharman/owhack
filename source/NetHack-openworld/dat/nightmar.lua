@@ -151,8 +151,9 @@ if percent(40) then
    des.object({ id = "egg", coord = place[2], montype = "giant ant" })
 end
 if percent(20) then
-   -- Slash'EM mushroom; a slime mold here
-   des.object({ id = "slime mold", coord = place[2], buc = "cursed", spe = 0 })
+   -- Slash'EM mushroom; a lichen corpse (the nearest fungus) here
+   des.object({ id = "corpse", montype = "lichen", coord = place[2],
+                buc = "cursed" })
 end
 -- The source asks for tins of "asphynx meat" and "green slime meat", which
 -- Slash'EM's level compiler did not recognise, so they were tins of random

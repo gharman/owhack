@@ -44,16 +44,16 @@ des.engraving({ x = 01, y = 07, type = "engrave", text = "Sorry about the mess. 
 des.engraving({ x = 01, y = 09, type = "engrave", text = "Don't even think about stealing anything." })
 -- black marketeer's assistants:
 -- from The Hobbit (Tolkien)
-des.monster({ id = "rock troll", x = 03, y = 03, name = "William", asleep = 1, peaceful = 1 })
-des.monster({ id = "rock troll", x = 03, y = 12, name = "Thomas", asleep = 1, peaceful = 1 })
+des.monster({ id = "rock troll", x = 03, y = 03, name = "William", female = false, asleep = 1, peaceful = 1 })
+des.monster({ id = "rock troll", x = 03, y = 12, name = "Thomas", female = false, asleep = 1, peaceful = 1 })
 -- from the Bible
-des.monster({ id = "frost giant", x = 03, y = 16, name = "Goliath", asleep = 1, peaceful = 1 })
+des.monster({ id = "frost giant", x = 03, y = 16, name = "Goliath", female = false, asleep = 1, peaceful = 1 })
 -- from Greek mythology & high-energy physics
 des.monster({ id = "wood nymph", x = 03, y = 09, name = "Daphne", asleep = 1, peaceful = 1 })
 -- Add your favorite monsters here.  Make them peaceful and named,
 -- otherwise they will not behave like assistants.
 des.monster({ id = "balrog", x = 03, y = 04, name = "Njalnohaar", asleep = 1, peaceful = 1 })
 des.monster({ id = "pit fiend", x = 03, y = 02, name = "Hilvuuloth", asleep = 1, peaceful = 1 })
-des.monster({ id = "cockatrice", x = 03, y = 13, name = "Wilbur", asleep = 1, peaceful = 1 })
-des.monster({ id = "cockatrice", x = 03, y = 08, name = "Simon", asleep = 1, peaceful = 1 })
+des.monster({ id = "cockatrice", x = 03, y = 13, name = "Wilbur", female = false, asleep = 1, peaceful = 1 })
+des.monster({ id = "cockatrice", x = 03, y = 08, name = "Simon", female = false, asleep = 1, peaceful = 1 })
 des.monster({ id = "rhaumbusun", x = 03, y = 11, name = "Izzy", asleep = 1, peaceful = 1 })

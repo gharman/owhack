@@ -3951,7 +3951,16 @@ lspo_engraving(lua_State *L)
         ecoord = SP_COORD_PACK(x, y);
 
     get_location_coord(&x, &y, DRY, gc.coder->croom, ecoord);
-    make_engr_at(x, y, txt, NULL, 0L, etyp);
+    /* a random "dry" spot can be air or cloud, which can't hold an
+       engraving; try for another one */
+    if (ecoord == SP_COORD_PACK_RANDOM(0)) {
+        int tries;
+
+        for (tries = 0; tries < 100 && IS_AIR(levl[x][y].typ); tries++)
+            get_location_coord(&x, &y, DRY, gc.coder->croom, ecoord);
+    }
+    if (!IS_AIR(levl[x][y].typ))
+        make_engr_at(x, y, txt, NULL, 0L, etyp);
     Free(txt);
     ep = engr_at(x, y);
     if (ep) {
