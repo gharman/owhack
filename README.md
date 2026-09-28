@@ -132,8 +132,9 @@ ring), quest artifact, sacrifice gift and pet.
   fire elementals, for the High Ice Mage.  Gift: Deep Freeze, an icy staff.
 * **Jedi** (lawful).  A warrior of the Force armed with a lightsaber,
   which has to be applied to switch it on, lights the area, uses up its
-  charge while lit (a scroll of charging refills it) and only cuts when
-  lit; it can melt locks and cut through doors (#force).  A skilled Jedi
+  charge while lit (a scroll of charging refills it, and from experience
+  level 5 so does the charge saber technique, which pours the Jedi's
+  energy into it) and only cuts when lit; it can melt locks and cut through doors (#force).  A skilled Jedi
   deflects missiles, cuts foes' weapons in half and can throw the lit
   lightsaber and call it back with the Force.  Jedi fight in robes, not
   armor, and must not attack the peaceful.  The quest: find the
