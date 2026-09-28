@@ -127,6 +127,8 @@ toggle_stealth(
                 You("float imperceptibly.");
             else
                 You("walk very quietly.");
+        } else if (u_giant()) {
+            You("are just as noisy as before.");
         } else {
             boolean riding = (u.usteed != NULL);
 
@@ -227,7 +229,16 @@ Boots_on(void)
         }
         break;
     case ELVEN_BOOTS:
-        toggle_stealth(uarmf, oldprop, TRUE);
+        if (u_giant() && !gi.initial_don) {
+            /* nothing silences a giant's tread (EvilHack) */
+            pline("This %s will not silence someone %s.", xname(uarmf),
+                  rn2(2) ? "as large as you" : "of your stature");
+            EStealth &= ~W_ARMF;
+        } else if (u_giant()) {
+            EStealth &= ~W_ARMF;
+        } else {
+            toggle_stealth(uarmf, oldprop, TRUE);
+        }
         break;
     case FUMBLE_BOOTS:
         if (!oldprop && !(HFumbling & ~TIMEOUT))
@@ -374,6 +385,15 @@ Cloak_on(void)
     default:
         impossible(unknown_type, c_cloak, uarmc->otyp);
     }
+    /* vampires cut a fine figure in an opera cloak (Hack'EM) */
+    if (uarmc && Race_if(PM_VAMPIRE) && objdescr_is(uarmc, "opera cloak")) {
+        if (!gi.initial_don)
+            You("%s very impressive in your %s.",
+                (Blind || (Invis && !See_invisible)) ? "feel" : "look",
+                OBJ_DESCR(objects[uarmc->otyp]));
+        ABON(A_CHA) += 1;
+        disp.botl = TRUE;
+    }
     if (uarmc && !uarmc->known) { /* no known instance of !uarmc here */
         uarmc->known = 1; /* cloak's +/- evident because of status line AC */
         update_inventory();
@@ -388,6 +408,12 @@ Cloak_off(void)
     int otyp = otmp->otyp;
     long oldprop = u.uprops[objects[otyp].oc_oprop].extrinsic & ~WORN_CLOAK;
 
+    /* undo a vampire's opera cloak charisma bonus (see Cloak_on()) */
+    if (Race_if(PM_VAMPIRE) && objdescr_is(otmp, "opera cloak")
+        && !svc.context.takeoff.cancelled_don) {
+        ABON(A_CHA) -= 1;
+        disp.botl = TRUE;
+    }
     svc.context.takeoff.mask &= ~W_ARMC;
     /* For mummy wrapping, taking it off first resets `Invisible'. */
     setworn((struct obj *) 0, W_ARMC);
@@ -449,6 +475,16 @@ Helmet_on(void)
     case HELM_OF_TELEPATHY:
         break;
     case HELM_OF_CAUTION:
+        see_monsters();
+        break;
+    case TINFOIL_HAT:
+        /* shields the mind: psychic resistance, and it blocks telepathy
+           (via w_blocks()) and clairvoyance (Hack'EM) */
+        if (!gi.initial_don) {
+            Your("thoughts feel much more secure.");
+            makeknown(TINFOIL_HAT);
+        }
+        BClairvoyant |= W_ARMH;
         see_monsters();
         break;
     case HELM_OF_BRILLIANCE:
@@ -543,6 +579,10 @@ Helmet_off(void)
             disp.botl = TRUE;
         }
         break;
+    case TINFOIL_HAT:
+        BClairvoyant &= ~W_ARMH;
+        FALLTHROUGH;
+        /*FALLTHRU*/
     case HELM_OF_TELEPATHY:
     case HELM_OF_CAUTION:
         /* need to update ability before calling see_monsters() */
@@ -1293,7 +1333,14 @@ Ring_on(struct obj *obj)
         /* wearing a meat ring does not affect vegan conduct */
         break;
     case RIN_STEALTH:
-        toggle_stealth(obj, oldprop, TRUE);
+        if (u_giant()) {
+            /* nothing silences a giant's tread (EvilHack) */
+            pline("This %s will not silence someone %s.", xname(obj),
+                  rn2(2) ? "as large as you" : "of your stature");
+            EStealth &= ~(obj->owornmask & W_RING);
+        } else {
+            toggle_stealth(obj, oldprop, TRUE);
+        }
         break;
     case RIN_WARNING:
         see_monsters();
@@ -1787,6 +1834,10 @@ armor_or_accessory_off(struct obj *obj)
         You("are not wearing that.");
         return ECMD_OK;
     }
+    if (u_vampire_form() && (obj->owornmask & W_ARMOR)) {
+        You_cant("take that off; it's merged.");
+        return ECMD_OK;
+    }
     if (obj == uskin
         || ((obj == uarm) && uarmc)
         || ((obj == uarmu) && (uarmc || uarm))) {
@@ -1859,6 +1910,10 @@ dotakeoff(void)
             pline("Not wearing any armor or accessories.");
         return ECMD_OK;
     }
+    if (Hidinshell) {
+        You_cant("take off worn items while hiding in your shell.");
+        return ECMD_OK;
+    }
     if (Narmorpieces != 1 || ParanoidRemove || gi.item_action_in_progress)
         otmp = getobj("take off", takeoff_ok, GETOBJ_NOFLAGS);
     if (!otmp)
@@ -1891,6 +1946,10 @@ doremring(void)
     count_worn_stuff(&otmp, TRUE);
     if (!Naccessories && !Narmorpieces) {
         pline("Not wearing any accessories or armor.");
+        return ECMD_OK;
+    }
+    if (Hidinshell) {
+        You_cant("take off worn items while hiding in your shell.");
         return ECMD_OK;
     }
     if (Naccessories != 1 || ParanoidRemove || cmdq_peek(CQ_CANNED))
@@ -2057,7 +2116,13 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
             : is_shirt(otmp) ? c_shirt
               : is_suit(otmp) ? c_suit
                 : 0;
-    if (which && cantweararm(gy.youmonst.data)
+    if (Hidinshell) {
+        if (noisy)
+            You("can't wear any armor while hiding in your shell.");
+        return 0;
+    }
+
+    if (which && (u_breakarm() || u_sliparm())
         /* same exception for cloaks as used in m_dowear() */
         && (which != c_cloak
             || ((otmp->otyp != MUMMY_WRAPPING)
@@ -2128,6 +2193,15 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
                which sounds odd, so use hard-coded "hooves" */
             if (noisy)
                 You("have too many hooves to wear %s.", c_boots);
+            err++;
+        } else if (u_race_no_boots()) {
+            /* break_armor() pushes boots off for centaurs and tortles
+               (EvilHack) */
+            if (noisy)
+                Your("%s are not shaped correctly to wear %s.",
+                     Race_if(PM_CENTAUR) ? "hooves"
+                                         : makeplural(body_part(FOOT)),
+                     c_boots);
             err++;
         } else if (u.utrap
                    && (u.utraptype == TT_BEARTRAP || u.utraptype == TT_INFLOOR
@@ -2464,7 +2538,8 @@ dowear(void)
 
     /* cantweararm() checks for suits of armor, not what we want here;
        verysmall() or nohands() checks for shields, gloves, etc... */
-    if (verysmall(gy.youmonst.data) || nohands(gy.youmonst.data)) {
+    if (verysmall(gy.youmonst.data) || nohands(gy.youmonst.data)
+        || Hidinshell) {
         pline("Don't even bother.");
         return ECMD_OK;
     }
@@ -2484,6 +2559,10 @@ doputon(void)
 {
     struct obj *otmp;
 
+    if (Hidinshell) {
+        You_cant("put on any items while hiding in your shell.");
+        return ECMD_OK;
+    }
     if (uleft && uright && uamul && ublindf
         && uarm && uarmu && uarmc && uarmh && uarms && uarmg && uarmf) {
         /* 'P' message doesn't mention armor */
@@ -2501,23 +2580,23 @@ doputon(void)
 void
 find_ac(void)
 {
-    int uac = mons[u.umonnum].ac; /* base armor class for current form */
+    int uac = u_base_ac(); /* base armor class for current form or race */
 
-    /* armor class from worn gear */
+    /* armor class from worn gear (a ghost gets less out of it) */
     if (uarm)
-        uac -= ARM_BONUS(uarm);
+        uac -= u_arm_bonus(uarm);
     if (uarmc)
-        uac -= ARM_BONUS(uarmc);
+        uac -= u_arm_bonus(uarmc);
     if (uarmh)
-        uac -= ARM_BONUS(uarmh);
+        uac -= u_arm_bonus(uarmh);
     if (uarmf)
-        uac -= ARM_BONUS(uarmf);
+        uac -= u_arm_bonus(uarmf);
     if (uarms)
-        uac -= ARM_BONUS(uarms);
+        uac -= u_arm_bonus(uarms);
     if (uarmg)
-        uac -= ARM_BONUS(uarmg);
+        uac -= u_arm_bonus(uarmg);
     if (uarmu)
-        uac -= ARM_BONUS(uarmu);
+        uac -= u_arm_bonus(uarmu);
     if (uleft && uleft->otyp == RIN_PROTECTION)
         uac -= uleft->spe;
     if (uright && uright->otyp == RIN_PROTECTION)
@@ -2530,6 +2609,7 @@ find_ac(void)
         uac -= u.ublessed;
     uac -= u.uspellprot;
     uac -= tech_icearmor_ac(); /* an ice mage's ice armor technique */
+    uac += u_race_ac_adjust(); /* tortle's shell, shapeshifters' skin */
 
     /* put a cap on armor class [5.0: was +127,-128, now reduced to +/- 99 */
     if (abs(uac) > AC_MAX)
@@ -3060,6 +3140,9 @@ doddoremarm(void)
     } else if (!uwep && !uswapwep && !uquiver && !uamul && !ublindf
                && !uleft && !uright && !wearing_armor()) {
         You("are not wearing anything.");
+        return ECMD_OK;
+    } else if (Hidinshell) {
+        You_cant("take off worn items while hiding in your shell.");
         return ECMD_OK;
     }
 

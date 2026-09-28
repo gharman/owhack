@@ -356,6 +356,10 @@ doread(void)
     gk.known = FALSE;
     if (check_capacity((char *) 0))
         return ECMD_OK;
+    if (Hidinshell) {
+        You_cant("read anything while hiding in your shell.");
+        return ECMD_OK;
+    }
 
     scroll = getobj("read", read_ok, GETOBJ_PROMPT);
     if (!scroll)
@@ -1046,6 +1050,9 @@ forget(int howmuch)
 
     if (howmuch & ALL_SPELLS)
         losespells();
+
+    /* a doppelganger loses track of some of the forms it has tasted */
+    forget_eaten_forms();
 
     /* Forget some skills. */
     drain_weapon_skill(rnd(howmuch ? 5 : 3));
@@ -1862,6 +1869,12 @@ seffect_amnesia(struct obj **sobjp)
     boolean sblessed = sobj->blessed;
 
     gk.known = TRUE;
+    /* a shielded mind shrugs amnesia off (Hack'EM) */
+    if (Psychic_resistance) {
+        You_feel("something tugging at your thoughts, but it quickly "
+                 "subsides.");
+        return;
+    }
     forget((!sblessed ? ALL_SPELLS : 0));
     if (Hallucination) /* Ommmmmm! */
         Your("mind releases itself from mundane concerns.");

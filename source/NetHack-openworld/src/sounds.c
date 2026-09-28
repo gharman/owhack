@@ -1025,10 +1025,13 @@ domonnoise(struct monst *mtmp)
     case MS_BONES:
         Soundeffect(se_bone_rattle, 60);
         pline("%s rattles noisily.", Monnam(mtmp));
-        You("freeze for a moment.");
-        nomul(-2);
-        gm.multi_reason = "scared by rattling";
-        gn.nomovemsg = 0;
+        /* the undead aren't scared by bones (EvilHack) */
+        if (!u_undead()) {
+            You("freeze for a moment.");
+            nomul(-2);
+            gm.multi_reason = "scared by rattling";
+            gn.nomovemsg = 0;
+        }
         break;
     case MS_LAUGH: {
         static const char *const laugh_msg[4] = {
@@ -1357,7 +1360,7 @@ dochat(void)
         You_cant("speak.  You're choking!");
         return ECMD_OK;
     }
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         pline("They won't hear you out there.");
         return ECMD_OK;
     }
@@ -1508,6 +1511,19 @@ dochat(void)
             if (canspotmon(mtmp))
                 pline_mon(mtmp, "%s seems pacified.", Monnam(mtmp));
         }
+        return ECMD_TIME;
+    }
+
+    /* a draugr can try to impose its will on a hostile zombie (EvilHack) */
+    if (Race_if(PM_DRAUGR) && !Upolyd && mtmp->data->mlet == S_ZOMBIE
+        && !mtmp->mpeaceful && !mtmp->mtame) {
+        if (!canspotmon(mtmp))
+            map_invisible(mtmp->mx, mtmp->my);
+        You("attempt to impose your will over %s...", mon_nam(mtmp));
+        if (rnl(10) < 1)
+            (void) tamedog(mtmp, (struct obj *) 0, FALSE);
+        else
+            pline("%s ignores you.", Monnam(mtmp));
         return ECMD_TIME;
     }
     return domonnoise(mtmp);

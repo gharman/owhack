@@ -195,7 +195,10 @@ done_in_by(struct monst *mtmp, int how)
             mimicker = (M_AP_TYPE(mtmp) == M_AP_MONSTER),
             imitator = (mptr != champtr || mimicker);
 
-    You((how == STONING) ? "turn to stone..." : "die...");
+    if (how == STONING)
+        You("turn to stone...");
+    else
+        pline("%s", u_death_msg());
     mark_synch(); /* flush buffered screen output */
     buf[0] = '\0';
     svk.killer.format = KILLED_BY_AN;
@@ -336,6 +339,9 @@ done_in_by(struct monst *mtmp, int how)
         u.ugrave_arise = PM_VAMPIRE;
     else if (mptr == &mons[PM_GHOUL])
         u.ugrave_arise = PM_GHOUL;
+    /* the undead races don't arise as some other monster (EvilHack) */
+    if (u_destroyed_not_killed() || Race_if(PM_GHOST))
+        u.ugrave_arise = NON_PM;
     /* this could happen if a high-end vampire kills the hero
        when ordinary vampires are genocided; ditto for wraiths */
     if (u.ugrave_arise >= LOW_PM
@@ -710,6 +716,10 @@ savelife(int how)
     int uhpmin;
     int givehp = 50 + 10 * (ACURR(A_CON) / 2);
 
+    /* a reviving draugr comes back whole (EvilHack) */
+    if (Race_if(PM_DRAUGR))
+        givehp = max(givehp, u.uhpmax);
+
     /* life-drain/level-loss to experience level 0 kills without actually
        reducing ulevel below 1, but include this for bulletproofing */
     if (u.ulevel < 1)
@@ -728,7 +738,9 @@ savelife(int how)
     if ((Sick & TIMEOUT) == 1L) {
         make_sick(0L, (char *) 0, FALSE, SICK_ALL);
     }
-    gn.nomovemsg = "You survived that attempt on your life.";
+    gn.nomovemsg = u_destroyed_not_killed()
+                       ? "You survived that attempt to destroy you."
+                       : "You survived that attempt on your life.";
     svc.context.move = 0;
 
     gm.multi = -1; /* can't move again during the current turn */
@@ -737,7 +749,8 @@ savelife(int how)
           "killed by <something>, while "
        in high scores entry, if any, and in logfile (but not on tombstone) */
     gm.multi_reason = Role_if(PM_TOURIST) ? "being toyed with by Fate"
-                                          : "attempting to cheat Death";
+                      : Race_if(PM_DRAUGR) ? "running out of chances to revive"
+                        : "attempting to cheat Death";
 
     if (u.utrap && u.utraptype == TT_LAVA)
         reset_utrap(FALSE);
@@ -1082,7 +1095,55 @@ done(int how)
             disp.botl = TRUE;
         }
     }
-    if (Lifesaved && (how <= GENOCIDED)) {
+    /* a draugr can revive a few times, though each revival takes its toll
+       and it can't come back from every kind of end (EvilHack) */
+    if (Race_if(PM_DRAUGR) && how <= GENOCIDED && !Lifesaved) {
+        /* burnt up, dissolved or disintegrated (savelife() resets
+           ugrave_arise, so check first) */
+        boolean nothing_left = (how == BURNING || how == DISSOLVED
+                                || u.ugrave_arise == (NON_PM - 2));
+        int arise = u.ugrave_arise; /* restored if the revival fails */
+
+        pline("But wait...  Suddenly, you start to revive!");
+        (void) adjattrib(A_STR, -1, TRUE);
+        (void) adjattrib(A_CON, -1, TRUE);
+        savelife(how);
+        if (how == GENOCIDED) {
+            u.uhp = 0;
+            pline("Unfortunately you are still genocided...");
+        } else if (nothing_left) {
+            u.uhp = 0;
+            pline("Unfortunately there's nothing left to revive...");
+        } else if (how == STONING) {
+            u.uhp = 0;
+            pline("Unfortunately you've turned to stone...");
+        } else if (u.umortality > rnd(3)) {
+            u.uhp = 0;
+            pline("Unfortunately you weren't strong enough to revive "
+                  "fully...");
+        } else {
+            char killbuf[BUFSZ];
+
+            formatkiller(killbuf, BUFSZ, how, FALSE);
+            livelog_printf(LL_LIFESAVE, "revived (%s)", killbuf);
+            survive = TRUE;
+        }
+        if (!survive)
+            u.ugrave_arise = arise;
+        disp.botl = TRUE;
+    }
+    if (!survive && Lifesaved && (how <= GENOCIDED)
+        /* the medallion can't hold the undead to life (EvilHack) */
+        && u_destroyed_not_killed() && !Upolyd) {
+        pline("But wait...");
+        makeknown(AMULET_OF_LIFE_SAVING);
+        Your("medallion %s!", !Blind ? "glows white-hot" : "sears your neck");
+        if (!Deaf)
+            You_hear("manic laughter in the distance...");
+        Your("medallion turns to ash!");
+        if (uamul)
+            useup(uamul);
+    } else if (!survive && Lifesaved && (how <= GENOCIDED)) {
         pline("But wait...");
         /* assumes that only one type of item confers LifeSaved property */
         makeknown(AMULET_OF_LIFE_SAVING);
@@ -1113,8 +1174,14 @@ done(int how)
            accept it more than once if there's no user supplying it */
         && !(program_state.done_hup && gd.done_seq++ == gh.hero_seq)
 #endif
-        && !paranoid_query(ParanoidDie, "Die?")) {
-        pline("OK, so you don't %s.", (how == CHOKING) ? "choke" : "die");
+        && !paranoid_query(ParanoidDie,
+                           u_destroyed_not_killed() ? "Destroyed?"
+                                                    : "Die?")) {
+        if (u_destroyed_not_killed() && how != CHOKING)
+            pline("OK, so you aren't destroyed.");
+        else
+            pline("OK, so you don't %s.",
+                  (how == CHOKING) ? "choke" : "die");
         iflags.last_msg = PLNMSG_OK_DONT_DIE;
         savelife(how);
         survive = TRUE;
@@ -1214,6 +1281,8 @@ really_done(int how)
         u.ugrave_arise = (NON_PM - 2); /* leave no corpse */
     else if (how == STONING)
         u.ugrave_arise = LEAVESTATUE; /* statue instead of corpse */
+    else if (Race_if(PM_GHOST) && !Upolyd)
+        u.ugrave_arise = (NON_PM - 2); /* a ghost leaves no corpse */
     else if (how == TURNED_SLIME
              /* it's possible to turn into slime even though green slimes
                 have been genocided:  genocide could occur after hero is

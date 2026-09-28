@@ -63,6 +63,10 @@ staticfn void start_engulf(struct monst *) NONNULLARG1;
 staticfn void end_engulf(void);
 staticfn int gulpum(struct monst *, struct attack *) NONNULLPTRS;
 staticfn boolean hmonas(struct monst *) NONNULLARG1;
+staticfn boolean race_attack(struct attack *) NONNULLARG1;
+staticfn boolean race_attack_dangerous(struct monst *, struct attack *)
+                                                            NONNULLPTRS;
+staticfn void race_extra_attacks(struct monst *, int) NONNULLARG1;
 staticfn void nohandglow(struct monst *) NONNULLARG1;
 staticfn boolean mhurtle_to_doom(struct monst *, int,
                              struct permonst **) NONNULLARG13;
@@ -415,6 +419,12 @@ find_roll_to_hit(
         tmp++;
     /* active techniques: kiii, berserk, souleater */
     tmp += tech_tohit_bonus();
+    /* a ghost can barely keep hold of a weapon */
+    if (u_ghost() && weapon && aatyp == AT_WEAP)
+        tmp -= 2;
+    /* a shapechanged vampire fights well with its natural weapons */
+    if (!uwep && u_vampire_form())
+        tmp += (u.ulevel / 3) + 5;
 
     /* encumbrance: with a lot of luggage, your agility diminishes */
     if ((tmp2 = near_capacity()) != 0)
@@ -576,10 +586,14 @@ do_attack(struct monst *mtmp)
         return FALSE;
     }
 
-    if (Upolyd)
+    if (Upolyd) {
         (void) hmonas(mtmp);
-    else
-        (void) hitum(mtmp, gy.youmonst.data->mattk);
+    } else {
+        int oldumort = u.umortality;
+
+        if (hitum(mtmp, gy.youmonst.data->mattk))
+            race_extra_attacks(mtmp, oldumort);
+    }
     mtmp->mstrategy &= ~STRAT_WAITMASK;
 
  atk_done:
@@ -594,6 +608,124 @@ do_attack(struct monst *mtmp)
         map_invisible(u.ux + u.dx, u.uy + u.dy);
 
     return TRUE;
+}
+
+/* the natural attack a race gets in addition to its weapon attacks:
+   an illithid's tentacles, a draugr's or vampire's bite (EvilHack); these
+   come from the race's monster form except for the vampire, whose regular
+   monster form claws as well */
+staticfn boolean
+race_attack(struct attack *att)
+{
+    static const struct attack vampire_bite = { AT_BITE, AD_DRLI, 1, 4 };
+
+    switch (Race_switch) {
+    case PM_ILLITHID:
+        *att = mons[PM_ILLITHID].mattk[1]; /* tentacles, AD_DRIN */
+        return TRUE;
+    case PM_DRAUGR:
+        *att = mons[PM_DRAUGR].mattk[1]; /* bite, AD_DRIN */
+        return TRUE;
+    case PM_VAMPIRE:
+        *att = vampire_bite;
+        return TRUE;
+    default:
+        break;
+    }
+    return FALSE;
+}
+
+/* the racial tentacle or bite attack is never used when it would be too
+   dangerous (EvilHack) */
+staticfn boolean
+race_attack_dangerous(struct monst *mon, struct attack *att)
+{
+    struct permonst *ptr = mon->data;
+
+    if ((flesh_petrifies(ptr) && !Stone_resistance)
+        || is_rider(ptr) || noncorporeal(ptr) || ptr == &mons[PM_GREEN_SLIME]
+        || (ismnum(u.ulycn) && were_beastie(monsndx(ptr)) == u.ulycn))
+        return TRUE;
+    /* never eat brains or bite while engulfed */
+    if (u.uswallow)
+        return TRUE;
+    /* small, quick animals may dodge a draugr's bite */
+    if (Race_if(PM_DRAUGR) && att->aatyp == AT_BITE
+        && ptr->msize <= MZ_SMALL && is_animal(ptr)
+        && !(mon->mfrozen || !mon->mcanmove || mon->mconf || mon->mstun)
+        && rn2(3)) {
+        pline("%s nimbly %s your bite!", Monnam(mon),
+              rn2(2) ? "dodges" : "evades");
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/* after the hero's weapon (or bare-handed) attack on a monster that
+   survived: lycanthropes may go berserk (Slash'EM), and illithids, draugr
+   and vampires may follow up with their natural attack (EvilHack) */
+staticfn void
+race_extra_attacks(struct monst *mon, int oldumort)
+{
+    struct attack att;
+    int tmp, dieroll, armorpenalty, attknum = 1;
+    boolean malive = TRUE;
+
+    /* lycanthropes sometimes go a little berserk! */
+    if (Race_if(PM_HUMAN_WEREWOLF) && !rn2(24)) {
+        int repeat_hit = rn2(4) + 1;
+        static const char *const growls[] = {
+            "Grrrrr!", "Rarrrgh!", "Grrarrgh!", "Rarggrrgh!"
+        };
+
+        pline("%s", growls[repeat_hit - 1]);
+        while (repeat_hit-- > 0 && malive) {
+            if (gm.multi < 0 || u.umortality > oldumort
+                || m_at(gb.bhitpos.x, gb.bhitpos.y) != mon
+                || DEADMONSTER(mon))
+                return;
+            malive = hitum(mon, gy.youmonst.data->mattk);
+        }
+        if (!malive)
+            return;
+    }
+
+    if (gm.multi < 0 || u.umortality > oldumort || DEADMONSTER(mon)
+        || m_at(gb.bhitpos.x, gb.bhitpos.y) != mon || !race_attack(&att))
+        return;
+    /* illithids and draugr don't use their natural attack every time;
+       vampires bite more often */
+    if (((Race_if(PM_ILLITHID) || Race_if(PM_DRAUGR)) && rn2(4))
+        || (Race_if(PM_VAMPIRE) && !rn2(3)))
+        return;
+    if (race_attack_dangerous(mon, &att))
+        return;
+
+    tmp = find_roll_to_hit(mon, att.aatyp, (struct obj *) 0, &attknum,
+                           &armorpenalty);
+    mon_maybe_unparalyze(mon);
+    dieroll = rnd(20);
+    if (tmp > dieroll) {
+        int res;
+
+        wakeup(mon, TRUE);
+        if (att.aatyp == AT_TENT)
+            Your("tentacles suck %s.", mon_nam(mon));
+        else
+            You("bite %s.", mon_nam(mon));
+        /* a draugr's bite usually carries the rot of the grave rather
+           than eating brains (EvilHack); a victim it kills rises as a
+           zombie, see xkilled() */
+        if (Race_if(PM_DRAUGR) && rn2(5))
+            att.adtyp = AD_PHYS;
+        set_racial_bite(Race_if(PM_DRAUGR));
+        res = damageum(mon, &att, 0);
+        set_racial_bite(FALSE);
+        (void) passive(mon, (struct obj *) 0, TRUE,
+                       !(res & M_ATTK_DEF_DIED), att.aatyp, FALSE);
+    } else {
+        missum(mon, &att, (tmp + armorpenalty > dieroll));
+    }
 }
 
 /* really hit target monster; returns TRUE if it still lives */
@@ -882,6 +1014,14 @@ hmon_hitmon_barehands(struct _hitmon_data *hmd, struct monst *mon)
                                &hmd->hated_obj);
     if (hmd->hated_obj)
         hmd->hatedmsg = TRUE;
+
+    /* a ghost's touch chills the living */
+    if (u_ghost() && hmd->thrown == HMON_MELEE
+        && hmd->mdat != &mons[PM_SHADE]
+        && !resists_cold(mon) && !defended(mon, AD_COLD)) {
+        hmd->dmg += rnd(4 + u.ulevel / 3);
+        hmd->ghostchill = TRUE;
+    }
 }
 
 staticfn void
@@ -947,6 +1087,16 @@ hmon_hitmon_weapon_melee(
     /* "normal" weapon usage */
     hmd->use_weapon_skill = TRUE;
     hmd->dmg = dmgval(obj, mon);
+    /* giants are more effective with club-like weapons (EvilHack):
+       best of two damage rolls, plus one */
+    if (u_giant() && objects[obj->otyp].oc_skill == P_CLUB
+        && !noncorporeal(hmd->mdat)) {
+        int dmg2 = dmgval(obj, mon);
+
+        if (hmd->dmg < dmg2)
+            hmd->dmg = dmg2;
+        hmd->dmg++;
+    }
     /* a minimal hit doesn't exercise proficiency */
     hmd->train_weapon_skill = (hmd->dmg > 1);
     if (is_lightsaber(obj) && !obj->lamplit) {
@@ -980,13 +1130,21 @@ hmon_hitmon_weapon_melee(
         You("strike %s from behind!", mon_nam(mon));
         hmd->dmg += rnd(u.ulevel);
         hmd->hittxt = TRUE;
-    } else if (hmd->dieroll == 2 && obj == uwep
-               && obj->oclass == WEAPON_CLASS
-               && (bimanual(obj)
-                   || (Role_if(PM_SAMURAI) && obj->otyp == KATANA
-                       && !uarms))
-               && ((wtype = uwep_skill_type()) != P_NONE
-                   && P_SKILL(wtype) >= P_SKILLED)
+    } else if (obj == uwep && obj->oclass == WEAPON_CLASS
+               && ((hmd->dieroll == 2
+                    && (bimanual(obj) || (Race_if(PM_GIANT) && !Upolyd)
+                        || (Role_if(PM_SAMURAI) && obj->otyp == KATANA
+                            && !uarms))
+                    && ((wtype = uwep_skill_type()) != P_NONE
+                        && P_SKILL(wtype) >= P_SKILLED))
+                   /* giants' blows shatter weapons more often (EvilHack) */
+                   || (hmd->dieroll == 3 && Race_if(PM_GIANT) && !Upolyd
+                       && ((wtype = uwep_skill_type()) != P_NONE
+                           && P_SKILL(wtype) >= P_BASIC))
+                   || (hmd->dieroll == 4 && !rn2(2) && Race_if(PM_GIANT)
+                       && !Upolyd
+                       && ((wtype = uwep_skill_type()) != P_NONE
+                           && P_SKILL(wtype) >= P_EXPERT)))
                && ((monwep = MON_WEP(mon)) != 0
                    && !is_flimsy(monwep)
                    && !obj_resists(monwep,
@@ -1082,7 +1240,7 @@ hmon_hitmon_weapon_melee(
     if (artifact_light(obj) && obj->lamplit
         && mon_hates_light(mon))
         hmd->lightobj = TRUE;
-    if (u.usteed && !hmd->thrown && hmd->dmg > 0
+    if ((u.usteed || u_centaur()) && !hmd->thrown && hmd->dmg > 0
         && weapon_type(obj) == P_LANCE && mon != u.ustuck) {
         hmd->jousting = joust(mon, obj);
         /* exercise skill even for minimal damage hits */
@@ -1125,8 +1283,9 @@ hmon_hitmon_weapon(
         is_launcher(obj)
         /* or strike with a missile in your hand... */
         || (!hmd->thrown && (is_missile(obj) || is_ammo(obj)))
-        /* or use a pole at short range and not mounted... */
-        || (!hmd->thrown && !u.usteed && is_pole(obj)
+        /* or use a pole at short range and not mounted (nor a centaur,
+           who is its own mount)... */
+        || (!hmd->thrown && !u.usteed && !u_centaur() && is_pole(obj)
             && !is_art(obj,ART_SNICKERSNEE))
         /* or throw a missile without the proper bow... */
         || (is_ammo(obj) && (hmd->thrown != HMON_THROWN
@@ -1622,7 +1781,9 @@ hmon_hitmon_stagger(
     struct obj *obj UNUSED)
 {
     /* VERY small chance of stunning opponent if unarmed. */
-    if (rnd(100) < P_SKILL(P_BARE_HANDED_COMBAT) && !bigmonst(hmd->mdat)
+    if (rnd((Race_if(PM_GIANT) && !Upolyd) ? 40 : 100)
+            < P_SKILL(P_BARE_HANDED_COMBAT)
+        && !bigmonst(hmd->mdat)
         && !thick_skinned(hmd->mdat)) {
         if (canspotmon(mon))
             pline("%s %s from your powerful strike!", Monnam(mon),
@@ -1703,7 +1864,12 @@ hmon_hitmon_msg_hit(
                 : (obj && (objects[obj->otyp].oc_skill == P_WHIP
                            || is_wet_towel(obj))) ? "lash"
                   : Role_if(PM_BARBARIAN) ? "smite"
-                    : "hit",
+                    /* the clawed races (EvilHack) */
+                    : (!obj && !Upolyd
+                       && (Race_if(PM_ILLITHID) || Race_if(PM_TORTLE)
+                           || Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)))
+                      ? "claw"
+                      : "hit",
                 mon_nam(mon), canseemon(mon) ? exclam(hmd->dmg) : ".");
     }
 }
@@ -1850,6 +2016,7 @@ hmon_hitmon(
     hmd.dryit = FALSE;
     hmd.doreturn = FALSE;
     hmd.retval = FALSE;
+    hmd.ghostchill = FALSE;
     hmd.saved_oname[0] = '\0';
 
     hmon_hitmon_do_hit(&hmd, mon, obj);
@@ -1931,6 +2098,13 @@ hmon_hitmon(
     hmon_hitmon_splitmon(&hmd, mon, obj);
 
     hmon_hitmon_msg_hit(&hmd, mon, obj);
+
+    if (hmd.ghostchill && canspotmon(mon) && !hmd.offmap)
+        You("chill %s.", mon_nam(mon));
+    /* a ghost's blows can put the fear of the dead into its victims */
+    if (u_ghost() && hmd.hand_to_hand && !hmd.destroyed && !hmd.offmap
+        && !rn2(4))
+        ghost_frightens(mon);
 
     if (hmd.dryit) { /* dryit implies wet towel, so 'obj' is still intact */
         assert(obj != NULL);
@@ -2518,10 +2692,25 @@ mhitm_ad_drli(
 {
     if (magr == &gy.youmonst) {
         /* uhitm */
+        boolean vampbite = (u_vampire() && mattk->aatyp == AT_BITE);
+
+        /* a vampire only drains what it can drink (EvilHack): the victim
+           must have blood, and the vampire can't be too full */
+        if (vampbite && (!has_blood(mdef->data) || u.uhunger > 1250))
+            return;
         if (!rn2(3) && !(resists_drli(mdef) || defended(mdef, AD_DRLI))
             && !mhitm_mgc_atk_negated(magr, mdef, TRUE)) {
             mhm->damage = d(2, 6); /* Stormbringer uses monhp_per_lvl
                                     * (usually 1d8) */
+            if (vampbite) {
+                /* For the life of a creature is in the blood (Lev 17:11) */
+                if (flags.verbose)
+                    You("feed on its lifeblood.");
+                /* biting monsters doesn't count against eating conducts;
+                   the draining of life is considered to be primarily a
+                   non-physical effect (Slash'EM) */
+                lesshungry(mhm->damage * 6);
+            }
             pline("%s becomes weaker!", Monnam(mdef));
             if (mdef->mhpmax - mhm->damage > (int) mdef->m_lev) {
                 mdef->mhpmax -= mhm->damage;
@@ -2889,7 +3078,7 @@ mhitm_ad_sgld(
         hitmsg(magr, mattk);
         if (pd->mlet == pa->mlet)
             return;
-        if (!magr->mcan)
+        if (!magr->mcan && !Hidinshell)
             stealgold(magr);
     } else {
         /* mhitm */
@@ -3276,7 +3465,8 @@ mhitm_ad_drin(
         if (m_slips_free(mdef, mattk))
             return;
 
-        if ((helmet = which_armor(mdef, W_ARMH)) != 0 && rn2(8)) {
+        if ((helmet = which_armor(mdef, W_ARMH)) != 0
+            && (rn2(8) || helmet->otyp == TINFOIL_HAT)) {
             pline("%s %s blocks your attack to %s head.",
                   s_suffix(Monnam(mdef)), helm_simple_name(helmet),
                   mhis(mdef));
@@ -3304,10 +3494,17 @@ mhitm_ad_drin(
         if (u_slip_free(magr, mattk))
             return;
 
-        if (uarmh && rn2(8)) {
+        /* a tinfoil hat always keeps the tentacles out (Hack'EM) */
+        if (uarmh && (rn2(8) || uarmh->otyp == TINFOIL_HAT)) {
             /* not body_part(HEAD) */
             Your("%s blocks the attack to your head.",
                  helm_simple_name(uarmh));
+            return;
+        }
+        /* an illithid's psionics ward off another mind flayer (EvilHack) */
+        if (u_illithid()) {
+            Your("psionic abilities shield your brain.");
+            gs.skipdrin = TRUE;
             return;
         }
         /* negative armor class doesn't reduce this damage */
@@ -3330,6 +3527,12 @@ mhitm_ad_drin(
                or shade) so this check for missing is academic */
             if (mhitu == M_ATTK_MISS)
                 return;
+        }
+        /* a shielded mind keeps its memories (Hack'EM) */
+        if (Psychic_resistance) {
+            Your("brain is shielded from memory loss!");
+            gs.skipdrin = TRUE;
+            return;
         }
         /* adjattrib gives dunce cap message when appropriate */
         (void) adjattrib(A_INT, -rnd(2), FALSE);
@@ -3355,7 +3558,9 @@ mhitm_ad_drin(
             gs.skipdrin = TRUE; /* affects mattackm()'s attack loop */
             return;
         }
-        if ((mdef->misc_worn_check & W_ARMH) && rn2(8)) {
+        if ((mdef->misc_worn_check & W_ARMH)
+            && (rn2(8)
+                || which_armor(mdef, W_ARMH)->otyp == TINFOIL_HAT)) {
             if (gv.vis && canspotmon(magr) && canseemon(mdef)) {
                 Strcpy(buf, s_suffix(Monnam(mdef)));
                 pline("%s helmet blocks %s attack to %s head.", buf,
@@ -4103,9 +4308,18 @@ mhitm_ad_phys(
                     mhm->hitflags |= M_ATTK_HIT;
                 }
             } else if (u.ustuck == magr) {
-                exercise(A_STR, FALSE);
-                You("are being %s.",
-                    (pa == &mons[PM_ROPE_GOLEM]) ? "choked" : "crushed");
+                if (Hidinshell) {
+                    /* still held, but can't be hurt through the shell */
+                    Your("protective shell prevents you from being %s!",
+                         (pa == &mons[PM_ROPE_GOLEM]) ? "choked"
+                                                      : "crushed");
+                    mhm->damage = 0;
+                } else {
+                    exercise(A_STR, FALSE);
+                    You("are being %s.",
+                        (pa == &mons[PM_ROPE_GOLEM]) ? "choked"
+                                                     : "crushed");
+                }
             }
         } else { /* hand to hand weapon */
             struct obj *otmp = MON_WEP(magr);
@@ -4385,8 +4599,11 @@ mhitm_ad_heal(
     } else if (mdef == &gy.youmonst) {
         /* mhitu */
         /* a cancelled nurse is just an ordinary monster,
-         * nurses don't heal those that cause petrification */
-        if (magr->mcan || (Upolyd && touch_petrifies(pd))) {
+         * nurses don't heal those that cause petrification,
+         * nor will they heal the undead (EvilHack) */
+        if (magr->mcan || (Upolyd && touch_petrifies(pd)) || u_undead()) {
+            if (u_undead() && !magr->mcan && !Deaf && !(svm.moves % 5))
+                verbalize("I can't heal the undead... you're dead!");
             hitmsg(magr, mattk);
             return;
         }
@@ -4657,8 +4874,9 @@ mhitm_ad_samu(
         hitmsg(magr, mattk);
         /* when the Wizard or quest nemesis hits, there's a 1/20 chance
            to steal a quest artifact (any, not just the one for the hero's
-           own role) or the Amulet or one of the invocation tools */
-        if (!rn2(20))
+           own role) or the Amulet or one of the invocation tools
+           (a tortle hiding in its shell keeps them out of reach) */
+        if (!rn2(20) && !Hidinshell)
             stealamulet(magr);
     } else {
         /* mhitm */
@@ -4714,7 +4932,7 @@ mhitm_ad_sedu(
 
         if (is_animal(magr->data)) {
             hitmsg(magr, mattk);
-            if (magr->mcan)
+            if (magr->mcan || Hidinshell)
                 return;
             /* Continue below */
         } else if (dmgtype(gy.youmonst.data, AD_SEDU)
@@ -4732,10 +4950,10 @@ mhitm_ad_sedu(
             mhm->hitflags = M_ATTK_AGR_DONE; /* return 3??? */
             mhm->done = TRUE;
             return;
-        } else if (magr->mcan) {
+        } else if (magr->mcan || Hidinshell) {
             if (!Blind)
                 pline("%s tries to %s you, but you seem %s.",
-                      Adjmonnam(magr, "plain"),
+                      !magr->mcan ? Monnam(magr) : Adjmonnam(magr, "plain"),
                       flags.female ? "charm" : "seduce",
                       flags.female ? "unaffected" : "uninterested");
             if (rn2(3)) {
@@ -4837,7 +5055,8 @@ mhitm_ad_ssex(struct monst *magr, struct attack *mattk, struct monst *mdef,
     } else if (mdef == &gy.youmonst) {
         /* mhitu */
         if (SYSOPT_SEDUCE) {
-            if (could_seduce(magr, mdef, mattk) == 1 && !magr->mcan)
+            if (could_seduce(magr, mdef, mattk) == 1 && !magr->mcan
+                && !Hidinshell)
                 if (doseduce(magr)) {
                     mhm->hitflags = M_ATTK_AGR_DONE;
                     mhm->done = TRUE;
@@ -5967,6 +6186,11 @@ passive(
         (void) destroy_items(&gy.youmonst, AD_FIRE, tmp);
         if (u.uhp < 1 || (Upolyd && u.mh < 1))
             return (malive | mhit);
+    }
+    /* a vampire biting its victim gets a taste of its blood */
+    if (mhitb && aatyp == AT_BITE && u_vampire()) {
+        if (bite_monster(mon))
+            return M_ATTK_AGR_DIED; /* lifesaved */
     }
 
     for (i = 0;; i++) {

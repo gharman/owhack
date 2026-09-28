@@ -176,7 +176,7 @@ stuck_in_wall(void)
             if (!isok(x, y)
                 || (IS_OBSTRUCTED(levl[x][y].typ)
                     && (levl[x][y].typ != SDOOR && levl[x][y].typ != SCORR))
-                || (blocked_boulder(i, j) && !throws_rocks(gy.youmonst.data)))
+                || (blocked_boulder(i, j) && !u_throws_rocks()))
                 ++count;
         }
     }
@@ -222,7 +222,8 @@ in_trouble(void)
         return TROUBLE_REGION;
     if ((!Upolyd || Unchanging) && critically_low_hp(FALSE))
         return TROUBLE_HIT;
-    if (ismnum(u.ulycn))
+    /* a werewolf by race doesn't consider its nature a trouble */
+    if (ismnum(u.ulycn) && !Race_if(PM_HUMAN_WEREWOLF))
         return TROUBLE_LYCANTHROPE;
     if (near_capacity() >= EXT_ENCUMBER && AMAX(A_STR) - ABASE(A_STR) > 3)
         return TROUBLE_COLLAPSING;
@@ -1317,7 +1318,8 @@ pleased(aligntyp g_align)
 
             godvoice(u.ualign.type,
                      "Thou hast pleased me with thy progress,");
-            if (!(HTelepat & INTRINSIC)) {
+            /* a draugr's dead brain can't be made telepathic (EvilHack) */
+            if (!(HTelepat & INTRINSIC) && !Race_if(PM_DRAUGR)) {
                 HTelepat |= FROMOUTSIDE;
                 pline(msg, "Telepathy");
                 if (Blind)
@@ -1350,7 +1352,9 @@ pleased(aligntyp g_align)
             FALLTHROUGH;
             /*FALLTHRU*/
         case 6:
-            give_spell();
+            /* draugr don't mess around with spells (EvilHack) */
+            if (!Race_if(PM_DRAUGR))
+                give_spell();
             break;
         default:
             impossible("Confused deity!");
@@ -1706,7 +1710,8 @@ sacrifice_your_race(
 {
     int pm;
 
-    if (is_demon(gy.youmonst.data)) {
+    if (is_demon(gy.youmonst.data) || Race_if(PM_HUMAN_WEREWOLF)) {
+        /* werewolves too (Slash'EM) */
         You("find the idea very satisfying.");
         exercise(A_WIS, TRUE);
     } else if (u.ualign.type != A_CHAOTIC) {
@@ -1720,7 +1725,14 @@ sacrifice_your_race(
         return;
     } else if (altaralign != A_CHAOTIC && altaralign != A_NONE) {
         /* curse the lawful/neutral altar */
-        pline_The("altar is stained with %s blood.", gu.urace.adj);
+        if (otmp->odrained)
+            pline_The("bloodless %s corpse is consumed in flames!",
+                      is_human(&mons[otmp->corpsenm]) ? "human"
+                                                      : gu.urace.adj);
+        else
+            pline_The("altar is stained with %s blood.",
+                      is_human(&mons[otmp->corpsenm]) ? "human"
+                                                      : gu.urace.adj);
         levl[u.ux][u.uy].altarmask = AM_CHAOTIC;
         newsym(u.ux, u.uy); /* in case Invisible to self */
         angry_priest();
@@ -1867,6 +1879,9 @@ dosacrifice(void)
         return ECMD_OK;
     } else if (Confusion || Stunned) {
         You("are too impaired to perform the rite.");
+        return ECMD_OK;
+    } else if (Hidinshell) {
+        You_cant("offer a sacrifice while hiding in your shell.");
         return ECMD_OK;
     }
     highaltar = (levl[u.ux][u.uy].altarmask & AM_SANCTUM);
@@ -2021,7 +2036,8 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
 
     /* same race or former pet results apply even if the corpse is
        too old (value==0) */
-    if (your_race(ptr)) {
+    /* to a vampire, humans are close enough kin (EvilHack) */
+    if (your_race(ptr) || (Race_if(PM_VAMPIRE) && is_human(ptr))) {
         sacrifice_your_race(otmp, highaltar, altaralign);
         return;
     }
@@ -2202,7 +2218,7 @@ can_pray(boolean praying) /* false means no messages should be given */
             gp.p_type = 3;
     }
 
-    if (is_undead(gy.youmonst.data) && !Inhell
+    if (u_undead() && !Inhell
         && (gp.p_aligntyp == A_LAWFUL
             || (gp.p_aligntyp == A_NEUTRAL && !rn2(10))))
         gp.p_type = -1;
@@ -2470,6 +2486,10 @@ doturn(void)
         You("shudder at the thought.");
         return ECMD_OK;
     }
+    if (Hidinshell) {
+        You_cant("turn undead while hiding in your shell!");
+        return ECMD_OK;
+    }
     if (!u.uconduct.gnostic++)
         livelog_printf(LL_CONDUCT, "rejected atheism by turning undead");
 
@@ -2486,8 +2506,7 @@ doturn(void)
         return (u.uconduct.gnostic == 1) ? ECMD_TIME : ECMD_OK;
     }
     if ((u.ualign.type != A_CHAOTIC
-         && (is_demon(gy.youmonst.data)
-             || is_undead(gy.youmonst.data) || is_vampshifter(&gy.youmonst)))
+         && (is_demon(gy.youmonst.data) || u_undead()))
         || u.ugangr > 6) { /* "Die, mortal!" */
         pline("For some reason, %s seems to ignore you.", Gname);
         aggravate();

@@ -897,6 +897,12 @@ domonability(void)
     struct permonst *uptr = gy.youmonst.data;
     boolean might_hide = (is_hider(uptr) || hides_under(uptr));
     char c = '\0';
+    int res;
+
+    /* racial abilities: tortle's shell, illithid's psychic blast,
+       vampire's shapechange, shapeshifters' polymorph at will */
+    if ((res = race_monability()) >= 0)
+        return res;
 
     if (might_hide && webmaker(uptr)) {
         c = yn_function("Hide [h] or spin a web [s]?",
@@ -2036,8 +2042,8 @@ struct ext_func_tab extcmdlist[] = {
               wiz_wish, IFBURIED | CMD_M_PREFIX | WIZMODECMD, NULL },
     { '\0',   "wmode", "show wall modes",
               wiz_show_wmodes, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
-    { '\0',   "youpoly", "polymorph at will",
-              dopolyatwill, AUTOCOMPLETE, NULL },
+    { '\0',   "youpoly", "polymorph at will (shapeshifters, elemental mages)",
+              dopolyatwill, IFBURIED | AUTOCOMPLETE, NULL },
     { 'z',    "zap", "zap a wand",
               dozap, 0, NULL },
     /* movement commands will be bound by reset_commands() */

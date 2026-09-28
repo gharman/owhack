@@ -287,9 +287,9 @@ obj_shuffle_range(
             *lo_p = SPEED_BOOTS, *hi_p = LEVITATION_BOOTS;
         break;
     case POTION_CLASS:
-        /* potion of water has the only fixed description */
+        /* the potions of blood and water have fixed descriptions */
         *lo_p = svb.bases[POTION_CLASS];
-        *hi_p = POT_WATER - 1;
+        *hi_p = POT_BLOOD - 1;
         break;
     case AMULET_CLASS:
     case SCROLL_CLASS:

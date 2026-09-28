@@ -561,7 +561,7 @@
         A(ATTK(AT_WEAP, AD_PHYS, 1, 4), ATTK(AT_TENT, AD_DRIN, 2, 1),
           ATTK(AT_TENT, AD_DRIN, 2, 1), ATTK(AT_TENT, AD_DRIN, 2, 1),
           NO_ATTK, NO_ATTK),
-        SIZ(1450, 400, MS_HISS, MZ_HUMAN), 0, 0,
+        SIZ(1450, 400, MS_HISS, MZ_HUMAN), MR_PSYCHIC, 0,
         M1_HUMANOID | M1_FLY | M1_SEE_INVIS | M1_OMNIVORE,
         M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
@@ -571,7 +571,7 @@
         A(ATTK(AT_WEAP, AD_PHYS, 1, 8), ATTK(AT_TENT, AD_DRIN, 2, 1),
           ATTK(AT_TENT, AD_DRIN, 2, 1), ATTK(AT_TENT, AD_DRIN, 2, 1),
           ATTK(AT_TENT, AD_DRIN, 2, 1), ATTK(AT_TENT, AD_DRIN, 2, 1)),
-        SIZ(1450, 400, MS_HISS, MZ_HUMAN), 0, 0,
+        SIZ(1450, 400, MS_HISS, MZ_HUMAN), MR_PSYCHIC, 0,
         M1_HUMANOID | M1_FLY | M1_SEE_INVIS | M1_OMNIVORE,
         M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
@@ -587,6 +587,16 @@
           | M2_COLLECT | M2_JEWELS | M2_MAGIC,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         7, CLR_GRAY, GOLLUM),
+    /* plain "illithid" is a placeholder for the player race */
+    MON(NAM("illithid"), S_HUMANOID,
+        LVL(0, 12, 10, 0, -8), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 6), ATTK(AT_TENT, AD_DRIN, 2, 1),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), MR_PSYCHIC, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_STRONG | M2_GREEDY | M2_JEWELS | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        2, CLR_BRIGHT_MAGENTA, ILLITHID),
     /*
      * imps & other minor demons/devils
      */
@@ -1575,6 +1585,15 @@
     /*
      * Centaurs
      */
+    /* plain "centaur" is a placeholder for the player race */
+    MON(NAM("centaur"), S_CENTAUR,
+        LVL(0, 18, 4, 0, 0), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 6), ATTK(AT_KICK, AD_PHYS, 1, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(2200, 500, MS_HUMANOID, MZ_LARGE), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_STRONG | M2_GREEDY | M2_COLLECT,
+        M3_INFRAVISIBLE, 2, CLR_RED, CENTAUR),
     MON(NAM("plains centaur"), S_CENTAUR,
         LVL(4, 18, 4, 0, 0), (G_GENO | 1),
         A(ATTK(AT_WEAP, AD_PHYS, 1, 6), ATTK(AT_KICK, AD_PHYS, 1, 6),
@@ -2840,6 +2859,16 @@
     /*
      * Zombies
      */
+    /* "draugr" (Norse revenant) is a placeholder for the player race */
+    MON(NAM("draugr"), S_ZOMBIE,
+        LVL(0, 10, 10, 0, -3), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 8), ATTK(AT_BITE, AD_DRIN, 1, 2),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 200, MS_SILENT, MZ_HUMAN),
+        MR_COLD | MR_SLEEP | MR_POISON, 0,
+        M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_CARNIVORE,
+        M2_NOPOLY | M2_UNDEAD | M2_STRONG | M2_STALK, M3_INFRAVISION,
+        2, HI_DOMESTIC, DRAUGR),
     MON(NAM("kobold zombie"), S_ZOMBIE,
         LVL(0, 6, 10, 0, -2), (G_GENO | G_NOCORPSE | 1),
         A(ATTK(AT_CLAW, AD_PHYS, 1, 4),
@@ -3633,8 +3662,8 @@
         A(ATTK(AT_MAGC, AD_SPEL, 8, 6), ATTK(AT_STNG, AD_DRLI, 1, 4),
           ATTK(AT_CLAW, AD_DISE, 1, 6), ATTK(AT_CLAW, AD_DISE, 1, 6),
           NO_ATTK, NO_ATTK),
-        SIZ(1500, 500, MS_GROWL, MZ_HUGE), MR_FIRE | MR_POISON, 0,
-        M1_FLY | M1_SEE_INVIS | M1_NOHANDS | M1_POIS,
+        SIZ(1500, 500, MS_GROWL, MZ_HUGE), MR_FIRE | MR_POISON | MR_PSYCHIC,
+        0, M1_FLY | M1_SEE_INVIS | M1_NOHANDS | M1_POIS,
         M2_NOPOLY | M2_DEMON | M2_STALK | M2_HOSTILE | M2_PNAME | M2_NASTY
             | M2_PRINCE | M2_MALE,
         M3_WANTSAMUL | M3_INFRAVISIBLE | M3_INFRAVISION,
@@ -3647,7 +3676,8 @@
         A(ATTK(AT_TUCH, AD_DETH, 8, 8), ATTK(AT_TUCH, AD_DETH, 8, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(WT_HUMAN, 1, MS_RIDER, MZ_HUMAN),
-        MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON | MR_STONE, 0,
+        MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON | MR_STONE
+            | MR_PSYCHIC, 0,
         M1_FLY | M1_HUMANOID | M1_REGEN | M1_SEE_INVIS | M1_TPORT_CNTRL,
         M2_NOPOLY | M2_STALK | M2_HOSTILE | M2_PNAME | M2_STRONG | M2_NASTY,
         M3_INFRAVISIBLE | M3_INFRAVISION | M3_DISPLACES,
@@ -3657,7 +3687,8 @@
         A(ATTK(AT_TUCH, AD_PEST, 8, 8), ATTK(AT_TUCH, AD_PEST, 8, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(WT_HUMAN, 1, MS_RIDER, MZ_HUMAN),
-        MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON | MR_STONE, 0,
+        MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON | MR_STONE
+            | MR_PSYCHIC, 0,
         M1_FLY | M1_HUMANOID | M1_REGEN | M1_SEE_INVIS | M1_TPORT_CNTRL,
         M2_NOPOLY | M2_STALK | M2_HOSTILE | M2_PNAME | M2_STRONG | M2_NASTY,
         M3_INFRAVISIBLE | M3_INFRAVISION | M3_DISPLACES,
@@ -3667,7 +3698,8 @@
         A(ATTK(AT_TUCH, AD_FAMN, 8, 8), ATTK(AT_TUCH, AD_FAMN, 8, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(WT_HUMAN, 1, MS_RIDER, MZ_HUMAN),
-        MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON | MR_STONE, 0,
+        MR_FIRE | MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON | MR_STONE
+            | MR_PSYCHIC, 0,
         M1_FLY | M1_HUMANOID | M1_REGEN | M1_SEE_INVIS | M1_TPORT_CNTRL,
         M2_NOPOLY | M2_STALK | M2_HOSTILE | M2_PNAME | M2_STRONG | M2_NASTY,
         M3_INFRAVISIBLE | M3_INFRAVISION | M3_DISPLACES,
@@ -3767,6 +3799,16 @@
     /*
      * lizards, &c
      */
+    /* "tortle" (turtle-folk) is a placeholder for the player race */
+    MON(NAM("tortle"), S_LIZARD,
+        LVL(0, 10, 0, 0, 3), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1600, 400, MS_HUMANOID, MZ_LARGE), 0, 0,
+        M1_HUMANOID | M1_THICK_HIDE | M1_OMNIVORE | M1_AMPHIBIOUS
+            | M1_SWIM,
+        M2_NOPOLY | M2_STRONG | M2_COLLECT, M3_INFRAVISIBLE,
+        2, CLR_CYAN, TORTLE),
     MON(NAM("newt"), S_LIZARD,
         LVL(0, 6, 8, 0, 0), (G_GENO | 5),
         A(ATTK(AT_BITE, AD_PHYS, 1, 2),

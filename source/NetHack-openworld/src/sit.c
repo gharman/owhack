@@ -325,7 +325,7 @@ special_throne_effect(int effect) {
     case 11:
         /* polymorph effect (not blocked by magic resistance, but other things
            that protect from polymorphs work) */
-        if (is_vampire(gy.youmonst.data)) {
+        if (u_vampire()) {
             You_feel("unworthy.");
         } else {
             pline("This throne was not meant for those such as you!");
@@ -403,6 +403,10 @@ dosit(void)
     struct trap *trap = t_at(u.ux, u.uy);
     int typ = levl[u.ux][u.uy].typ;
 
+    if (Hidinshell) {
+        You_cant("sit while hiding in your shell.");
+        return ECMD_OK;
+    }
     if (u.usteed) {
         You("are already sitting on %s.", mon_nam(u.usteed));
         return ECMD_OK;

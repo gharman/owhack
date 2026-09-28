@@ -38,6 +38,7 @@ staticfn int num_extinct(void);
 staticfn int num_gone(int, int *);
 staticfn char *size_str(int);
 staticfn void item_resistance_message(int, const char *, int);
+staticfn void race_enlightenment(int);
 
 extern const char *const hu_stat[];  /* hunger status from eat.c */
 extern const char *const enc_stat[]; /* encumbrance status from botl.c */
@@ -1007,6 +1008,8 @@ status_enlightenment(int mode, int final)
     } else if (Flying) { /* can only fly when not levitating */
         enl_msg(youtoo, are, were, "flying", from_what(FLYING));
     }
+    if (Hidinshell)
+        you_are("hiding in your shell", "");
     if (Underwater) {
         you_are("underwater", "");
     } else if (u.uinwater) {
@@ -1218,7 +1221,18 @@ status_enlightenment(int mode, int final)
        needed for wizard mode's reveal of u.uhunger but add it for everyone */
     if (!*buf)
         Strcpy(buf, "not hungry");
-    if (*buf) { /* (since "not hungry" was added, this will always be True) */
+    if (u_ghost()) {
+        /* a ghost never eats and never gets hungry */
+        enl_msg(You_, "have", "had", " no need to eat", "");
+    } else if (u_vamp_hunger() && u.uhs >= WEAK) {
+        /* a vampire thirsts for blood and can't starve to death */
+        Strcpy(buf, (u.uhs == WEAK) ? "weak from severe thirst"
+                    : (u.uhs == FAINTING) ? "frail from extreme thirst"
+                      : "starved for blood");
+        if (wizard)
+            Sprintf(eos(buf), " <%d>", u.uhunger);
+        you_are(buf, "");
+    } else if (*buf) { /* (since "not hungry" was added, always True) */
         *buf = lowc(*buf); /* override capitalization */
         if (!strcmp(buf, "weak"))
             Strcat(buf, " from severe hunger");
@@ -1484,6 +1498,64 @@ weapon_insight(int final)
     } /* skill applies */
 }
 
+/* traits and abilities of the new player races (EvilHack, Hack'EM,
+   Slash'EM); part of attributes_enlightenment() */
+staticfn void
+race_enlightenment(int final)
+{
+    char buf[BUFSZ];
+    int i, n;
+
+    if (u_undead() && !Upolyd)
+        you_are("undead", "");
+    if (u_fire_vulnerable())
+        you_are("vulnerable to fire", "");
+    if (u_vamp_hunger())
+        enl_msg(You_, "must consume", "had to consume",
+                " blood to survive", "");
+    if (u_ghost()) {
+        you_are("incorporeal", "");
+        enl_msg(You_, "can pass", "could pass",
+                " through solid matter at the cost of energy", "");
+        enl_msg("Physical blows ", "pass", "passed",
+                " partly through you", "");
+        enl_msg("Your touch ", "chills", "chilled", " the living", "");
+    }
+    if (Race_if(PM_TORTLE) && !Upolyd) {
+        if (Hidinshell)
+            you_are("hiding in your shell", "");
+        else
+            you_can("hide in your shell", "");
+    }
+    if (Race_if(PM_ILLITHID) && !Upolyd)
+        you_can("unleash a psychic blast", "");
+    if (Race_if(PM_VAMPIRE)) {
+        if (u.ulevel < 3)
+            ; /* shapechanging not yet possible */
+        else if (u.uvampireshape == 0)
+            you_are("able to use your shapechange ability", "");
+        else if (!final || wizard) {
+            Sprintf(buf, "have %d turn%s remaining before shapechanging "
+                         "again",
+                    u.uvampireshape, plur(u.uvampireshape));
+            enl_msg(You_, buf, buf, "", "");
+        }
+    }
+    if (Race_if(PM_HUMAN_WEREWOLF) && ismnum(u.ulycn) && u.ulevel >= 3)
+        you_can("change between your human and beast forms at will", "");
+    if (Race_if(PM_DOPPELGANGER)) {
+        for (i = LOW_PM, n = 0; i < NUMMONS; i++)
+            if (svm.mvitals[i].eaten)
+                n++;
+        you_can("change your shape at will", "");
+        if (n) {
+            Sprintf(buf, "remember the taste of %d kind%s of creature",
+                    n, plur(n));
+            enl_msg(You_, buf, buf, "", "");
+        }
+    }
+}
+
 staticfn void
 item_resistance_message(
     int adtyp,
@@ -1573,6 +1645,8 @@ attributes_enlightenment(
     item_resistance_message(AD_ACID, " protected from acid", final);
     if (Drain_resistance)
         you_are("level-drain resistant", from_what(DRAIN_RES));
+    if (Psychic_resistance)
+        you_are("psychic resistant", from_what(PSYCHIC_RES));
     if (Sick_resistance)
         you_are("immune to sickness", from_what(SICK_RES));
     if (Stone_resistance) {
@@ -1603,8 +1677,13 @@ attributes_enlightenment(
             enl_msg(You_, "would see", "would have seen",
                     " invisible if not blind", "");
     }
-    if (Blind_telepat)
+    if (Blind_telepat) {
         you_are("telepathic", from_what(TELEPAT));
+    } else if ((HTelepat || ETelepat) && BTelepat) {
+        Strcpy(buf, from_what(-TELEPAT));
+        (void) strsubst(buf, " because of ", " if not for ");
+        enl_msg(You_, "could be", "could have been", " telepathic", buf);
+    }
     if (Warning)
         you_are("warned", from_what(WARNING));
     if (Warn_of_mon && svc.context.warntype.obj) {
@@ -1795,7 +1874,8 @@ attributes_enlightenment(
         you_can("survive without air", from_what(MAGICAL_BREATHING));
     else if (Amphibious)
         you_can("breathe water", from_what(MAGICAL_BREATHING));
-    if (Passes_walls)
+    /* (a ghost's phasing is described with its other racial traits) */
+    if (HPasses_walls || EPasses_walls)
         you_can("walk through walls", from_what(PASSES_WALLS));
 
     /*** Physical attributes ***/
@@ -1936,6 +2016,7 @@ attributes_enlightenment(
                 you_are(buf, "");
             }
     }
+    race_enlightenment(final);
     /* movement and non-armor-based protection */
     if (Fast)
         you_are(Very_fast ? "very fast" : "fast", from_what(FAST));

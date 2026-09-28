@@ -391,7 +391,8 @@ staticfn void
 mcast_death_touch(struct monst *mtmp)
 {
     pline("Oh no, %s's using the touch of death!", mhe(mtmp));
-    if (nonliving(gy.youmonst.data) || is_demon(gy.youmonst.data)) {
+    if (nonliving(gy.youmonst.data) || is_demon(gy.youmonst.data)
+        || u_undead()) {
         You("seem no deader than before.");
     } else if (!Antimagic && rn2(mtmp->m_lev) > 12) {
         if (Hallucination) {
@@ -505,7 +506,7 @@ mcast_disappear(struct monst *mtmp)
 staticfn void
 mcast_stun_you(int dmg)
 {
-    if (Antimagic || Free_action) {
+    if (Antimagic || Free_action || Hidinshell) {
         shieldeff(u.ux, u.uy);
         monstseesu(M_SEEN_MAGR);
         if (!Stunned)
@@ -551,6 +552,7 @@ mcast_fire_pillar(struct monst *mtmp, int dmg)
         dmg = 0;
     } else {
         monstunseesu(M_SEEN_FIRE);
+        dmg = u_fire_vuln(dmg);
     }
     if (Half_spell_damage)
         dmg = (dmg + 1) / 2;

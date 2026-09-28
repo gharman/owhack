@@ -223,6 +223,23 @@ and easy to overcome at first sight, an experienced Wizard is a deadly foe.
 You may also choose the race of your character (within limits; most
 roles have restrictions on which races are eligible for them):
 .pg
+\fICentaurs\fP have the torso of a human on the body of a horse.  They
+are very fast and deliver powerful kicks, fire bows and crossbows with
+great skill, and wield polearms and lances as though mounted; but they
+can neither wear boots nor ride.
+.pg
+\fIDoppelgangers\fP are shapeshifters who remember the creatures they
+have eaten.  They can polymorph at will (\fB#youpoly\fP), paying for it
+in energy, change back for free, and gain control over their shape as
+they grow in experience.
+.pg
+\fIDraugr\fP are undead warriors risen from their burial mounds.  They
+need no air and resist cold, sleep, poison, sickness and level drain,
+and they can revive a few times after being destroyed; but they eat only
+rotten meat, fire and blessings hurt them, and shopkeepers, town
+watchmen and the priests of lawful and neutral gods will have nothing to
+do with them.
+.pg
 \fIDwarves\fP are smaller than humans or elves, but are stocky and solid
 individuals.  Dwarves' most notable trait is their great expertise in mining
 and metalwork.  Dwarvish armor is said to be second in quality not even to the
@@ -231,6 +248,18 @@ mithril mail of the Elves.
 \fIElves\fP are agile, quick, and perceptive; very little of what goes
 on will escape an Elf.  The quality of Elven craftsmanship often gives
 them an advantage in arms and armor.
+.pg
+\fIGhosts\fP are the incorporeal spirits of the dead.  They fly, need
+neither food nor air, drift through walls and rock (at a cost in energy,
+and only while unburdened), are only half hurt by ordinary blows and
+missiles, chill the living with their touch and frighten those they
+strike; but they can carry little, and armor protects them only half as
+well.
+.pg
+\fIGiants\fP are huge and immensely strong.  They can carry and throw
+boulders, dig and kick down doors with ease, and know gems at a touch;
+but they are slow, can wear no body armor or cloak, and nothing can make
+them stealthy.
 .pg
 \fIGnomes\fP are smaller than but generally similar to dwarves.  Gnomes are
 known to be expert miners, and it is known that a secret underground mine
@@ -241,10 +270,30 @@ both riches and danger.
 are thus the norm to which other races are often compared.  Although
 they have no special abilities, they can succeed in any role.
 .pg
+\fIIllithids\fP are mind flayers:  telepathic and resistant to psychic
+attack, they eat brains with their tentacles and assail minds with their
+psionics (\fB#monster\fP and the psionic wave), which a metal helmet
+blocks.
+.pg
 \fIOrcs\fP are a cruel and barbaric race that hate every living thing
 (including other orcs).  Above all others, Orcs hate Elves with a passion
 unequalled, and will go out of their way to kill one at any opportunity.
 The armor and weapons fashioned by the Orcs are typically of inferior quality.
+.pg
+\fITortles\fP are turtle folk, born swimmers whose shell grows harder as
+they gain experience.  They can hide in it (\fB#monster\fP), but they
+cannot wear body armor or boots.
+.pg
+\fIVampires\fP are undead who live on blood, drinking it from fresh
+corpses and potions and draining life with their bite.  With experience
+they fly and can take the form of a bat, a fog cloud or a warg
+(\fB#monster\fP); but silver, fire and blessings hurt them, and they
+cannot eat solid food.
+.pg
+\fIWerewolves\fP are humans whose lycanthropy is their nature rather
+than a curse.  They regenerate and, once experienced, change between
+human and wolf form at will (\fB#youpoly\fP); but silver hurts them, and
+attempts to purify them do them harm.
 .hn 1
 What do all those things on the screen mean?
 .pg
@@ -4836,8 +4885,11 @@ objects or monsters is less intrusive.
 Default is off.  Persistent.
 .lp "race    "
 Selects your race (for example, \f(CRrace:human\fP).
-Choices are \f(CRhuman\fP, \f(CRdwarf\fP, \f(CRelf\fP, \f(CRgnome\fP, and
-\f(CRorc\fP but most roles restrict which of the non-human races are allowed.
+Choices are \f(CRhuman\fP, \f(CRdwarf\fP, \f(CRelf\fP, \f(CRgnome\fP,
+\f(CRorc\fP, \f(CRgiant\fP, \f(CRcentaur\fP, \f(CRillithid\fP,
+\f(CRtortle\fP, \f(CRdraugr\fP, \f(CRvampire\fP, \f(CRwerewolf\fP,
+\f(CRdoppelganger\fP, and \f(CRghost\fP
+but most roles restrict which of the non-human races are allowed.
 See
 .op role
 for a description of how to use negation to exclude choices.

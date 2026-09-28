@@ -179,6 +179,13 @@ watch_on_duty(struct monst *mtmp)
 
     if (mtmp->mpeaceful && in_town(u.ux + u.dx, u.uy + u.dy)
         && mtmp->mcansee && m_canseeu(mtmp) && !rn2(3)) {
+        /* the watch won't have the walking dead in town (EvilHack) */
+        if (Race_if(PM_DRAUGR) && !Upolyd) {
+            mon_yells(mtmp, "Another zombie!  Attack!");
+            (void) angry_guards(!!Deaf);
+            stop_occupation();
+            return;
+        }
         if (picking_lock(&x, &y) && IS_DOOR(levl[x][y].typ)
             && (levl[x][y].doormask & D_LOCKED)) {
             if (couldsee(mtmp->mx, mtmp->my)) {
@@ -587,40 +594,51 @@ mind_blast(struct monst *mtmp)
 
     if (canseemon(mtmp))
         pline_mon(mtmp, "%s concentrates.", Monnam(mtmp));
-    if (mdistu(mtmp) > BOLT_LIM * BOLT_LIM) {
-        You("sense a faint wave of psychic energy.");
+    if (Race_if(PM_DRAUGR) && !Upolyd) {
+        ; /* a draugr's dead brain gives nothing to lock on to (EvilHack) */
+    } else if (mdistu(mtmp) > BOLT_LIM * BOLT_LIM) {
+        /* a tinfoil hat keeps out even the faintest wave (Hack'EM) */
+        if (!(uarmh && uarmh->otyp == TINFOIL_HAT))
+            You("sense a faint wave of psychic energy.");
         return;
-    }
-    pline("A wave of psychic energy pours over you!");
-    if (mtmp->mpeaceful
-        && (!Conflict || resist_conflict(mtmp))) {
-        pline("It feels quite soothing.");
-    } else if (!u.uinvulnerable) {
-        int dmg;
-        boolean m_sen = sensemon(mtmp);
+    } else {
+        pline("A wave of psychic energy pours over you!");
+        if (mtmp->mpeaceful
+            && (!Conflict || resist_conflict(mtmp))) {
+            pline("It feels quite soothing.");
+        } else if (u_illithid()) {
+            /* EvilHack */
+            Your("psionic abilities shield your brain.");
+        } else if (Psychic_resistance) {
+            /* Hack'EM */
+            You("are unaffected.");
+        } else if (!u.uinvulnerable) {
+            int dmg;
+            boolean m_sen = sensemon(mtmp);
 
-        if (m_sen || (Blind_telepat && rn2(2)) || !rn2(10)) {
-            /* hiding monsters are brought out of hiding when hit by
-                a psychic blast, so do the same for hiding poly'd hero */
-            if (u.uundetected) {
-                u.uundetected = 0;
-                newsym(u.ux, u.uy);
-            } else if (U_AP_TYPE != M_AP_NOTHING
-                        /* hero has no way to hide as monster but
-                            check for that theoretical case anyway */
-                        && U_AP_TYPE != M_AP_MONSTER) {
-                gy.youmonst.m_ap_type = M_AP_NOTHING;
-                gy.youmonst.mappearance = 0;
-                newsym(u.ux, u.uy);
+            if (m_sen || (Blind_telepat && rn2(2)) || !rn2(10)) {
+                /* hiding monsters are brought out of hiding when hit by
+                    a psychic blast, so do the same for hiding poly'd hero */
+                if (u.uundetected) {
+                    u.uundetected = 0;
+                    newsym(u.ux, u.uy);
+                } else if (U_AP_TYPE != M_AP_NOTHING
+                            /* hero has no way to hide as monster but
+                                check for that theoretical case anyway */
+                            && U_AP_TYPE != M_AP_MONSTER) {
+                    gy.youmonst.m_ap_type = M_AP_NOTHING;
+                    gy.youmonst.mappearance = 0;
+                    newsym(u.ux, u.uy);
+                }
+                pline("It locks on to your %s!",
+                        m_sen ? "telepathy"
+                        : Blind_telepat ? "latent telepathy"
+                        : "mind"); /* note: hero is never mindless */
+                dmg = rnd(15);
+                if (Half_spell_damage)
+                    dmg = (dmg + 1) / 2;
+                losehp(dmg, "psychic blast", KILLED_BY_AN);
             }
-            pline("It locks on to your %s!",
-                    m_sen ? "telepathy"
-                    : Blind_telepat ? "latent telepathy"
-                    : "mind"); /* note: hero is never mindless */
-            dmg = rnd(15);
-            if (Half_spell_damage)
-                dmg = (dmg + 1) / 2;
-            losehp(dmg, "psychic blast", KILLED_BY_AN);
         }
     }
     for (m2 = fmon; m2; m2 = nmon) {
@@ -632,6 +650,9 @@ mind_blast(struct monst *mtmp)
         if (mindless(m2->data))
             continue;
         if (m2 == mtmp)
+            continue;
+        /* other mind flayers and psychic resisters shrug it off */
+        if (is_mind_flayer(m2->data) || resists_psychic(m2))
             continue;
         if ((telepathic(m2->data) && (rn2(2) || m2->mblinded)) || !rn2(10)) {
             /* wake it up first, to bring hidden monster out of hiding */
@@ -790,6 +811,10 @@ dochug(struct monst *mtmp)
 
     /* check distance and scariness of attacks */
     distfleeck(mtmp, &inrange, &nearby, &scared);
+
+    /* ordinary peaceful folk may take fright at a ghost hero */
+    if (u_ghost() && mtmp->mpeaceful && ghost_scares_peaceful(mtmp))
+        distfleeck(mtmp, &inrange, &nearby, &scared);
 
     /* search for and potentially use defensive or miscellaneous items. */
     if (find_defensive(mtmp, FALSE)) {
@@ -1874,7 +1899,11 @@ m_move(struct monst *mtmp, int after)
             || (is_obj_mappear(&gy.youmonst, GOLD_PIECE) && !likes_gold(ptr))
             || (mtmp->mpeaceful && !mtmp->isshk) /* allow shks to follow */
             || ((monsndx(ptr) == PM_STALKER || ptr->mlet == S_BAT
-                 || ptr->mlet == S_LIGHT) && !rn2(3)))
+                 || ptr->mlet == S_LIGHT) && !rn2(3))
+            /* unintelligent monsters won't realize a hiding tortle is a
+               creature, and even intelligent ones overlook it at times */
+            || (Hidinshell
+                && (is_animal(ptr) || mindless(ptr) || !rn2(6))))
             appr = 0;
 
         if (appr == 1 && leppie_avoidance(mtmp))
@@ -1897,7 +1926,7 @@ m_move(struct monst *mtmp, int after)
     if ((!mtmp->mpeaceful || !rn2(10)) && (!Is_rogue_level(&u.uz))) {
         boolean in_line = (lined_up(mtmp)
              && (distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy)
-                 <= (throws_rocks(gy.youmonst.data) ? 20
+                 <= (u_throws_rocks() ? 20
                                                     : (ACURRSTR / 2 + 1))));
 
         if (appr != 1 || !in_line) {

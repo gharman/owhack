@@ -1013,6 +1013,7 @@ extern void eating_conducts(struct permonst *) NONNULLARG1;
 extern int eat_brains(struct monst *, struct monst *, boolean,
                                                           int *) NONNULLARG12;
 extern void fix_petrification(void);
+extern boolean bite_monster(struct monst *) NONNULLARG1;
 extern int intrinsic_possible(int, struct permonst *) NONNULLARG2;
 extern boolean should_givit(int, struct permonst *) NONNULLARG2;
 extern void consume_oeaten(struct obj *, int) NONNULLARG1;
@@ -1984,6 +1985,7 @@ extern void mon_learns_traps(struct monst *, int) NONNULLARG1;
 extern void mons_see_trap(struct trap *) NONNULLARG1;
 extern int get_atkdam_type(int);
 extern void init_mhflags(void);
+extern void init_mresists(void);
 #if (NH_DEVEL_STATUS != NH_STATUS_RELEASED) || defined(DEBUG)
 extern int mstrength(struct permonst *) NONNULLARG1;
 #endif
@@ -2774,6 +2776,60 @@ extern char *setstate(char *);
 extern long random(void);
 #endif /* CROSS_TO_AMIGA */
 #endif /* RANDOM */
+
+/* ### racial.c ### */
+
+extern boolean u_undead(void);
+extern int u_size(void);
+extern unsigned u_bodyweight(void);
+extern int u_race_speed(void);
+extern boolean u_race_no_boots(void);
+extern boolean u_giant(void);
+extern boolean u_centaur(void);
+extern boolean u_throws_rocks(void);
+extern boolean u_illithid(void);
+extern boolean u_vampire(void);
+extern boolean u_draugr(void);
+extern boolean u_ghost(void);
+extern boolean u_ghost_passthru(struct monst *, struct obj *);
+extern int u_ghost_dmg(int, struct monst *, struct obj *);
+extern boolean u_fire_vulnerable(void);
+extern int u_fire_vuln(int);
+extern void undead_death_heal(void);
+extern long draugr_rot_amount(struct obj *) NONNULLARG1;
+extern boolean u_destroyed_not_killed(void);
+extern const char *u_death_msg(void);
+extern void ghost_frightens(struct monst *) NONNULLARG1;
+extern boolean ghost_scares_peaceful(struct monst *) NONNULLARG1;
+extern boolean u_ghost_phasing(void);
+extern boolean u_ghost_phasing_only(void);
+extern boolean ghost_solid_at(coordxy, coordxy);
+extern boolean ghost_phase_ok(coordxy, coordxy, int, boolean);
+extern void ghost_phase_step(void);
+extern boolean your_race_form(int);
+extern boolean u_vamp_hunger(void);
+extern void vampire_starvation(void);
+extern void set_racial_bite(boolean);
+extern boolean racial_bite_active(void);
+extern boolean u_breakarm(void);
+extern boolean u_sliparm(void);
+extern int u_base_ac(void);
+extern int u_race_ac_adjust(void);
+extern int u_arm_bonus(struct obj *) NONNULLARG1;
+extern int toggleshell(void);
+extern int doenshelling(void);
+extern boolean shell_blocks(struct monst *, struct attack *) NONNULLPTRS;
+extern void race_timeouts(void);
+extern void leave_shell(void);
+extern boolean u_vampire_form(void);
+extern int polyatwill(void);
+extern boolean dopp_knows_form(int);
+extern void note_eaten_form(int);
+extern void forget_eaten_forms(void);
+extern boolean u_psionics_blocked(boolean);
+extern int psionic_wave_dmg(void);
+extern int race_monability(void);
+extern void race_form_props(boolean);
 
 /* ### read.c ### */
 

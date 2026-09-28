@@ -897,6 +897,11 @@ m_initinv(struct monst *mtmp)
         if (rn2(7))
             (void) mongets(mtmp, MUMMY_WRAPPING);
         break;
+    case S_VAMPIRE:
+        /* vampires carry some blood to drink (EvilHack) */
+        if (rn2(2))
+            (void) mongets(mtmp, rn2(4) ? POT_BLOOD : POT_VAMPIRE_BLOOD);
+        break;
     case S_QUANTMECH:
         if (!rn2(20) && ptr == &mons[PM_QUANTUM_MECHANIC]) {
             struct obj *catcorpse;
@@ -2463,8 +2468,14 @@ peace_minded(struct permonst *ptr)
     if ((Role_if(PM_FLAME_MAGE) && ptr == &mons[PM_FIRE_ELEMENTAL])
         || (Role_if(PM_ICE_MAGE) && ptr == &mons[PM_ICE_ELEMENTAL]))
         return TRUE;
-    if (always_hostile(ptr))
+    if (always_hostile(ptr)) {
+        /* ordinary undead are peaceful towards draugr and vampires more
+           often than not (EvilHack) */
+        if ((Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)) && !Upolyd
+            && is_undead(ptr) && !unique_corpstat(ptr) && rn2(3))
+            return TRUE;
         return FALSE;
+    }
     if (ptr->msound == MS_LEADER || ptr->msound == MS_GUARDIAN)
         return TRUE;
     if (ptr->msound == MS_NEMESIS)

@@ -215,6 +215,28 @@ you_unwere(boolean purify)
 {
     boolean controllable_poly = Polymorph_control && !(Stunned || Unaware);
 
+    if (purify && Race_if(PM_HUMAN_WEREWOLF)) {
+        /* lycanthropy is a werewolf's nature, not a disease: an attempt
+           to purify one does harm instead (Slash'EM) */
+        boolean in_wereform = (u.umonnum == u.ulycn);
+
+        if (in_wereform && Unchanging) {
+            svk.killer.format = NO_KILLER_PREFIX;
+            Strcpy(svk.killer.name,
+                   "purified while stuck in creature form");
+            pline_The("purification was deadly...");
+            done(DIED);
+        } else {
+            You_feel("very bad!");
+            if (in_wereform)
+                rehumanize();
+            (void) adjattrib(A_STR, -rn1(3, 3), 2);
+            (void) adjattrib(A_CON, -rn1(3, 3), 1);
+            losehp(u.uhp - (u.uhp > 10 ? rnd(5) : 1), "purification",
+                   KILLED_BY);
+        }
+        return;
+    }
     if (purify) {
         You_feel("purified.");
         set_ulycn(NON_PM); /* cure lycanthropy */

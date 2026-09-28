@@ -636,11 +636,13 @@ fall_through(
         ; /* KMH -- You can't escape the Sokoban level traps */
     } else if (Levitation || u.ustuck
              || (!Can_fall_thru(&u.uz) && !levl[u.ux][u.uy].candig)
-             || ((Flying || is_clinger(gy.youmonst.data)
+             || ((Flying || is_clinger(gy.youmonst.data) || u_giant()
                   || (ceiling_hider(gy.youmonst.data) && u.uundetected))
                  && !(ftflags & TOOKPLUNGE))) {
-        dont_fall = "don't fall in.";
-    } else if (gy.youmonst.data->msize >= MZ_HUGE) {
+        /* give giants a hint (EvilHack) */
+        dont_fall = u_giant() ? "don't fall, but you can climb down."
+                              : "don't fall in.";
+    } else if (u_size() >= MZ_HUGE && !u_giant()) {
         dont_fall = "don't fit through.";
     } else if (!next_to_u()) {
         dont_fall = "are jerked back by your pet!";
@@ -655,12 +657,12 @@ fall_through(
         }
         return;
     }
-    if ((Flying || is_clinger(gy.youmonst.data))
+    if ((Flying || is_clinger(gy.youmonst.data) || u_giant())
         && (ftflags & TOOKPLUNGE) && td && t) {
         if (Flying)
             controlled_flight = TRUE;
         You("%s down %s!",
-            Flying ? "swoop" : "deliberately drop",
+            Flying ? "swoop" : u_giant() ? "climb" : "deliberately drop",
             (t->ttyp == TRAPDOOR)
                 ? "through the trap door"
                 : "into the gaping hole");
@@ -2182,7 +2184,8 @@ trapeffect_web(
 
         /* Time stuck in the web depends on your/steed's strength. */
         {
-            int tim, str = ACURR(A_STR);
+            /* giants tear through webs as if gigantically strong */
+            int tim, str = u_giant() ? 125 : ACURR(A_STR);
 
             /* If mounted, the steed gets trapped.  Use mintrap
              * to do all the work.  If mtrapped is set as a result,
@@ -4325,7 +4328,7 @@ dofiretrap(
     } else {
         int uhpmin = minuhpmax(1), olduhpmax = u.uhpmax;
 
-        num = d(2, 4);
+        num = d(2, 4); /* (vulnerability to fire is applied below) */
         if (u.uhpmax > uhpmin) {
             u.uhpmax -= rn2(min(u.uhpmax, num + 1)), disp.botl = TRUE;
         } /* note: no 'else' here */
@@ -5169,6 +5172,18 @@ drown(void)
         gv.vision_full_recalc = 1;
         return FALSE;
     }
+    /* a shapechanged vampire reverts to its breathless natural form
+       rather than drown (Hack'EM) */
+    if (Upolyd && !Unchanging && Race_if(PM_VAMPIRE)) {
+        rehumanize();
+        if (Breathless) {
+            vision_recalc(2); /* unsee old position */
+            set_uinwater(1);
+            under_water(1);
+            gv.vision_full_recalc = 1;
+            return FALSE;
+        }
+    }
     if ((Teleportation || can_teleport(gy.youmonst.data)) && !Unaware
         && (Teleport_control || rn2(3) < Luck + 2)) {
         You("attempt a teleport spell."); /* utcsri!carroll */
@@ -5315,6 +5330,8 @@ could_untrap(boolean verbosely, boolean check_floor)
     } else if (u.ustuck || (welded(uwep) && bimanual(uwep))) {
         Sprintf(buf, "Your %s seem to be too busy for that.",
                 makeplural(body_part(HAND)));
+    } else if (Hidinshell) {
+        Strcpy(buf, "You can't do that while hiding in your shell.");
     } else if (check_floor && !can_reach_floor(FALSE)) {
         /* only checked here for autounlock of chest/box and that will
            be !verbosely so precise details of the message don't matter */
@@ -5506,7 +5523,7 @@ try_disarm(
     if (u.dx && u.dy && bad_rock(gy.youmonst.data, u.ux, ttmp->ty)
         && bad_rock(gy.youmonst.data, ttmp->tx, u.uy)) {
         if ((gi.invent && (inv_weight() + weight_cap() > WT_TOOMUCH_DIAGONAL))
-            || bigmonst(gy.youmonst.data)) {
+            || u_size() >= MZ_LARGE) {
             /* don't allow untrap if they can't get thru to it */
             You("are unable to reach the %s!", trapname(ttype, FALSE));
             return 0;
@@ -7089,7 +7106,9 @@ sokoban_guilt(void)
 {
     if (Sokoban) {
         u.uconduct.sokocheat++;
-        change_luck(-1);
+        /* giants can easily bring boulders along or step over existing
+           ones, so their penalty is more severe (EvilHack) */
+        change_luck(u_throws_rocks() ? -2 : -1);
         /*
          * TODO:
          *  Issue some feedback so that player can learn that whatever

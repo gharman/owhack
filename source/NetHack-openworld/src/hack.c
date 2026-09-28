@@ -152,7 +152,7 @@ could_move_onto_boulder(coordxy sx, coordxy sy)
         return FALSE;
     /* can if a giant, unless doing so allows hero to pass into a
        diagonal squeeze at the same time */
-    if (throws_rocks(gy.youmonst.data))
+    if (u_throws_rocks())
         return (!u.dx || !u.dy || !(IS_OBSTRUCTED(levl[u.ux][sy].typ)
                                     && IS_OBSTRUCTED(levl[sx][u.uy].typ)));
     /* can if tiny (implies carrying very little else couldn't move at all) */
@@ -189,7 +189,7 @@ dopush(
                     || svm.moves < gb.bldrpushtime);
         what = givemesg ? the(xname(otmp)) : 0;
         if (!u.usteed) {
-            easypush = throws_rocks(gy.youmonst.data);
+            easypush = u_throws_rocks();
             if (givemesg)
                 pline("With %s effort you move %s.",
                       easypush ? "little" : "great", what);
@@ -261,7 +261,7 @@ cannot_push_msg(struct obj *otmp, coordxy sx, coordxy sy)
 staticfn int
 cannot_push(struct obj *otmp, coordxy sx, coordxy sy)
 {
-    if (throws_rocks(gy.youmonst.data)) {
+    if (u_throws_rocks()) {
         boolean
             canpickup = (!Sokoban
                          /* similar exception as in can_lift():
@@ -388,7 +388,7 @@ moverock_core(coordxy sx, coordxy sy)
             int res;
 
             feel_location(sx, sy); /* same for all 3 if/else-if/else cases */
-            if (throws_rocks(gy.youmonst.data)) {
+            if (u_throws_rocks()) {
                 /* player has used 'm<dir>' to move, so step to boulder's
                    spot without pushing it; hero is poly'd into a giant,
                    so exotic forms of locomotion are out, but might be
@@ -958,8 +958,8 @@ cant_squeeze_thru(struct monst *mon)
     if ((mon == &gy.youmonst) ? Passes_walls : passes_walls(ptr))
         return 0;
 
-    /* too big? */
-    if (bigmonst(ptr)
+    /* too big? (giants, centaurs and tortles are, in their natural form) */
+    if (((mon == &gy.youmonst) ? (u_size() >= MZ_LARGE) : bigmonst(ptr))
         && !(amorphous(ptr) || is_whirly(ptr) || noncorporeal(ptr)
              || slithy(ptr) || can_fog(mon)))
         return 1;
@@ -1011,8 +1011,12 @@ test_move(
     if (IS_OBSTRUCTED(tmpr->typ) || tmpr->typ == IRONBARS) {
         if (Blind && mode == DO_MOVE)
             feel_location(x, y);
-        if (Passes_walls && may_passwall(x, y)) {
+        if (Passes_walls && may_passwall(x, y)
+            && ghost_phase_ok(x, y, mode, TRUE)) {
             ; /* do nothing */
+        } else if (Passes_walls && may_passwall(x, y)) {
+            /* a ghost out of energy (message given), or travel */
+            return FALSE;
         } else if (Underwater) {
             /* note: if water_friction() changes direction due to
                turbulence, new target destination will always be water,
@@ -1030,7 +1034,10 @@ test_move(
                 return FALSE;
             }
             if (!(Passes_walls || passes_bars(gy.youmonst.data))) {
-                if (mode == DO_MOVE && flags.mention_walls)
+                if (mode == DO_MOVE && u_ghost())
+                    Your("possessions are too heavy to pass through "
+                         "solid matter.");
+                else if (mode == DO_MOVE && flags.mention_walls)
                     You("cannot pass through the bars.");
                 return FALSE;
             }
@@ -1053,6 +1060,10 @@ test_move(
                            && In_sokoban(&u.uz)) {
                     /* soko restriction stays even after puzzle is solved */
                     pline_The("Sokoban walls resist your ability.");
+                } else if (u_ghost() && may_passwall(x, y)) {
+                    /* a burdened ghost can't phase */
+                    Your("possessions are too heavy to pass through "
+                         "solid matter.");
                 } else if (flags.mention_walls) {
                     char buf[BUFSZ];
                     int glyph = back_to_glyph(x, y),
@@ -1075,7 +1086,7 @@ test_move(
         if (closed_door(x, y)) {
             if (Blind && mode == DO_MOVE)
                 feel_location(x, y);
-            if (Passes_walls) {
+            if (Passes_walls && ghost_phase_ok(x, y, mode, FALSE)) {
                 ; /* do nothing */
             } else if (can_ooze(&gy.youmonst)) {
                 if (mode == DO_MOVE)
@@ -1213,7 +1224,8 @@ test_move(
         return FALSE;
     }
 
-    if (sobj_at(BOULDER, x, y) && (Sokoban || !Passes_walls)) {
+    if (sobj_at(BOULDER, x, y)
+        && (Sokoban || !Passes_walls || !ghost_phase_ok(x, y, mode, FALSE))) {
         if (mode != TEST_TRAV && svc.context.run >= 2
             && !(Blind || Hallucination) && !could_move_onto_boulder(x, y)) {
             if (mode == DO_MOVE && flags.mention_walls)
@@ -2793,6 +2805,12 @@ domove_core(void)
     boolean cause_delay = FALSE,        /* dragging ball will skip a move */
             displaceu = FALSE;          /* involuntary swap */
 
+    if (Hidinshell) {
+        Your("movement is constrained by your shell.");
+        nomul(0);
+        svc.context.move = 0;
+        return;
+    }
     if (svc.context.travel) {
         if (!findtravelpath(TRAVP_TRAVEL))
             (void) findtravelpath(TRAVP_GUESS);
@@ -3015,7 +3033,7 @@ domove_core(void)
 
     /* your tread on the ground may disturb the slumber of nearby zombies */
     if (!Levitation && !Flying && !Stealth
-        && gy.youmonst.data->cwt >= (WT_ELF / 2))
+        && u_bodyweight() >= (WT_ELF / 2))
         disturb_buried_zombies(u.ux, u.uy);
 
     if (hides_under(gy.youmonst.data) || gy.youmonst.data->mlet == S_EEL
@@ -3038,6 +3056,8 @@ domove_core(void)
         gd.domove_succeeded |=
                 (gd.domove_attempting & (DOMOVE_RUSH | DOMOVE_WALK));
         u.umoved = TRUE;
+        /* a ghost pays for drifting into solid matter */
+        ghost_phase_step();
         /* Clean old position -- vision_recalc() will print our new one. */
         newsym(u.ux0, u.uy0);
         /* Since the hero has moved, adjust what can be seen/unseen. */
@@ -3269,7 +3289,8 @@ switch_terrain(void)
     }
     /* the same terrain that blocks levitation also blocks flight */
     if (blocklev) {
-        if (Flying)
+        /* (a ghost drifting through solid matter has been told so) */
+        if (Flying && !u_ghost())
             You_cant("fly in here.");
         BFlying |= FROMOUTSIDE;
     } else if (BFlying) {
@@ -3278,7 +3299,7 @@ switch_terrain(void)
         /* [minor bug: we don't know whether this is beginning flight or
            resuming it; that could be tracked so that this message could
            be adjusted to "resume flying", but isn't worth the effort...] */
-        if (Flying)
+        if (Flying && !u_ghost())
             You("start flying.");
     }
     if ((!!Levitation ^ was_levitating) || (!!Flying ^ was_flying))
@@ -4365,7 +4386,7 @@ losehp(int n, const char *knam, schar k_format)
         svk.killer.format = k_format;
         if (svk.killer.name != knam) /* the thing that killed you */
             Strcpy(svk.killer.name, knam ? knam : "");
-        urgent_pline("You die...");
+        urgent_pline("%s", u_death_msg());
         done(DIED);
     } else if (n > 0 && u.uhp * 10 < u.uhpmax) {
         maybe_wail();
@@ -4375,7 +4396,8 @@ losehp(int n, const char *knam, schar k_format)
 int
 weight_cap(void)
 {
-    long carrcap, save_ELev = ELevitation, save_BLev = BLevitation;
+    long carrcap, save_ELev = ELevitation, save_BLev = BLevitation,
+         maxcarrcap = MAX_CARR_CAP;
 
     /* boots take multiple turns to wear but any properties they
        confer are enabled at the start rather than the end; that
@@ -4391,7 +4413,20 @@ weight_cap(void)
 
     carrcap = (WT_WEIGHTCAP_STRCON * (ACURRSTR + ACURR(A_CON)))
                + WT_WEIGHTCAP_SPARE;
-    if (Upolyd) {
+    /* the bigger and stronger races can carry more (EvilHack); a
+       shapechanged vampire's gear melds into its new form, which carries
+       no less than its natural one */
+    if (!Upolyd || u_vampire_form()) {
+        if (Race_if(PM_GIANT) || Race_if(PM_CENTAUR)) {
+            carrcap += 100;
+            maxcarrcap += 400;
+        } else if (Race_if(PM_TORTLE) || Race_if(PM_DRAUGR)
+                   || Race_if(PM_VAMPIRE)) {
+            carrcap += 100;
+            maxcarrcap += 200;
+        }
+    }
+    if (Upolyd && !u_vampire_form()) {
         /* consistent with can_carry() in mon.c */
         if (gy.youmonst.data->mlet == S_NYMPH)
             carrcap = MAX_CARR_CAP;
@@ -4405,10 +4440,10 @@ weight_cap(void)
 
     if (Levitation || Is_airlevel(&u.uz) /* pugh@cornell */
         || (u.usteed && strongmonst(u.usteed->data))) {
-        carrcap = MAX_CARR_CAP;
+        carrcap = maxcarrcap;
     } else {
-        if (carrcap > MAX_CARR_CAP)
-            carrcap = MAX_CARR_CAP;
+        if (carrcap > maxcarrcap)
+            carrcap = maxcarrcap;
         if (!Flying) {
             if (EWounded_legs & LEFT_SIDE)
                 carrcap -= WT_WOUNDEDLEG_REDUCT;
@@ -4422,6 +4457,10 @@ weight_cap(void)
         BLevitation = save_BLev;
         float_vs_flight();
     }
+
+    /* a ghost can barely bear the weight of physical things */
+    if (u_ghost())
+        carrcap /= 2;
 
     return (int) max(carrcap, 1L); /* never return 0 */
 }
@@ -4437,7 +4476,7 @@ inv_weight(void)
     while (otmp) {
         if (otmp->oclass == COIN_CLASS)
             wt += (int) (((long) otmp->quan + 50L) / 100L);
-        else if (otmp->otyp != BOULDER || !throws_rocks(gy.youmonst.data))
+        else if (otmp->otyp != BOULDER || !u_throws_rocks())
             wt += otmp->owt;
         otmp = otmp->nobj;
     }

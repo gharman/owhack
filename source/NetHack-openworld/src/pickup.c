@@ -1723,7 +1723,7 @@ lift_object(
        and for boulder picked up by hero poly'd into a giant; override
        availability of open inventory slot iff not already carrying one */
     if (obj->otyp == LOADSTONE
-        || (obj->otyp == BOULDER && throws_rocks(gy.youmonst.data))) {
+        || (obj->otyp == BOULDER && u_throws_rocks())) {
         if (inv_cnt(FALSE) < invlet_basic || !carrying(obj->otyp)
             || merge_choice(gi.invent, obj))
             return 1; /* lift regardless of current situation */
@@ -4053,6 +4053,10 @@ tipcontainer_checks(
     if (box->olocked) {
         pline("%s is locked.", upstart(thesimpleoname(box)));
         return TIPCHECK_LOCKED;
+
+    } else if (Hidinshell) {
+        You_cant("tip that while hiding in your shell.");
+        return TIPCHECK_CANNOT;
 
     } else if (box->otrapped) {
         /* we're not reaching inside but we're still handling it... */

@@ -170,6 +170,9 @@ can_ride(struct monst *mtmp)
 {
     return (mtmp->mtame && humanoid(gy.youmonst.data)
             && !verysmall(gy.youmonst.data) && !bigmonst(gy.youmonst.data)
+            /* giants, centaurs and tortles are too big (or too oddly
+               shaped) and ghosts too insubstantial (EvilHack) */
+            && u_size() < MZ_LARGE && !u_ghost()
             && (!Underwater || is_swimmer(mtmp->data)));
 }
 
@@ -238,11 +241,16 @@ mount_steed(
             return (FALSE);
     }
 
-    if (Upolyd && (!humanoid(gy.youmonst.data)
-                   || verysmall(gy.youmonst.data)
-                   || bigmonst(gy.youmonst.data)
-                   || slithy(gy.youmonst.data))) {
+    if ((Upolyd && (!humanoid(gy.youmonst.data)
+                    || verysmall(gy.youmonst.data)
+                    || bigmonst(gy.youmonst.data)
+                    || slithy(gy.youmonst.data)))
+        || u_size() >= MZ_LARGE) {
         You("won't fit on a saddle.");
+        return (FALSE);
+    }
+    if (u_ghost()) {
+        You("would pass right through the saddle.");
         return (FALSE);
     }
     if (!force && (near_capacity() > SLT_ENCUMBER)) {
@@ -545,7 +553,7 @@ landing_spot(
                     kn_trap = i == 0 && ((t = t_at(x, y)) != 0 && t->tseen
                                          && t->ttyp != VIBRATING_SQUARE);
                     boulder = i <= 1 && (sobj_at(BOULDER, x, y)
-                                         && !throws_rocks(gy.youmonst.data));
+                                         && !u_throws_rocks());
                     if (!kn_trap && !boulder) {
                         spot->x = x;
                         spot->y = y;

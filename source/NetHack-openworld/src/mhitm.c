@@ -606,7 +606,8 @@ failed_grab(
     struct monst *mdef,
     struct attack *mattk)
 {
-    if ((unsolid(mdef->data) || gn.notonhead)
+    if ((unsolid(mdef->data) || gn.notonhead
+         || (mdef == &gy.youmonst && u_ghost()))
         /* hug attack: most holders (owlbear, python, pit fiend, &c);
            wrap damage: eel grabbing, trapper/lurker-above engulfing;
            stick-to damage: mimic, lichen;

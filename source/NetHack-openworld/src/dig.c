@@ -370,7 +370,7 @@ dig(void)
 
     svc.context.digging.effort +=
         10 + rn2(5) + abon() + uwep->spe - greatest_erosion(uwep) + u.udaminc;
-    if (Race_if(PM_DWARF))
+    if (Race_if(PM_DWARF) || (Race_if(PM_GIANT) && !Upolyd))
         svc.context.digging.effort *= 2;
     if (saber)
         svc.context.digging.effort -= rn2(20); /* melting takes longer */
@@ -1132,6 +1132,10 @@ use_pick_axe(struct obj *obj)
     ispick = is_pick(obj);
     verb = ispick ? "dig" : "chop";
 
+    if (Hidinshell) {
+        You_cant("%s while hiding in your shell.", verb);
+        return res;
+    }
     if (u.utrap && u.utraptype == TT_WEB) {
         pline("%s you can't %s while entangled in a web.",
               /* res==0 => no prior message;

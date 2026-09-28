@@ -71,6 +71,7 @@ set_uasmon(void)
     PROPSET(POISON_RES, resist_from_form(MR_POISON));
     PROPSET(ACID_RES, resist_from_form(MR_ACID));
     PROPSET(STONE_RES, resist_from_form(MR_STONE));
+    PROPSET(PSYCHIC_RES, resist_from_form(MR_PSYCHIC));
     {
         /* resists_drli() takes wielded weapon into account; suppress it */
         struct obj *save_uwep = uwep;
@@ -86,7 +87,9 @@ set_uasmon(void)
                         || dmgtype(mdat, AD_RBRE)));
     PROPSET(SICK_RES, (mdat->mlet == S_FUNGUS || mdat == &mons[PM_GHOUL]));
 
-    PROPSET(STUNNED, (mdat == &mons[PM_STALKER] || is_bat(mdat)));
+    /* a vampire bat flies true (EvilHack) */
+    PROPSET(STUNNED, (mdat == &mons[PM_STALKER]
+                      || (is_bat(mdat) && mdat != &mons[PM_VAMPIRE_BAT])));
     PROPSET(HALLUC_RES, dmgtype(mdat, AD_HALU));
     PROPSET(SEE_INVIS, perceives(mdat));
     PROPSET(TELEPAT, telepathic(mdat));
@@ -111,6 +114,9 @@ set_uasmon(void)
                        || dmgtype_fromattack(mdat, AD_BLND, AT_GAZE)));
 #undef PROPSET
 #undef resist_from_form
+
+    /* racial flight and breathlessness only work in the natural form */
+    race_form_props(FALSE);
 
     /* whether the player is flying/floating depends on their steed,
        which won't be known during the restore process: but BFlying
@@ -340,6 +346,25 @@ newman(void)
     const char *newform;
     int i, oldlvl, newlvl, oldgend, newgend, hpmax, enmax;
 
+    if (Race_if(PM_DOPPELGANGER)) {
+        /* a doppelganger just takes a new look at its own shape: no
+           change of level (Slash'EM, Hack'EM) */
+        oldlvl = newlvl = u.ulevel;
+        oldgend = poly_gender();
+        if (!rn2(10))
+            change_sex();
+        redist_attr();
+        if (u.uhpmax < 10)
+            setuhpmax(10, TRUE);
+        if (u.uhp < 10)
+            u.uhp = 10;
+        if (u.uenmax < u.ulevel)
+            u.uenmax = u.ulevel;
+        if (u.uen < u.ulevel)
+            u.uen = u.ulevel;
+        goto dopp_newman;
+    }
+
     oldlvl = u.ulevel;
     newlvl = oldlvl + rn1(5, -2);     /* new = old + {-2,-1,0,+1,+2} */
     if (newlvl > 127 || newlvl < 1) { /* level went below 0? */
@@ -413,6 +438,7 @@ newman(void)
     u.uenmax = enmax;
     /* [should alignment record be tweaked too?] */
 
+ dopp_newman:
     u.uhunger = rn1(500, 500);
     if (Sick)
         make_sick(0L, (char *) 0, FALSE, SICK_ALL);
@@ -478,17 +504,22 @@ polyself(int psflags)
             formrevert = ((psflags & POLY_REVERT) != 0),
             draconian = (uarm && Is_dragon_armor(uarm)),
             iswere = (ismnum(u.ulycn)),
+            /* a vampire hero shifts like a vampire (EvilHack) */
             isvamp = (is_vampire(gy.youmonst.data)
-                      || is_vampshifter(&gy.youmonst)),
+                      || is_vampshifter(&gy.youmonst)
+                      || (!Upolyd && Race_if(PM_VAMPIRE))),
+            isdopp = Race_if(PM_DOPPELGANGER),
             controllable_poly = Polymorph_control && !(Stunned || Unaware);
 
     if (Unchanging) {
         You("fail to transform!");
         return;
     }
-    /* being Stunned|Unaware doesn't negate this aspect of Poly_control */
+    leave_shell(); /* a tortle can't change while in its shell */
+    /* being Stunned|Unaware doesn't negate this aspect of Poly_control;
+       doppelgangers are made to change shape */
     if (!Polymorph_control && !forcecontrol && !draconian && !iswere
-        && !isvamp) {
+        && !isvamp && !isdopp) {
         if (rn2(20) > ACURR(A_CON)) {
             You1(shudder_for_moment);
             losehp(rnd(30), "system shock", KILLED_BY_AN);
@@ -625,6 +656,37 @@ polyself(int psflags)
         if (isvamp && (tryct <= 0 || mntmp == PM_WOLF || mntmp == PM_FOG_CLOUD
                        || is_bat(&mons[mntmp])))
             goto do_vampyr;
+    } else if (isdopp) {
+        /* not an experienced doppelganger yet (no polymorph control):
+           it can still attempt the form of its choice (Slash'EM) */
+        buf[0] = '\0';
+        tryct = 5;
+        do {
+            getlin("Attempt to become what kind of monster? "
+                   "[type the name]", buf);
+            (void) mungspaces(buf);
+            if (*buf == '\033' || !strcmp(buf, "*")
+                || !strcmp(buf, "random")) {
+                mntmp = NON_PM;
+                break;
+            }
+            mntmp = name_to_mon(buf, &gvariant);
+            if (mntmp < LOW_PM) {
+                pline("I've never heard of such monsters.");
+            } else if (!polyok(&mons[mntmp]) && !your_race(&mons[mntmp])) {
+                You("cannot polymorph into that.");
+                mntmp = NON_PM;
+            } else if (!dopp_knows_form(mntmp)) {
+                You("attempt an unfamiliar polymorph.");
+                if (rn2(5) + u.ulevel < mons[mntmp].mlevel)
+                    mntmp = NON_PM; /* didn't work for sure */
+                break;
+            } else {
+                break;
+            }
+        } while (--tryct > 0);
+        if (!tryct)
+            pline1(thats_enough_tries);
     } else if (draconian || iswere || isvamp) {
         /* special changes that don't require polyok() */
         if (draconian) {
@@ -711,8 +773,14 @@ polyself(int psflags)
      * we deliberately chose something illegal to force newman().
      */
     gs.sex_change_ok++;
-    if (!polyok(&mons[mntmp]) || (!forcecontrol && !rn2(5))
-        || your_race(&mons[mntmp])) {
+    if (!polyok(&mons[mntmp])
+        || (isdopp
+            /* doppelgangers rarely fail at forms they know well enough
+               (Slash'EM) */
+            ? ((u.ulevel < mons[mntmp].mlevel || !dopp_knows_form(mntmp))
+               && !rn2(20))
+            : (!forcecontrol && !rn2(5)))
+        || your_race_form(mntmp)) {
         newman();
     } else {
         (void) polymon(mntmp);
@@ -748,6 +816,7 @@ polymon(int mntmp)
         exercise(A_WIS, TRUE);
         return 0;
     }
+    leave_shell();
 
     /* KMH, conduct */
     if (!u.uconduct.polyselfs++)
@@ -813,8 +882,15 @@ polymon(int mntmp)
     }
 
     u.mtimedone = rn1(500, 500);
-    u.umonnum = mntmp;
-    set_uasmon();
+    {
+        /* racial flight only works in the natural form */
+        boolean race_flew = (!Upolyd && (HFlying & FROMRACE) && Flying);
+
+        u.umonnum = mntmp;
+        set_uasmon();
+        if (race_flew && !Flying)
+            You_feel("gravity's pull!");
+    }
 
     /* New stats for monster, to last only as long as polymorphed.
      * Currently only strength gets changed.
@@ -859,6 +935,10 @@ polymon(int mntmp)
      * "experience level of you as a monster" for a polymorphed character.
      */
     mlvl = (int) mons[mntmp].mlevel;
+    /* the werewolf race's beast form grows with its experience
+       (Slash'EM) */
+    if (Race_if(PM_HUMAN_WEREWOLF) && mntmp == u.ulycn)
+        mlvl = u.ulevel;
     if (gy.youmonst.data->mlet == S_DRAGON && mntmp >= PM_GRAY_DRAGON) {
         u.mhmax = In_endgame(&u.uz) ? (8 * mlvl) : (4 * mlvl + d(mlvl, 4));
     } else if (is_golem(gy.youmonst.data)) {
@@ -871,9 +951,20 @@ polymon(int mntmp)
         if (is_home_elemental(&mons[mntmp]))
             u.mhmax *= 3;
     }
+    /* a vampire's shapechange keeps its natural hit points if they're
+       better than the form's (EvilHack) */
+    if (u_vampire_form() && u.mhmax < u.uhpmax)
+        u.mhmax = u.uhpmax;
     u.mh = u.mhmax;
 
-    if (u.ulevel < mlvl) {
+    /* doppelgangers can stay much longer in a form they know well
+       (Slash'EM) */
+    if (Race_if(PM_DOPPELGANGER) && dopp_knows_form(mntmp)) {
+        u.mtimedone *= 2;
+        u.mtimedone += svm.mvitals[mntmp].eaten;
+    }
+
+    if (u.ulevel < mlvl && !u_vampire_form()) {
         /* Low level characters can't become high level monsters for long */
 #ifdef DUMB
         /* DRS/NS 2.2.6 messes up -- Peter Kendell */
@@ -1160,11 +1251,22 @@ break_armor(void)
 {
     struct obj *otmp;
     struct permonst *uptr = gy.youmonst.data;
-    /* an elemental mage willingly taking draconic form sheds armor
-       instead of bursting out of it (Slash'EM) */
-    boolean controlled_change = mage_draconic_form();
+    /* an elemental mage willingly taking draconic form, doppelgangers,
+       and werewolves turning into their wolf form shed their armor instead
+       of bursting out of it (Slash'EM) */
+    boolean controlled_change = (mage_draconic_form()
+                                 || Race_if(PM_DOPPELGANGER)
+                                 || (Race_if(PM_HUMAN_WEREWOLF)
+                                     && u.umonnum == u.ulycn));
 
-    if (breakarm(uptr)) {
+    /* a vampire's gear melds into its shapechange form (EvilHack) */
+    if (u_vampire_form())
+        return;
+
+    /* (u_breakarm() and u_sliparm() consider the hero's race when not
+       polymorphed: giants and tortles can't wear suits, cloaks or shirts,
+       centaurs and tortles can't wear boots) */
+    if (u_breakarm()) {
         if ((otmp = uarm) != 0) {
             if (donning(otmp))
                 cancel_don();
@@ -1176,7 +1278,7 @@ break_armor(void)
             if (controlled_change && !otmp->cursed) {
                 You("quickly remove your armor as you start to change.");
                 (void) Armor_gone();
-                dropx(otmp);
+                dropp(otmp);
             } else {
                 You("break out of your armor!");
                 exercise(A_STR, FALSE);
@@ -1188,7 +1290,7 @@ break_armor(void)
             You("remove your %s before you transform.",
                 cloak_simple_name(otmp));
             (void) Cloak_off();
-            dropx(otmp);
+            dropp(otmp);
         } else if ((otmp = uarmc) != 0
             /* mummy wrapping adapts to small and very big sizes */
             && (otmp->otyp != MUMMY_WRAPPING || !WrappingAllowed(uptr))) {
@@ -1207,15 +1309,17 @@ break_armor(void)
                 dropp(otmp);
             }
         }
-        if ((otmp = uarmu) != 0 && controlled_change && !otmp->cursed) {
-            You("take off your shirt just before it starts to rip.");
-            setworn((struct obj *) 0, W_ARMU);
-            dropx(otmp);
-        } else if (uarmu) {
-            Your("shirt rips to shreds!");
-            useup(uarmu);
+        if ((otmp = uarmu) != 0) {
+            if (controlled_change && !otmp->cursed && !uarm) {
+                You("quickly remove your shirt as you start to change.");
+                setworn((struct obj *) 0, otmp->owornmask & W_ARMU);
+                dropp(otmp);
+            } else {
+                Your("shirt rips to shreds!");
+                useup(otmp);
+            }
         }
-    } else if (sliparm(uptr)) {
+    } else if (u_sliparm()) {
         if ((otmp = uarm) != 0 && racial_exception(&gy.youmonst, otmp) < 1) {
             if (donning(otmp))
                 cancel_don();
@@ -1291,7 +1395,7 @@ break_armor(void)
         }
     }
     if (nohands(uptr) || verysmall(uptr)
-        || slithy(uptr) || uptr->mlet == S_CENTAUR) {
+        || slithy(uptr) || uptr->mlet == S_CENTAUR || u_race_no_boots()) {
         if ((otmp = uarmf) != 0) {
             if (donning(otmp))
                 cancel_don();
@@ -1328,6 +1432,8 @@ drop_weapon(int alone)
     const char *what, *which, *whichtoo;
     boolean candropwep, candropswapwep, updateinv = TRUE;
 
+    if (u_vampire_form())
+        return; /* wielded weapons meld into the vampire's new form */
     if (uwep) {
         /* !alone check below is currently superfluous but in the
          * future it might not be so if there are monsters which cannot
@@ -1409,10 +1515,19 @@ rehumanize(void)
      * Right now, dying while being a shifted vampire (bat, cloud, wolf)
      * reverts to human rather than to vampire.
      */
+    /* a vampire hero killed in a shapechange form has to wait longer
+       before it can shapechange again (EvilHack) */
+    if (u_vampire_form() && u.mh < 1)
+        u.uvampireshape += 1000;
 
     if (emits_light(gy.youmonst.data))
         del_light_source(LS_MONSTER, monst_to_any(&gy.youmonst));
     polyman("You return to %s form!", gu.urace.adj);
+    /* armor worn in the other form might not suit the natural body */
+    if (Race_if(PM_GIANT) || Race_if(PM_TORTLE) || Race_if(PM_CENTAUR))
+        break_armor();
+    if (!was_flying && Flying && (HFlying & FROMRACE))
+        You_feel("lighter than air!");
 
     if (u.uhp < 1) {
         /* can only happen if some bit of code reduces u.uhp
@@ -1446,11 +1561,12 @@ dobreathe(void)
         You_cant("breathe.  Sorry.");
         return ECMD_OK;
     }
-    if (u.uen < 15) {
+    if (u.uen < (Race_if(PM_DOPPELGANGER) ? 10 : 15)) {
         You("don't have enough energy to breathe!");
         return ECMD_OK;
     }
-    u.uen -= 15;
+    /* doppelgangers are better at using their forms (Slash'EM) */
+    u.uen -= Race_if(PM_DOPPELGANGER) ? 10 : 15;
     disp.botl = TRUE;
 
     if (!getdir((char *) 0))
@@ -1987,6 +2103,9 @@ dopolyatwill(void)
     int red = Role_if(PM_FLAME_MAGE), adult_pm, baby_pm;
     boolean scales, scale_mail;
 
+    /* doppelgangers and werewolves change shape their own way */
+    if (Race_if(PM_DOPPELGANGER) || Race_if(PM_HUMAN_WEREWOLF))
+        return polyatwill();
     if (!Role_if(PM_FLAME_MAGE) && !Role_if(PM_ICE_MAGE)) {
         You_cant("polymorph at will.");
         return ECMD_OK;
@@ -2101,6 +2220,13 @@ domindblast(void)
         if (mindless(mtmp->data))
             continue;
         u_sen = telepathic(mtmp->data) && !mtmp->mcansee;
+        /* a psychic resister (or another mind flayer) is aware of the
+           probe but unharmed by it */
+        if (resists_psychic(mtmp) || is_mind_flayer(mtmp->data)) {
+            if (u_sen || canspotmon(mtmp))
+                pline("%s shrugs off your psychic blast.", Monnam(mtmp));
+            continue;
+        }
         if (u_sen || (telepathic(mtmp->data) && rn2(2)) || !rn2(10)) {
             dmg = rnd(15);
             /* wake it up first, to bring hidden monster out of hiding;
@@ -2263,10 +2389,21 @@ mbodypart(struct monst *mon, int part)
         return humanoid_parts[part]; /* yeti/sasquatch, monkey/ape */
     }
     if ((part == HAND || part == HANDED)
-        && (humanoid(mptr) && attacktype(mptr, AT_CLAW)
-            && !strchr(not_claws, mptr->mlet) && mptr != &mons[PM_STONE_GOLEM]
-            && mptr != &mons[PM_AMOROUS_DEMON]))
+        && ((humanoid(mptr) && attacktype(mptr, AT_CLAW)
+             && !strchr(not_claws, mptr->mlet)
+             && mptr != &mons[PM_STONE_GOLEM]
+             && mptr != &mons[PM_AMOROUS_DEMON])
+            /* several of the hero's races have claws (EvilHack) */
+            || (mon == &gy.youmonst && !Upolyd
+                && (Race_if(PM_ILLITHID) || Race_if(PM_TORTLE)
+                    || Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE)))))
         return (part == HAND) ? "claw" : "clawed";
+    /* a centaur hero has a human torso on a horse's body */
+    if (mon == &gy.youmonst && !Upolyd && Race_if(PM_CENTAUR)
+        && part != ARM && part != FINGER && part != FINGERTIP
+        && part != HAND && part != HANDED && part != HEAD && part != FACE
+        && part != EYE && part != NOSE && part != HAIR && part != NECK)
+        return horse_parts[part];
     if ((mptr == &mons[PM_MUMAK] || mptr == &mons[PM_MASTODON])
         && part == NOSE)
         return "trunk";

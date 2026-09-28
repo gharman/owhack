@@ -325,6 +325,7 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
 #define MUSE_POT_FULL_HEALING 18
 #define MUSE_LIZARD_CORPSE 19
 #define MUSE_WAN_UNDEAD_TURNING 20 /* also an offensive item */
+#define MUSE_POT_VAMPIRE_BLOOD 21
 /*
 #define MUSE_INNATE_TPT 9999
  * We cannot use this.  Since monsters get unlimited teleportation, if they
@@ -725,6 +726,13 @@ find_defensive(struct monst *mtmp, boolean tryescape)
             if (obj->otyp == POT_HEALING) {
                 gm.m.defensive = obj;
                 gm.m.has_defense = MUSE_POT_HEALING;
+            }
+            /* vampires heal themselves with vampire blood (EvilHack) */
+            nomore(MUSE_POT_VAMPIRE_BLOOD);
+            if (obj->otyp == POT_VAMPIRE_BLOOD
+                && (is_vampire(mtmp->data) || is_vampshifter(mtmp))) {
+                gm.m.defensive = obj;
+                gm.m.has_defense = MUSE_POT_VAMPIRE_BLOOD;
             }
         } else { /* Pestilence */
             nomore(MUSE_POT_FULL_HEALING);
@@ -1199,6 +1207,30 @@ use_defensive(struct monst *mtmp)
             pline_mon(mtmp, "%s looks completely healed.", Monnam(mtmp));
         if (oseen)
             makeknown(otmp->otyp);
+        m_useup(mtmp, otmp);
+        return 2;
+    case MUSE_POT_VAMPIRE_BLOOD:
+        if (!otmp)
+            panic(MissingDefensiveItem, "potion of vampire blood");
+        mquaffmsg(mtmp, otmp);
+        if (otmp->blessed) {
+            /* acts mostly like a potion of full healing (EvilHack) */
+            healmon(mtmp, otmp->odiluted ? mtmp->mhpmax / 4 : mtmp->mhpmax,
+                    0);
+            if (vismon)
+                pline_mon(mtmp, "%s looks completely healed.", Monnam(mtmp));
+        } else if (otmp->cursed) {
+            if (vismon)
+                pline_mon(mtmp, "%s discards the congealed blood in disgust.",
+                          Monnam(mtmp));
+        } else {
+            /* uncursed acts mostly like a potion of healing */
+            healmon(mtmp, d(4, 4) / (otmp->odiluted ? 4 : 1), 1);
+            if (vismon)
+                pline_mon(mtmp, "%s looks better.", Monnam(mtmp));
+        }
+        if (oseen)
+            makeknown(POT_VAMPIRE_BLOOD);
         m_useup(mtmp, otmp);
         return 2;
     case MUSE_LIZARD_CORPSE:
@@ -2571,7 +2603,7 @@ use_misc(struct monst *mtmp)
             if (vismon)
                 pline_mon(mtmp, "%s flicks a bullwhip towards your %s!",
                           Monnam(mtmp), hand_buf);
-            if (obj->otyp == HEAVY_IRON_BALL) {
+            if (obj->otyp == HEAVY_IRON_BALL || Hidinshell) {
                 pline("%s fails to wrap around %s.", The_whip, the_weapon);
                 return 1;
             }
@@ -2744,6 +2776,9 @@ searches_for_item(struct monst *mon, struct obj *obj)
             || typ == POT_SLEEPING || typ == POT_ACID || typ == POT_CONFUSION)
             return TRUE;
         if (typ == POT_BLINDNESS && !attacktype(mon->data, AT_GAZE))
+            return TRUE;
+        if (typ == POT_VAMPIRE_BLOOD
+            && (is_vampire(mon->data) || is_vampshifter(mon)))
             return TRUE;
         break;
     case SCROLL_CLASS:

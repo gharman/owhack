@@ -1058,8 +1058,7 @@ use_mirror(struct obj *obj)
                     }
                     gn.nomovemsg = 0; /* default, "you can move again" */
                 }
-            } else if (is_vampire(gy.youmonst.data)
-                       || is_vampshifter(&gy.youmonst)) {
+            } else if (u_vampire() || is_vampshifter(&gy.youmonst)) {
                 You("don't have a reflection.");
             } else if (u.umonnum == PM_UMBER_HULK) {
                 pline("Huh?  That doesn't look like you!");
@@ -1396,7 +1395,7 @@ use_candle(struct obj **optr)
     char qbuf[QBUFSZ], qsfx[QBUFSZ], *q;
     boolean was_lamplit;
 
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         You(no_elbow_room);
         return;
     }
@@ -1778,7 +1777,7 @@ light_cocktail(struct obj **optr)
     char buf[BUFSZ];
     boolean split1off;
 
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         You(no_elbow_room);
         return;
     }
@@ -1956,7 +1955,7 @@ check_jump(genericptr arg, coordxy x, coordxy y)
     /* let giants jump over boulders (what about Flying?
        and is there really enough head room for giants to jump
        at all, let alone over something tall?) */
-    if (sobj_at(BOULDER, x, y) && !throws_rocks(gy.youmonst.data))
+    if (sobj_at(BOULDER, x, y) && !u_throws_rocks())
         return FALSE;
     return TRUE;
 }
@@ -2069,6 +2068,9 @@ jump(int magic) /* 0=Physical, otherwise skill level */
         /* normally (nolimbs || slithy) implies !Jumping,
            but that isn't necessarily the case for knights */
         You_cant("jump; you have no legs!");
+        return ECMD_OK;
+    } else if (Hidinshell) {
+        You_cant("jump while hiding in your shell!");
         return ECMD_OK;
     } else if (!magic && !Jumping) {
         You_cant("jump very far.");
@@ -2260,6 +2262,10 @@ use_tinning_kit(struct obj *obj)
     }
     if (!(corpse = floorfood("tin", 2)))
         return;
+    if (corpse->odrained) {
+        You("cannot tin %s which is drained of its blood.", something);
+        return;
+    }
     if (corpse->oeaten) {
         You("cannot tin %s which is partly eaten.", something);
         return;
@@ -2335,6 +2341,10 @@ use_unicorn_horn(struct obj **optr)
     int trouble_list[PROP_COUNT];
     struct obj *obj = (optr ? *optr : (struct obj *) 0);
 
+    if (obj && Hidinshell) {
+        You_cant("use %s while hiding in your shell.", yname(obj));
+        return;
+    }
     if (obj && obj->cursed) {
         long lcount = (long) rn1(90, 10);
 
@@ -2816,7 +2826,10 @@ use_stone(struct obj *tstone)
         } else if (obj->oclass == GEM_CLASS
                    && (tstone->blessed
                        || (!tstone->cursed && (Role_if(PM_ARCHEOLOGIST)
-                                               || Race_if(PM_GNOME))))) {
+                                               || Race_if(PM_GNOME)
+                                               /* giants know their gems
+                                                  (EvilHack) */
+                                               || Race_if(PM_GIANT))))) {
             makeknown(TOUCHSTONE);
             makeknown(obj->otyp);
             prinv((char *) 0, obj, 0L);
@@ -3044,6 +3057,10 @@ use_whip(struct obj *obj)
     if (!getdir((char *) 0))
         return (res|ECMD_CANCEL);
 
+    if (Hidinshell) {
+        There("is not enough room to flick your bullwhip.");
+        return res;
+    }
     if (u.uswallow) {
         mtmp = u.ustuck;
         rx = mtmp->mx;
@@ -3505,7 +3522,7 @@ use_pole(struct obj *obj, boolean autohit)
     boolean freehit = FALSE;
 
     /* Are you allowed to use the pole? */
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         pline(not_enough_room);
         return ECMD_OK;
     }
@@ -3806,7 +3823,7 @@ use_grapple(struct obj *obj)
     struct obj *otmp;
 
     /* Are you allowed to use the hook? */
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         pline(not_enough_room);
         return ECMD_OK;
     }

@@ -510,6 +510,12 @@ struct you {
     struct tech tech_list[MAXTECH]; /* known techniques (see tech.c) */
     d_level uwaymark_lev;    /* Cartographer's waymark: its level */
     coordxy uwaymark_x, uwaymark_y; /* and location; uwaymark_x==0: none */
+    /* Open World races (see racial.c) */
+    int uinshell;            /* tortle: >0 turns left hiding in the shell,
+                              * <0 turns until it can hide again */
+    int uvampireshape;       /* vampire: turns until #monster shapechange
+                              * can be used again */
+    int ughostfear;          /* ghost: times humans have fled in fear */
 }; /* end of `struct you' */
 
 
@@ -556,6 +562,7 @@ struct _hitmon_data {
     boolean dryit;
     boolean doreturn;
     boolean retval;
+    boolean ghostchill; /* a ghost hero's bare hands chilled the target */
     char saved_oname[BUFSZ];
 };
 

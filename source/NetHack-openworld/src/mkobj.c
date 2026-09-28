@@ -300,6 +300,10 @@ mkobj(int oclass, boolean artif)
         impossible("probtype error, oclass=%d i=%d", (int) oclass, i);
         i = svb.bases[oclass];
     }
+    /* potions of blood only turn up in a vampire's world (EvilHack gives
+       them a probability of 20 and 5 out of 1025 when the hero is one) */
+    if (oclass == POTION_CLASS && Race_if(PM_VAMPIRE) && !rn2(41))
+        i = rn2(5) ? POT_BLOOD : POT_VAMPIRE_BLOOD;
 
     return mksobj(i, TRUE, artif);
 }
@@ -913,6 +917,7 @@ mksobj_init(struct obj **obj, boolean artif)
         break;
     case FOOD_CLASS:
         otmp->oeaten = 0;
+        otmp->odrained = 0;
         switch (otmp->otyp) {
         case CORPSE:
             /* possibly overridden by mkcorpstat() */

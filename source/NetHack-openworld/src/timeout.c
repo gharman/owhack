@@ -79,6 +79,7 @@ static const struct propname {
     { SHOCK_RES, "shock resistance" },
     { POISON_RES, "poison resistance" },
     { DRAIN_RES, "drain resistance" },
+    { PSYCHIC_RES, "psychic resistance" },
     { SICK_RES, "sickness resistance" },
     { ANTIMAGIC, "magic resistance" },
     { HALLUC_RES, "hallucination resistance" },
@@ -671,6 +672,8 @@ nh_timeout(void)
         if (--u.ugallop == 0L && u.usteed)
             pline("%s stops galloping.", Monnam(u.usteed));
     }
+
+    race_timeouts(); /* tortle's shell, vampire's shapechange */
 
     was_flying = Flying;
     for (upp = u.uprops; upp < u.uprops + SIZE(u.uprops); upp++)

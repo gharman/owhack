@@ -35,6 +35,7 @@ early_init(int argc, char *argv[])
     objects_globals_init();
     monst_globals_init();
     init_mhflags();
+    init_mresists();
     sys_early_init();
     runtime_info_init();
     nhUse(argc);
@@ -117,7 +118,7 @@ u_calc_moveamt(int wtcap)
         /* your speed doesn't augment steed's speed */
         moveamt = mcalcmove(u.usteed, TRUE);
     } else {
-        moveamt = gy.youmonst.data->mmove;
+        moveamt = u_race_speed(); /* form, else race (EvilHack) */
 
         if (Very_fast) { /* speed boots, potion, or spell */
             /* gain a free action on 2/3 of turns */
@@ -681,6 +682,9 @@ regen_hp(int wtcap)
                 u.uen--;
                 heal++;
             }
+            /* tortles heal a little faster inside their shell */
+            if (Hidinshell && !U_CAN_REGEN() && !rn2(5))
+                heal++;
 
             if (heal) {
                 disp.botl = TRUE;
@@ -985,6 +989,22 @@ welcome(boolean new_game) /* false => restoring an old game */
             pline("The further you roam, the deadlier the land; "
                   "the compass points home.  (Press ? for more.)");
         }
+        /* hints for the races with special abilities (EvilHack) */
+        if (Race_if(PM_TORTLE))
+            pline("Use #monster to hide in your shell.");
+        else if (Race_if(PM_ILLITHID))
+            pline("Use #monster to unleash a psychic blast.");
+        else if (Race_if(PM_VAMPIRE))
+            pline("Use #monster to change form, once you are experienced "
+                  "enough.");
+        else if (Race_if(PM_DOPPELGANGER))
+            pline("Use #youpoly (or #monster) to change your shape.");
+        else if (Race_if(PM_HUMAN_WEREWOLF))
+            pline("Use #youpoly to change form, once you are experienced "
+                  "enough.");
+        else if (Race_if(PM_GHOST))
+            pline("You can drift through solid matter, at the cost of "
+                  "energy.");
     } else {
         /* if restoring in Gehennom, give same hot/smoky message as when
            first entering it */

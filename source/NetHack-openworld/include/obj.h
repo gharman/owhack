@@ -154,14 +154,15 @@ struct obj {
     Bitfield(altmode, 1); /* double lightsaber: both blades are lit */
     Bitfield(oarmed, 1);  /* bomb: its fuse is burning */
     Bitfield(yours, 1);   /* bomb: armed by the hero */
+    Bitfield(odrained, 1);   /* corpse drained of its blood by a vampire */
 #if 0
     /* not implemented */
     Bitfield(eknown, 1); /* effect known for wands zapped or rings worn when
                           * not seen yet after being picked up while blind
                           * [maybe for remaining stack of used potion too] */
 #endif
-    /* the three lightsaber and bomb bits above start a new word of
-       bitfields: 29 free bits after them */
+    /* the lightsaber, bomb and drained-corpse bits above start a new
+       word of bitfields: 28 free bits after them */
 
     int corpsenm;         /* type of corpse is mons[corpsenm] */
 #define leashmon corpsenm /* gets m_id of attached pet */
@@ -321,6 +322,11 @@ struct obj {
 #define stale_egg(egg) \
     ((svm.moves - (egg)->age) > (2 * MAX_EGG_HATCH_TIME))
 #define ofood(o) ((o)->otyp == CORPSE || (o)->otyp == EGG || (o)->otyp == TIN)
+/* how much of a corpse's nutrition is its blood, all that a vampire can
+   drain from it (Slash'EM) */
+#define drain_level(corpse) (mons[(corpse)->corpsenm].cnutrit / 2)
+/* how long after death a corpse's blood stays fresh enough to drink */
+#define blood_freshness(corpse) (8L + (long) ((corpse)->o_id % 8))
     /* note: sometimes eggs and tins have special corpsenm values that
        shouldn't be used as an index into mons[]                       */
 #define polyfood(obj) \

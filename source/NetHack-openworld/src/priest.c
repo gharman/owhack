@@ -446,7 +446,20 @@ intemple(int roomno)
             epri_p->enter_time = 0L;
         }
         msg1 = msg2 = 0;
-        if (sanctum && Is_sanctum(&u.uz)) {
+        if (!sanctum && Race_if(PM_DRAUGR) && !Upolyd
+            && mon_aligntyp(priest) >= A_NEUTRAL) {
+            /* a draugr in a lawful or neutral temple (EvilHack) */
+            if (priest->mpeaceful) {
+                msg1 = "Begone, foul abomination!";
+                msg2 = "You desecrate this holy place!";
+                priest->mpeaceful = 0;
+                set_malign(priest);
+                if (in_town(priest->mx, priest->my))
+                    angry_guards(FALSE);
+            } else {
+                msg1 = "You desecrate this place by your presence!";
+            }
+        } else if (sanctum && Is_sanctum(&u.uz)) {
             if (priest->mpeaceful) {
                 /* first time inside */
                 msg1 = "Infidel, you have entered Moloch's Sanctum!";
@@ -528,11 +541,14 @@ intemple(int roomno)
                 You("sense a presence close by!");
             mtmp->mpeaceful = 0;
             set_malign(mtmp);
-            if (flags.verbose)
-                You("are frightened to death, and unable to move.");
-            nomul(-3);
-            gm.multi_reason = "being terrified of a ghost";
-            gn.nomovemsg = "You regain your composure.";
+            /* the undead don't fear their own kind (EvilHack) */
+            if (!u_undead()) {
+                if (flags.verbose)
+                    You("are frightened to death, and unable to move.");
+                nomul(-3);
+                gm.multi_reason = "being terrified of a ghost";
+                gn.nomovemsg = "You regain your composure.";
+            }
         }
     }
 }
@@ -581,7 +597,10 @@ priest_talk(struct monst *priest)
     }
 
     /* priests don't chat unless peaceful and in their own temple */
-    if (!inhistemple(priest) || !priest->mpeaceful || helpless(priest)) {
+    if (!inhistemple(priest) || !priest->mpeaceful || helpless(priest)
+        /* no priest of a lawful or neutral god will speak with a draugr */
+        || (Race_if(PM_DRAUGR) && !Upolyd
+            && mon_aligntyp(priest) >= A_NEUTRAL)) {
         static const char *const cranky_msg[3] = {
             "Thou wouldst have words, eh?  I'll give thee a word or two!",
             "Talk?  Here is what I have to say!",

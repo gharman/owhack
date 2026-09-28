@@ -37,6 +37,7 @@ static const struct worn {
 /* This only allows for one blocking item per property */
 #define w_blocks(o, m) \
     ((o->otyp == MUMMY_WRAPPING && ((m) & W_ARMC) != 0L) ? INVIS        \
+     : (o->otyp == TINFOIL_HAT && ((m) & W_ARMH) != 0L) ? TELEPAT       \
      : (o->otyp == CORNUTHAUM && ((m) & W_ARMH) != 0L                   \
         && !Role_if(PM_WIZARD)) ? CLAIRVOYANT                           \
        : (is_art(o, ART_EYES_OF_THE_OVERWORLD)                          \
@@ -583,7 +584,7 @@ update_mon_extrinsics(
     boolean silently)
 {
     int unseen;
-    uchar mask;
+    unsigned short mask;
     struct obj *otmp;
     int which = (int) objects[obj->otyp].oc_oprop,
         altwhich = altprop(obj);
@@ -627,7 +628,7 @@ update_mon_extrinsics(
         case JUMPING:
             break;
         default:
-            mon->mextrinsics |= (unsigned short) res_to_mr(which);
+            mon->mextrinsics |= (unsigned long) res_to_mr(which);
             break;
         }
     } else { /* off */
@@ -651,6 +652,8 @@ update_mon_extrinsics(
         case POISON_RES:
         case ACID_RES:
         case STONE_RES:
+        case DRAIN_RES:
+        case PSYCHIC_RES:
             /*
              * Update monster's extrinsics (for worn objects only;
              * 'obj' itself might still be worn or already unworn).
@@ -676,7 +679,7 @@ update_mon_extrinsics(
                     break;
             }
             if (!otmp)
-                mon->mextrinsics &= ~((unsigned short) mask);
+                mon->mextrinsics &= ~((unsigned long) mask);
             break;
         default:
             break;

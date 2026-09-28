@@ -229,7 +229,7 @@ flooreffects(
                 }
                 mtmp->mtrapped = 0;
             } else {
-                if (!Passes_walls && !throws_rocks(gy.youmonst.data)) {
+                if (!Passes_walls && !u_throws_rocks()) {
                     losehp(Maybe_Half_Phys(rnd(15)),
                            "squished under a boulder", NO_KILLER_PREFIX);
                     goto deletedwithboulder;
@@ -1146,6 +1146,11 @@ dodown(void)
     if (u_rooted())
         return ECMD_TIME;
 
+    if (Hidinshell) {
+        You_cant("climb down while hiding in your shell.");
+        return ECMD_OK;
+    }
+
     if (stucksteed(TRUE)) {
         return ECMD_OK;
     }
@@ -1264,7 +1269,7 @@ dodown(void)
         const char *down_or_thru = trap->ttyp == HOLE ? "down" : "through";
         const char *actn = u_locomotion("jump");
 
-        if (gy.youmonst.data->msize >= MZ_HUGE) {
+        if (u_size() >= MZ_HUGE) {
             char qbuf[QBUFSZ];
 
             You("don't fit %s easily.", down_or_thru);
@@ -1310,6 +1315,11 @@ doup(void)
 
     if (u_rooted())
         return ECMD_TIME;
+
+    if (Hidinshell) {
+        You_cant("climb up while hiding in your shell.");
+        return ECMD_OK;
+    }
 
     /* "up" to get out of a pit... */
     if (u.utrap && u.utraptype == TT_PIT) {

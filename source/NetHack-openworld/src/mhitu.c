@@ -708,8 +708,10 @@ mattacku(struct monst *mtmp)
     /*  Work out the armor class differential   */
     tmp = AC_VALUE(u.uac) + 10; /* tmp ~= 0 - 20 */
     tmp += mtmp->m_lev;
-    if (gm.multi < 0)
+    if (gm.multi < 0 && !Hidinshell)
         tmp += 4;
+    if (Hidinshell) /* enshelled tortles are much harder to hit */
+        tmp -= 12;
     if ((Invis && !perceives(mdat)) || !mtmp->mcansee)
         tmp -= 2;
     if (mtmp->mtrapped)
@@ -803,8 +805,10 @@ mattacku(struct monst *mtmp)
             if (!range2 && (!MON_WEP(mtmp) || mtmp->mconf || Conflict
                             || !touch_petrifies(gy.youmonst.data))) {
                 if (foundyou) {
+                    if (Hidinshell && shell_blocks(mtmp, mattk))
+                        continue;
                     if (tmp > (j = rnd(20 + i))) {
-                        if (unsolid(gy.youmonst.data)
+                        if ((unsolid(gy.youmonst.data) || u_ghost())
                             && failed_grab(mtmp, &gy.youmonst, mattk))
                             continue;
                         if (mattk->aatyp != AT_KICK
@@ -1216,6 +1220,11 @@ hitmu(struct monst *mtmp, struct attack *mattk)
             mhm.damage = 1;
     }
 
+    /* physical blows pass partly through a ghost hero's body */
+    if (mhm.damage > 0 && mattk->adtyp == AD_PHYS)
+        mhm.damage = u_ghost_dmg(mhm.damage, mtmp,
+                                 (mattk->aatyp == AT_WEAP) ? MON_WEP(mtmp)
+                                                           : (struct obj *) 0);
     /* touch attacks by a monster wearing (or made of) something the hero
        hates, such as an iron golem's fists against an elf; this comes
        after the AC damage reduction */
@@ -1604,7 +1613,7 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
               : enfolds(mtmp->data) ? "releases"
                 : "expels");
         expels(mtmp, mtmp->data, FALSE);
-    } else if (!u.uswldtim || gy.youmonst.data->msize >= MZ_HUGE) {
+    } else if (!u.uswldtim || u_size() >= MZ_HUGE) {
         /* As of 3.6.2: u.uswldtim used to be set to 0 by life-saving but it
            expels now so the !u.uswldtim case is no longer possible;
            however, polymorphing into a huge form while already

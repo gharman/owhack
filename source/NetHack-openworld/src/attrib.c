@@ -134,6 +134,72 @@ static const struct innate {
                  { 1, &HPoison_resistance, "", "" },
                  { 0, 0, 0, 0 } },
 
+  /* giants, centaurs, illithids, tortles, draugr and vampires as in
+     EvilHack (draugr and vampires also resist level drain, being undead;
+     racial flight is only active in the natural form, see
+     race_form_props()); werewolves (lycanthropes) and doppelgangers as in
+     Slash'EM; the ghost is new */
+  gia_abil[] = { { 1, &HInfravision, "", "" },
+                 { 1, &HAggravate_monster, "", "" },
+                 { 12, &HRegeneration, "resilient", "less resilient" },
+                 { 0, 0, 0, 0 } },
+
+  /* use EJumping here, otherwise centaurs would only be able to jump
+     the same way as knights */
+  cen_abil[] = { { 1, &HFast, "", "" },
+                 { 5, &EJumping, "light on your hooves", "weighted down" },
+                 { 10, &HWarning, "sensitive", "" },
+                 { 0, 0, 0, 0 } },
+
+  ill_abil[] = { { 1, &HInfravision, "", "" },
+                 { 1, &HTelepat, "", "" },
+                 { 1, &HPsychic_resistance, "", "" },
+                 { 12, &HFlying, "lighter than air", "gravity's pull" },
+                 { 0, 0, 0, 0 } },
+
+  trt_abil[] = { { 1, &HSwimming, "", "" },
+                 { 5, &HWarning, "sensitive", "" },
+                 { 12, &HRegeneration, "resilient", "less resilient" },
+                 { 0, 0, 0, 0 } },
+
+  dra_abil[] = { { 1, &HInfravision, "", "" },
+                 { 1, &HSick_resistance, "", "" },
+                 { 1, &HCold_resistance, "", "" },
+                 { 1, &HSleep_resistance, "", "" },
+                 { 1, &HPoison_resistance, "", "" },
+                 { 1, &HDrain_resistance, "", "" },
+                 { 1, &HAggravate_monster, "", "" },
+                 { 0, 0, 0, 0 } },
+
+  vam_abil[] = { { 1, &HInfravision, "", "" },
+                 { 1, &HSick_resistance, "", "" },
+                 { 1, &HCold_resistance, "", "" },
+                 { 1, &HSleep_resistance, "", "" },
+                 { 1, &HPoison_resistance, "", "" },
+                 { 1, &HDrain_resistance, "", "" },
+                 { 12, &HFlying, "lighter than air", "gravity's pull" },
+                 { 20, &HRegeneration, "resilient", "less resilient" },
+                 { 0, 0, 0, 0 } },
+
+  wer_abil[] = { { 1, &HRegeneration, "", "" },
+                 { 0, 0, 0, 0 } },
+
+  dop_abil[] = { { 9, &HPolymorph_control, "your choices improve",
+                   "choiceless" },
+                 { 0, 0, 0, 0 } },
+
+  gho_abil[] = { { 1, &HFlying, "", "" },
+                 { 1, &HCold_resistance, "", "" },
+                 { 1, &HSleep_resistance, "", "" },
+                 { 1, &HDrain_resistance, "", "" },
+                 { 1, &HMagical_breathing, "", "" },
+                 { 1, &HSee_invisible, "", "" },
+                 { 1, &HInfravision, "", "" },
+                 { 5, &HStealth, "stealthy", "" },
+                 { 9, &HPoison_resistance, "healthy", "" },
+                 { 13, &HWarning, "sensitive", "" },
+                 { 0, 0, 0, 0 } },
+
   hum_abil[] = { { 0, 0, 0, 0 } };
 
 staticfn void exerper(void);
@@ -141,6 +207,8 @@ staticfn int rnd_attr(void);
 staticfn int init_attr_role_redist(int, boolean);
 staticfn void postadjabil(long *) NONNULLARG1;
 staticfn const struct innate *role_abil(int);
+staticfn const struct innate *race_abil(int);
+staticfn boolean race_blocks_abil(const long *);
 staticfn const struct innate *check_innate_abil(long *, long);
 staticfn int innately(long *);
 
@@ -235,14 +303,26 @@ void
 gainstr(struct obj *otmp, int incr, boolean givemsg)
 {
     int num = incr;
+    /* the naturally strong races gain strength the way everyone gains it
+       from a potion, however it's gained (EvilHack) */
+    boolean strongrace = ((Race_if(PM_GIANT) || Race_if(PM_CENTAUR)
+                           || Race_if(PM_TORTLE) || Race_if(PM_DRAUGR)
+                           || Race_if(PM_VAMPIRE))
+                          && !(otmp && otmp->cursed));
 
-    if (!num) {
+    if (!num || strongrace) {
         if (ABASE(A_STR) < 18)
             num = (rn2(4) ? 1 : rnd(6));
         else if (ABASE(A_STR) < STR18(85))
             num = rnd(10);
         else
             num = 1;
+        /* giants grow stronger faster, up to 18/100 */
+        if (strongrace && Race_if(PM_GIANT) && ABASE(A_STR) < STR18(100))
+            num += d(2, 2);
+        if (strongrace && ABASE(A_STR) < STR18(100)
+            && ABASE(A_STR) + num > STR18(100))
+            num = STR18(100) - ABASE(A_STR);
     }
     (void) adjattrib(A_STR, (otmp && otmp->cursed) ? -num : num,
                      givemsg ? -1 : 1);
@@ -823,7 +903,8 @@ postadjabil(long *ability)
 int
 elem_vulnerable_dmg(int adtyp, int dmg)
 {
-    if ((adtyp == AD_FIRE && Vulnerable_fire && !Fire_resistance)
+    if ((adtyp == AD_FIRE && (Vulnerable_fire || u_fire_vulnerable())
+         && !Fire_resistance)
         || (adtyp == AD_COLD && Vulnerable_cold && !Cold_resistance))
         dmg += (dmg + 1) / 2;
     return dmg;
@@ -863,6 +944,62 @@ role_abil(int r)
     return roleabils[i].abil;
 }
 
+/* the intrinsics conferred by a race, by its races[] mnum */
+staticfn const struct innate *
+race_abil(int r)
+{
+    switch (r) {
+    case PM_DWARF:
+        return dwa_abil;
+    case PM_ELF:
+        return elf_abil;
+    case PM_GNOME:
+        return gno_abil;
+    case PM_ORC:
+        return orc_abil;
+    case PM_HUMAN:
+        return hum_abil;
+    case PM_GIANT:
+        return gia_abil;
+    case PM_CENTAUR:
+        return cen_abil;
+    case PM_ILLITHID:
+        return ill_abil;
+    case PM_TORTLE:
+        return trt_abil;
+    case PM_DRAUGR:
+        return dra_abil;
+    case PM_VAMPIRE:
+        return vam_abil;
+    case PM_HUMAN_WEREWOLF:
+        return wer_abil;
+    case PM_DOPPELGANGER:
+        return dop_abil;
+    case PM_GHOST:
+        return gho_abil;
+    default:
+        break;
+    }
+    return (const struct innate *) 0;
+}
+
+/* some races can never gain certain intrinsics from their role (EvilHack):
+   giants are too big to be stealthy, and the undead flesh of draugr and
+   vampires can't be made proof against fire */
+staticfn boolean
+race_blocks_abil(const long *ability)
+{
+    if (Race_if(PM_GIANT) && ability == &HStealth)
+        return TRUE;
+    if ((Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))
+        && ability == &HFire_resistance)
+        return TRUE;
+    /* a draugr's rotting brain gains no telepathy (EvilHack) */
+    if (Race_if(PM_DRAUGR) && ability == &HTelepat)
+        return TRUE;
+    return FALSE;
+}
+
 staticfn const struct innate *
 check_innate_abil(long *ability, long frommask)
 {
@@ -871,27 +1008,13 @@ check_innate_abil(long *ability, long frommask)
     if (frommask == FROMEXPER)
         abil = role_abil(Role_switch);
     else if (frommask == FROMRACE)
-        switch (Race_switch) {
-        case PM_DWARF:
-            abil = dwa_abil;
-            break;
-        case PM_ELF:
-            abil = elf_abil;
-            break;
-        case PM_GNOME:
-            abil = gno_abil;
-            break;
-        case PM_ORC:
-            abil = orc_abil;
-            break;
-        case PM_HUMAN:
-            abil = hum_abil;
-            break;
-        default:
-            break;
-        }
+        abil = race_abil(Race_switch);
 
     while (abil && abil->ability) {
+        if (frommask == FROMEXPER && race_blocks_abil(abil->ability)) {
+            abil++;
+            continue;
+        }
         if ((abil->ability == ability) && (u.ulevel >= abil->ulevel))
             return abil;
         abil++;
@@ -1063,17 +1186,13 @@ adjabil(int oldlevel, int newlevel)
     abil = role_abil(Role_switch);
 
     switch (Race_switch) {
-    case PM_ELF:
-        rabil = elf_abil;
-        break;
-    case PM_ORC:
-        rabil = orc_abil;
-        break;
     case PM_HUMAN:
-    case PM_DWARF:
-    case PM_GNOME:
-    default:
+    case PM_DWARF: /* dwarvish and gnomish infravision comes from the */
+    case PM_GNOME: /* race's monster form, see set_uasmon() */
         rabil = 0;
+        break;
+    default:
+        rabil = race_abil(Race_switch);
         break;
     }
 
@@ -1086,6 +1205,10 @@ adjabil(int oldlevel, int newlevel)
             abil = rabil;
             rabil = 0;
             mask = FROMRACE;
+        }
+        if (mask == FROMEXPER && race_blocks_abil(abil->ability)) {
+            abil++;
+            continue;
         }
         prevabil = *(abil->ability);
         if (oldlevel < abil->ulevel && newlevel >= abil->ulevel) {
@@ -1116,6 +1239,9 @@ adjabil(int oldlevel, int newlevel)
             postadjabil(abil->ability);
         abil++;
     }
+
+    /* racial flight works only in the natural form */
+    race_form_props(TRUE);
 
     if (oldlevel > 0) {
         if (newlevel > oldlevel)

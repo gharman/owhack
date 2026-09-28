@@ -613,6 +613,7 @@ explode(
             You("are unharmed!");
         } else if (adtyp == AD_PHYS || adtyp == AD_ACID)
             damu = Maybe_Half_Phys(damu);
+        /* (fire vulnerability is applied below, with elem_vulnerable_dmg) */
         if (adtyp == AD_FIRE) {
             (void) burnarmor(&gy.youmonst);
             ignite_items(gi.invent);
@@ -882,7 +883,7 @@ scatter(
                             nomul(0);
                         dam = dmgval(stmp->obj, &gy.youmonst);
                         hitvalu = 8 + stmp->obj->spe;
-                        if (bigmonst(gy.youmonst.data))
+                        if (u_size() >= MZ_LARGE)
                             hitvalu++;
                         hitu = thitu(hitvalu, Maybe_Half_Phys(dam),
                                      &stmp->obj, (char *) 0);

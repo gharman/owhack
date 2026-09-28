@@ -51,6 +51,10 @@
 #define EDrain_resistance u.uprops[DRAIN_RES].extrinsic
 #define Drain_resistance (HDrain_resistance || EDrain_resistance)
 
+#define HPsychic_resistance u.uprops[PSYCHIC_RES].intrinsic
+#define EPsychic_resistance u.uprops[PSYCHIC_RES].extrinsic
+#define Psychic_resistance (HPsychic_resistance || EPsychic_resistance)
+
 /* Hxxx due to FROMFORM only */
 #define HAntimagic u.uprops[ANTIMAGIC].intrinsic
 #define EAntimagic u.uprops[ANTIMAGIC].extrinsic
@@ -100,7 +104,7 @@
            are mutually exclusive; explicitly applying !BBlinded to both
            internal and external blindness should be more robust in case
            of future changes */
-#define Blind ((HBlinded || EBlinded) && !BBlinded)
+#define Blind (((HBlinded || EBlinded) && !BBlinded) || Hidinshell)
 
 /*
  * Maladies
@@ -153,8 +157,10 @@
 
 #define HTelepat u.uprops[TELEPAT].intrinsic
 #define ETelepat u.uprops[TELEPAT].extrinsic
-#define Blind_telepat (HTelepat || ETelepat)
-#define Unblind_telepat (ETelepat)
+#define BTelepat u.uprops[TELEPAT].blocked
+/* a tinfoil hat blocks telepathy */
+#define Blind_telepat ((HTelepat || ETelepat) && !BTelepat)
+#define Unblind_telepat (ETelepat && !BTelepat)
 
 #define HBlnd_resist u.uprops[BLND_RES].intrinsic /* from form */
 #define EBlnd_resist u.uprops[BLND_RES].extrinsic /* wielding Sunsword */
@@ -270,11 +276,15 @@
 #define HMagical_breathing u.uprops[MAGICAL_BREATHING].intrinsic
 #define EMagical_breathing u.uprops[MAGICAL_BREATHING].extrinsic
 #define Amphibious \
-    (HMagical_breathing || EMagical_breathing || amphibious(gy.youmonst.data))
+    (HMagical_breathing || EMagical_breathing || amphibious(gy.youmonst.data) \
+     || (!Upolyd && Race_if(PM_TORTLE)))
 /* Get wet, may go under surface */
 
+/* draugr and vampires don't breathe in their natural form (the ghost's
+   lack of breath is HMagical_breathing FROMRACE, see race_form_props()) */
 #define Breathless \
-    (HMagical_breathing || EMagical_breathing || breathless(gy.youmonst.data))
+    (HMagical_breathing || EMagical_breathing || breathless(gy.youmonst.data) \
+     || (!Upolyd && (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))))
 
 #define Underwater (u.uinwater)
 /* Note that Underwater and u.uinwater are both used in code.
@@ -283,7 +293,8 @@
 
 #define HPasses_walls u.uprops[PASSES_WALLS].intrinsic
 #define EPasses_walls u.uprops[PASSES_WALLS].extrinsic
-#define Passes_walls (HPasses_walls || EPasses_walls)
+/* a ghost hero phases through walls while unburdened (racial.c) */
+#define Passes_walls (HPasses_walls || EPasses_walls || u_ghost_phasing())
 
 /*** Physical attributes ***/
 #define HSlow_digestion u.uprops[SLOW_DIGESTION].intrinsic
@@ -338,7 +349,8 @@
 
 #define HHalf_physical_damage u.uprops[HALF_PHDAM].intrinsic
 #define EHalf_physical_damage u.uprops[HALF_PHDAM].extrinsic
-#define Half_physical_damage (HHalf_physical_damage || EHalf_physical_damage)
+#define Half_physical_damage \
+    (HHalf_physical_damage || EHalf_physical_damage || Hidinshell)
 
 #define HRegeneration u.uprops[REGENERATION].intrinsic
 #define ERegeneration u.uprops[REGENERATION].extrinsic
@@ -393,6 +405,8 @@
 #define HVulnerable_cold u.uprops[VULN_COLD].intrinsic
 #define EVulnerable_cold u.uprops[VULN_COLD].extrinsic
 #define Vulnerable_cold (HVulnerable_cold || EVulnerable_cold)
+/* a tortle retreated into its shell (EvilHack) */
+#define Hidinshell (u.uinshell > 0)
 
 /*
  * Some pseudo-properties.
@@ -406,7 +420,8 @@
    redundant but allows the function calls to be skipped most of the time */
 #define Unaware (gm.multi < 0 && (unconscious() || is_fainted()))
 
-#define Hate_silver (u.ulycn >= LOW_PM || hates_silver(gy.youmonst.data))
+#define Hate_silver (u.ulycn >= LOW_PM || hates_silver(gy.youmonst.data) \
+                     || (!Upolyd && Race_if(PM_VAMPIRE)))
 /* hero is hurt by objects made of material (silver, cold iron, copper...) */
 #define Hate_material(material) mon_hates_material(&gy.youmonst, material)
 

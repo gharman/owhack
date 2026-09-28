@@ -65,6 +65,7 @@ static const char and_its_contents[] = " and its contents";
 static const char the_contents_of[] = "the contents of ";
 
 staticfn void append_honorific(char *);
+staticfn boolean shk_bans_you(void);
 staticfn long addupbill(struct monst *);
 staticfn void pacify_shk(struct monst *, boolean);
 staticfn struct bill_x *onbill(struct obj *, struct monst *, boolean);
@@ -930,7 +931,7 @@ u_entered_shop(char *enterstring)
                   Shknam(shkp), noit_mhis(shkp));
         }
     } else {
-        if (!Deaf && !muteshk(shkp)) {
+        if (!Deaf && !muteshk(shkp) && !shk_bans_you()) {
             set_voice(shkp, 0, 80, 0);
             verbalize("%s, %s!  Welcome%s to %s %s!", Hello(shkp), svp.plname,
                       eshkp->visitct++ ? " again" : "",
@@ -981,6 +982,15 @@ u_entered_shop(char *enterstring)
                       Shknam(shkp),
                       not_upset ? "is hesitant" : "refuses",
                       tool, plur(cnt));
+            }
+            should_block = TRUE;
+        } else if (shk_bans_you() && !ANGRY(shkp)) {
+            /* shopkeepers won't deal with draugr (EvilHack) */
+            if (!Deaf && !muteshk(shkp)) {
+                SetVoice(shkp, 0, 80, 0);
+                verbalize("I don't do business with zombies!");
+            } else {
+                pline("%s refuses to let you in.", Shknam(shkp));
             }
             should_block = TRUE;
         } else if (u.usteed) {
@@ -1892,6 +1902,11 @@ dopay(void)
 
     if (!seensk) {
         You_cant("see...");
+        return ECMD_OK;
+    }
+
+    if (Hidinshell) {
+        pline("How do you expect to do that while hiding in your shell?");
         return ECMD_OK;
     }
 
@@ -3110,6 +3125,16 @@ get_cost(
              || (uarmu && !uarm && !uarmc)) /* touristy shirt visible */
         multiplier *= 4L, divisor *= 3L;
 
+    /* human shopkeepers overcharge some of the new races (EvilHack) */
+    if (shkp && is_human(shkp->data)) {
+        if (Race_if(PM_CENTAUR))
+            multiplier *= 3L, divisor *= 2L;
+        else if (Race_if(PM_DRAUGR))
+            multiplier *= 20L;
+        else if (Race_if(PM_VAMPIRE))
+            multiplier *= 5L;
+    }
+
     if (ACURR(A_CHA) > 18)
         divisor *= 2L;
     else if (ACURR(A_CHA) == 18)
@@ -3781,7 +3806,7 @@ append_honorific(char *buf)
     };
 
     Strcat(buf, honored[rn2(SIZE(honored) - 1) + u.uevent.udemigod]);
-    if (is_vampire(gy.youmonst.data))
+    if (u_vampire())
         Strcat(buf, (flags.female) ? " dark lady" : " dark lord");
     else if (maybe_polyd(is_elf(gy.youmonst.data), Race_if(PM_ELF)))
         Strcat(buf, (flags.female) ? " hiril" : " hir");
@@ -3789,6 +3814,13 @@ append_honorific(char *buf)
         Strcat(buf, !is_human(gy.youmonst.data) ? " creature"
                       : (flags.female) ? " lady"
                         : " sir");
+}
+
+/* shopkeepers keep draugr out of their shops (EvilHack) */
+staticfn boolean
+shk_bans_you(void)
+{
+    return (Race_if(PM_DRAUGR) && !Upolyd);
 }
 
 void
@@ -5139,6 +5171,7 @@ shk_move(struct monst *shkp)
             uondoor = u_at(eshkp->shd.x, eshkp->shd.y);
             if (uondoor) {
                 badinv = (carrying(PICK_AXE) || carrying(DWARVISH_MATTOCK)
+                          || shk_bans_you()
                           || (Fast && (sobj_at(PICK_AXE, u.ux, u.uy)
                                   || sobj_at(DWARVISH_MATTOCK, u.ux, u.uy))));
                 if (satdoor && badinv)

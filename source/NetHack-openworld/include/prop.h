@@ -23,7 +23,10 @@ enum prop_types {
     /* note: the first eight properties above are equivalent to MR_xxx bits
      * MR_FIRE through MR_STONE, and can be directly converted to them: */
 #define res_to_mr(r) \
-    ((FIRE_RES <= (r) && (r) <= STONE_RES) ? (uchar) (1 << ((r) - 1)) : 0x00)
+    ((FIRE_RES <= (r) && (r) <= STONE_RES)                             \
+         ? (unsigned short) (1 << ((r) - 1))                          \
+         : ((r) == DRAIN_RES) ? (unsigned short) MR_DRAIN              \
+           : ((r) == PSYCHIC_RES) ? (unsigned short) MR_PSYCHIC : 0x00)
     DRAIN_RES         =  9,
     SICK_RES          = 10,
     INVULNERABLE      = 11,
@@ -91,7 +94,8 @@ enum prop_types {
     LIFESAVED         = 68,
     VULN_FIRE         = 69, /* extra damage from unresisted fire */
     VULN_COLD         = 70, /* extra damage from unresisted cold */
-    LAST_PROP = VULN_COLD
+    PSYCHIC_RES       = 71, /* resists psionic attacks (also MR_PSYCHIC) */
+    LAST_PROP = PSYCHIC_RES
 };
 
 /*** Where the properties come from ***/

@@ -215,7 +215,11 @@ mk_artifact(
            suitable for hero's role+race */
         if ((a->alignment == alignment || a->alignment == A_NONE)
             /* avoid enemies' equipment */
-            && (a->race == NON_PM || !race_hostile(&mons[a->race]))) {
+            && (a->race == NON_PM || !race_hostile(&mons[a->race]))
+            /* nor a bane of the hero's own race (Giantslayer for giants,
+               Sunsword for the undead races, Werebane for werewolves) */
+            && !((a->spfx & SPFX_DFLAG2) != 0
+                 && (mons[gu.urace.mnum].mflags2 & a->mtype) != 0)) {
             /* when a role-specific first choice is available, use it */
             if (Role_if(a->role)) {
                 /* make this be the only possibility in the list */
@@ -1674,7 +1678,7 @@ artifact_hit(
                 observe_object(otmp);
                 return TRUE;
             } else {
-                if (bigmonst(gy.youmonst.data)) {
+                if (u_size() >= MZ_LARGE) {
                     pline("%s cuts deeply into you!",
                           magr ? Monnam(magr) : wepdesc);
                     *dmgptr *= 2;
@@ -1728,9 +1732,14 @@ artifact_hit(
                     return TRUE;
                 }
                 if (noncorporeal(gy.youmonst.data)
-                    || amorphous(gy.youmonst.data)) {
+                    || amorphous(gy.youmonst.data) || u_ghost()) {
                     pline("%s slices through your %s.", wepdesc,
                           body_part(NECK));
+                    return TRUE;
+                }
+                if (Hidinshell) {
+                    pline("%s glances harmlessly off of your protective "
+                          "shell.", wepdesc);
                     return TRUE;
                 }
                 *dmgptr = 2 * (Upolyd ? u.mh : u.uhp) + FATAL_DAMAGE_MODIFIER;
@@ -1852,6 +1861,11 @@ doinvoke(void)
     obj = getobj("invoke", invoke_ok, GETOBJ_PROMPT);
     if (!obj)
         return ECMD_CANCEL;
+    if (Hidinshell) {
+        You_cant("invoke %s while hiding in your shell.",
+                 the(distant_name(obj, xname)));
+        return ECMD_OK;
+    }
     if (!retouch_object(&obj, FALSE))
         return ECMD_TIME;
     return arti_invoke(obj);

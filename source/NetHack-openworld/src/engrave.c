@@ -204,7 +204,7 @@ can_reach_floor(boolean check_pit)
     if (u.uundetected && ceiling_hider(gy.youmonst.data))
         return FALSE;
 
-    if (Flying || gy.youmonst.data->msize >= MZ_HUGE)
+    if (Flying || u_size() >= MZ_HUGE)
         return TRUE;
 
     if (check_pit && (t = t_at(u.ux, u.uy)) != 0
@@ -473,6 +473,8 @@ del_engr_at(coordxy x, coordxy y)
 int
 freehand(void)
 {
+    if (Hidinshell)
+        return FALSE;
     return (!uwep || !welded(uwep)
             || (!bimanual(uwep) && (!uarms || !uarms->cursed)));
 }
@@ -572,7 +574,7 @@ doengrave_ctx_init(struct _doengrave_ctx *de)
 
     if (de->oep)
         de->oetype = de->oep->engr_type;
-    if (is_demon(gy.youmonst.data) || is_vampire(gy.youmonst.data))
+    if (is_demon(gy.youmonst.data) || u_vampire())
         de->type = ENGR_BLOOD;
 
     de->jello = (u.uswallow && !(is_animal(u.ustuck->data)
@@ -1001,6 +1003,11 @@ doengrave(void)
     /* There's no reason you should be able to write with a wand
      * while both your hands are tied up.
      */
+    if (Hidinshell) {
+        Your("%s are constrained within your shell.",
+             makeplural(body_part(HAND)));
+        goto doengr_exit;
+    }
     if (!freehand() && de->otmp != uwep && !de->otmp->owornmask) {
         You("have no free %s to write with!", body_part(HAND));
         goto doengr_exit;

@@ -512,7 +512,7 @@ HELM("helm of brilliance", "crystal helmet",
                                                         HELM_OF_BRILLIANCE),
 /* with shuffled appearances... */
 HELM("helmet", "plumed helmet",
-     0, 0,           0, 10, 1, 30, 10,  9, 0, IRON, HI_METAL,
+     0, 0,           0,  8, 1, 30, 10,  9, 0, IRON, HI_METAL,
                                                         HELMET),
 HELM("helm of caution", "etched helmet",
      0, 1,     WARNING,  6, 1, 50, 50,  9, 0, IRON, CLR_GREEN,
@@ -520,6 +520,10 @@ HELM("helm of caution", "etched helmet",
 HELM("helm of opposite alignment", "crested helmet",
      0, 1,           0, 10, 1, 50, 50,  9, 0, IRON, HI_METAL,
                                                  HELM_OF_OPPOSITE_ALIGNMENT),
+/* from SpliceHack via Hack'EM: shields the mind, and blocks telepathy */
+HELM("tinfoil hat", "fearsome helmet",
+     0, 1, PSYCHIC_RES,  2, 1,  5, 50, 10, 0, METAL, CLR_YELLOW,
+                                                        TINFOIL_HAT),
 HELM("helm of telepathy", "visored helmet",
      0, 1,     TELEPAT,  4, 1, 50, 50,  9, 0, IRON, HI_METAL,
                                                  HELM_OF_TELEPATHY),
@@ -876,6 +880,10 @@ RING("see invisible", "engagement",
 RING("protection from shape changers", "shiny",
      PROT_FROM_SHAPE_CHANGERS, 100, 1, 0,  5, IRON, CLR_BRIGHT_CYAN,
                                                RIN_PROTECTION_FROM_SHAPE_CHAN),
+/* Hack'EM */
+RING("psychic resistance", "ridged",
+     PSYCHIC_RES,              150, 1, 0,  6, IRON, HI_METAL,
+                                                   RIN_PSYCHIC_RESISTANCE),
 #undef RING
 
 /* amulets ... - THE Amulet comes last because it is special */
@@ -1234,8 +1242,14 @@ POTION("acid",                  "white",  0, 0, 10, 250, CLR_WHITE,
                                                         POT_ACID),
 POTION("oil",                   "murky",  0, 0, 30, 250, CLR_BROWN,
                                                         POT_OIL),
-/* fixed description
+/* fixed descriptions
  */
+/* blood (Slash'EM) sustains vampires; it is only generated at random
+   for a vampire hero, see mkobj() */
+POTION("blood",             "blood-red",  0, 0,  0,  50, CLR_RED,
+                                                        POT_BLOOD),
+POTION("vampire blood",     "blood-red",  1, 0,  0, 300, CLR_RED,
+                                                        POT_VAMPIRE_BLOOD),
 POTION("water",                 "clear",  0, 0, 80, 100, CLR_CYAN,
                                                         POT_WATER),
 #undef POTION
@@ -1473,6 +1487,10 @@ SPELL("stone to flesh",  "thick",
 SPELL("chain lightning", "checkered",
       P_ATTACK_SPELL,      25,  4, 2, 1, NODIR, CLR_GRAY,
                                                         SPE_CHAIN_LIGHTNING),
+/* illithid psionics (EvilHack); never generated, only illithids know it */
+SPELL("psionic wave",    "worn",
+      P_ATTACK_SPELL,       0,  1, 1, 1, IMMEDIATE, CLR_MAGENTA,
+                                                        SPE_PSIONIC_WAVE),
 
 /* from slash'em, create a tame critter which explodes when attacking,
    damaging adjacent creatures--friend or foe--and dying in the process */
