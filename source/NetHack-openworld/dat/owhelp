@@ -105,8 +105,9 @@ Materials
     long sword, a mithril chain mail, a wooden dagger.  The material
     changes weight, protection, damage, erosion and price.  There are no
     mithril coats; mithril is a material that body armor can be made of.
-    Silver harms demons and the undead as always, cold iron harms elves,
-    and copper harms molds and bringers of disease.
+    Silver harms demons, vampires and werewolves as always, cold iron
+    harms elves and the fae, and copper harms molds and bringers of
+    disease.
 
 Skills
     #enhance shows each skill's training toward the next level as a
