@@ -961,8 +961,11 @@ from_what(
                           : ((EFast & W_ARMF) != 0L && uarmf->dknown
                              && objects[uarmf->otyp].oc_name_known)
                               ? ysimple_name(uarmf) /* speed boots */
-                                : EFast ? "worn equipment"
-                                  : something);
+                                : ((EFast & W_WEP) != 0L && uwep
+                                   && uwep->oartifact)
+                                    ? bare_artifactname(uwep) /* Pathfinder */
+                                    : EFast ? "worn equipment"
+                                      : something);
             else if (wizard
                      && (obj = what_gives(&u.uprops[propidx].extrinsic)) != 0)
                 Sprintf(buf, because_of, obj->oartifact
