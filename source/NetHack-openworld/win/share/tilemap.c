@@ -123,7 +123,8 @@ struct tiles_used {
     char tilenam[MAX_TILENAM];
     char references[1024];
 };
-struct tiles_used *tilelist[2500] = { 0 };
+#define MAX_TILELIST 6000 /* room for the variant's extra monsters/objects */
+struct tiles_used *tilelist[MAX_TILELIST] = { 0 };
 
 /* Some special tiles used for init of some things */
 int TILE_stone = 0,       /* will get set to correct tile later */
@@ -1551,6 +1552,11 @@ add_tileref(
     static const char ellipsis[] = "...";
     char buf[BUFSZ];
 
+    if (n < 0 || n >= MAX_TILELIST) {
+        Fprintf(stderr, "tilemap: tile number %d out of range (MAX_TILELIST %d)\n",
+                n, MAX_TILELIST);
+        exit(EXIT_FAILURE);
+    }
     if (!tilelist[n]) {
         if ((tilelist[n] = malloc(sizeof temp)) != 0) {
             tilelist[n]->tilenum = n;
