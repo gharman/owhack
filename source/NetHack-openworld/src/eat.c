@@ -1370,6 +1370,7 @@ cpostfx(int pm)
     case PM_FAMINE:
         /* life-saved; don't attempt to confer any intrinsics */
         break;
+    case PM_ILLITHID: /* (a player-race corpse, from bones) */
     case PM_MIND_FLAYER:
     case PM_MASTER_MIND_FLAYER:
         if (ABASE(A_INT) < ATTRMAX(A_INT)) {
