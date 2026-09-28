@@ -12,6 +12,9 @@ make WANT_SOURCE_INSTALL=1 HACKDIR="$game" \
      INSTDIR="$here/playground" VARDIR="$here/playground" \
      POSTINSTALL= SYSCONFINSTALL= all
 mkdir -p "$game/save"
+for f in perm record logfile xlogfile livelog; do
+    [ -f "$game/$f" ] || : > "$game/$f"
+done
 for f in nethack nhdat recover symbols license; do
     cp -p "playground/$f" "$game/$f"
 done
