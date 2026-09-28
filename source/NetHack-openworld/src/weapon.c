@@ -490,7 +490,9 @@ special_dmgval(
         if (!obj || !(armask & worn[i].mask))
             continue;
         tmpbonus = 0;
-        if (obj->blessed && mon_hates_blessings(mdef))
+        /* blessed armor hurts undead and demons (blessed rings don't) */
+        if (obj->blessed && mon_hates_blessings(mdef)
+            && obj->oclass != RING_CLASS)
             tmpbonus += rnd(4);
         if (mon_hates_material(mdef, obj->material))
             tmpbonus += rnd(sear_damage(obj->material));

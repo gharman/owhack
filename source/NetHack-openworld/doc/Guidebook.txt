@@ -159,7 +159,7 @@
           Dwarves  are  smaller  than  humans  or elves, but are stocky and
      solid individuals.  Dwarves' most notable trait is their great  exper-
      tise  in mining and metalwork.  Dwarvish armor is said to be second in
-     quality not even to the mithril armor of the Elves.
+     quality not even to the mithril mail of the Elves.
 
           Elves are agile, quick, and perceptive; very little of what  goes
      on will escape an Elf.  The quality of Elven craftsmanship often gives
@@ -3214,14 +3214,19 @@
                    Dragon scale mail                        1
                    Plate mail, Crystal plate mail           3
                    Bronze plate mail, Splint mail,
-                      Banded mail, Dwarvish mithril-coat    4
-                   Chain mail, Elven mithril-coat           5
+                      Banded mail                           4
+                   Chain mail, Dwarvish chain mail,
+                      Elven chain mail                      5
                    Scale mail, Orcish chain mail            6
                    Ring mail, Studded leather armor,
                       Dragon scales                         7
                    Leather armor, Orcish ring mail          8
                    Leather jacket                           9
                    none                                    10
+
+          These values are for armor made of its usual material;  a  suit
+     made  of  something else may protect better or worse (see "Materials"
+     below).
 
           You can also wear other pieces of armor (cloak over  suit,  shirt
      under  suit,  helmet, gloves, boots, shield) to lower your armor class
@@ -3271,6 +3276,64 @@
      Also, `P' (put on) and `R' (remove) which are normally for accessories
      can be used for armor, but pieces of armor won't be  shown  as  likely
      candidates in a prompt for choosing what to put on or remove.
+
+     7.5.1.  Materials
+
+          Every object is made of something.  Most objects are made of the
+     usual material for their kind, but many weapons, pieces of armor, tools
+     and  amulets  can  be found made of something else: a silver long sword,
+     a mithril chain mail, a wooden dagger, a pair of plastic  high  boots.
+     Once  you  have  seen  such an object up close, its name tells you that
+     it isn't made of the usual material, and on the map it is shown in the
+     color of its material.  Objects which differ only in material don't
+     stack together.  You can wish for an object made of a particular mate-
+     rial (for example, "a mithril dwarvish chain mail") as long as that kind
+     of object can be made of it; otherwise you get one made of the  usual
+     material.
+
+          An object's material affects:
+
+          Its weight: gold and platinum are heavy, wood, bone, cloth and
+     plastic are light, and mithril is far lighter than iron.
+
+          The protection given by armor: mithril, gemstone and stone protect
+     better than iron or steel; copper, platinum, gold, wood, bone and plas-
+     tic worse.  Body armor and cloaks made of mithril also give at least a
+     moderate amount of magic cancellation.
+
+          Weapon damage and accuracy: glass and gemstone edges and points
+     are very sharp; blunt weapons of gold, platinum or stone hit harder;
+     wooden blades don't hold an edge, and plastic and paper make poor
+     weapons.  Mithril weapons are light and well balanced and easier to
+     hit with, while blades of soft gold or platinum are clumsy.
+
+          Damage: only iron rusts; iron and copper corrode; wood, leather,
+     cloth, paper and bone burn and rot; glass cracks and eventually shat-
+     ters; steel, silver, gold, platinum, mithril and gemstone are not dam-
+     aged at all.
+
+          Price: shopkeepers charge (and pay) more for precious materials.
+
+          Spellcasting: metallic armor (iron, steel, copper, silver, gold,
+     platinum or mithril) hinders spellcasting as usual, while a wooden or
+     bone suit doesn't.
+
+          Some creatures are hurt by particular materials.  Silver burns
+     demons, vampires, lycanthropes and imps; cold iron hurts elves and the
+     fae (nymphs and imps), and copper harms fungi, molds and the bringers
+     of disease and decay.  Weapons made of a material a creature hates do
+     extra damage to it, and it won't wield, wear or pick up things made of
+     that material.  Elves among the heroes are affected too: cold iron
+     hurts them when it strikes them or when they take hold of it, though
+     they can still use iron if they are willing to put up with it (gloves
+     help when wielding it).  Elven characters therefore start with copper
+     instead of iron equipment.
+
+          The mithril-coats of legend are simply mail made of mithril:
+     elven chain mail is mithril unless stated otherwise, dwarvish chain
+     mail made of mithril is as good as a dwarvish mithril-coat ever was,
+     and even ordinary chain mail, splint mail or plate mail is occasionally
+     found in mithril.
 
      7.6.  Food (`%')
 

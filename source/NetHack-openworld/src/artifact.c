@@ -953,9 +953,11 @@ touch_artifact(struct obj *obj, struct monst *mon)
         You("are blasted by %s power!", s_suffix(the(xname(obj))));
         touch_blasted = TRUE;
         dmg = d((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
-        /* add half (maybe quarter) of the usual silver damage bonus */
-        if (obj->material == SILVER && Hate_silver)
-            tmp = rnd(10), dmg += Maybe_Half_Phys(tmp);
+        /* add half (maybe quarter) of the usual silver (or other hated
+           material) damage bonus */
+        if (Hate_material(obj->material))
+            tmp = rnd(sear_damage(obj->material) / 2),
+            dmg += Maybe_Half_Phys(tmp);
         Sprintf(buf, "touching %s", oart->name);
         losehp(dmg, buf, KILLED_BY); /* magic damage, not physical */
         exercise(A_WIS, FALSE);
