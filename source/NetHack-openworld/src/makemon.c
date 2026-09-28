@@ -2313,6 +2313,8 @@ golemhp(int type)
         return 20;
     case PM_PAPER_GOLEM:
         return 20;
+    case PM_DROID: /* the Jedi's pet (Hack'EM) */
+        return 20;
     case PM_ROPE_GOLEM:
         return 30;
     case PM_LEATHER_GOLEM:

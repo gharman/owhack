@@ -991,9 +991,8 @@ mon_ignite_lightsaber(struct obj *obj, struct monst *mon)
 {
     if (!obj || !is_lightsaber(obj))
         return;
-    if (is_art(obj, ART_LIGHTSABER_PROTOTYPE) && !obj->age)
-        obj->age = 300L;
-    if (!obj->age)
+    /* (the prototype's power cell never runs down) */
+    if (!obj->age && !is_art(obj, ART_LIGHTSABER_PROTOTYPE))
         return;
     if (!obj->lamplit) {
         if (obj->cursed && !rn2(2)) {

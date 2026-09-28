@@ -1685,11 +1685,11 @@ use_lamp(struct obj *obj)
                               : "Sorry, fire and water don't mix");
         return;
     }
-    /* the Lightsaber Prototype's power cell never runs down */
-    if (is_art(obj, ART_LIGHTSABER_PROTOTYPE) && !obj->age)
-        obj->age = 300L;
-    /* magic lamps with an spe == 0 (wished for) cannot be lit */
-    if ((!Is_candle(obj) && obj->age == 0)
+    /* magic lamps with an spe == 0 (wished for) cannot be lit; the
+       Lightsaber Prototype's power cell never runs down (its age is its
+       invocation timeout, not its charge) */
+    if ((!Is_candle(obj) && obj->age == 0
+         && !is_art(obj, ART_LIGHTSABER_PROTOTYPE))
         || (obj->otyp == MAGIC_LAMP && obj->spe == 0)) {
         if (obj->otyp == BRASS_LANTERN || is_lightsaber(obj)) {
             if (!Blind)

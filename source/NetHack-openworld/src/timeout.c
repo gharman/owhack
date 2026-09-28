@@ -1792,7 +1792,8 @@ begin_burn(struct obj *obj, boolean already_lit)
     long turns = 0;
     boolean do_timer = TRUE;
 
-    if (obj->age == 0 && obj->otyp != MAGIC_LAMP && !artifact_light(obj))
+    if (obj->age == 0 && obj->otyp != MAGIC_LAMP && !artifact_light(obj)
+        && !is_art(obj, ART_LIGHTSABER_PROTOTYPE))
         return;
 
     switch (obj->otyp) {
