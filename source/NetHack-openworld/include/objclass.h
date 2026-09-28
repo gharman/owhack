@@ -20,28 +20,34 @@
  * price, which monsters are hurt by the object (silver, cold iron, copper),
  * how the object is named and whether it stacks with others.
  *
- * To give a new object type alternative materials:
- *  - its default material is simply its oc_material in objects.h;
+ * New object types:
+ *  - an object's default material is simply its oc_material in objects.h
+ *    (so objects[].oc_material is the default; always look at
+ *    obj->material for an actual object);
  *  - the lists of alternative materials and their probabilities are in
- *    mkobj.c; material_list() picks the list for an object.  Weapons, armor
- *    and tools whose default is IRON, STEEL, WOOD, CLOTH or LEATHER, and
- *    elven, dwarvish and orcish gear and amulets, get a list automatically;
- *    add a "case" for the object's otyp in material_list() to give it a
- *    different list, or add it to the list of fixed-material objects at the
- *    top of material_list() when it must always be made of its default
- *    material (typically because its name or description states a
- *    material, like "iron shoes", or because it shares a shuffled
- *    description with such an object);
+ *    mkobj.c; material_list() picks the list for an object.  NOTE: every
+ *    weapon, armor piece and tool whose default is IRON, STEEL, WOOD, CLOTH
+ *    or LEATHER, and all elven, dwarvish and orcish gear and amulets, get a
+ *    list automatically.  Add a "case" for the object's otyp in
+ *    material_list() to give it a different list, or add it to the list of
+ *    fixed-material objects at the top of material_list() when it must
+ *    always be made of its default material (a lightsaber or a firearm,
+ *    an object whose name or description states a material like "iron
+ *    shoes", or one that shares a shuffled description with such an
+ *    object);
  *  - nonsensical_obj_material() vetoes individual combinations (glass
  *    pick-axes, paper armor, iron elven gear, ...).
- * Nothing else is needed: generation, wishing, polymorph, bones, level
- * files (des.object({ material = "..." })) and the sanity checker all use
- * valid_obj_material() and init_obj_material().
+ * Nothing else is needed: generation, wishing (a material prefix, "a
+ * mithril chain mail"), polymorph, bones, level files (des.object({
+ * material = "..." })) and the sanity checker all use valid_obj_material()
+ * and init_obj_material().  Artifacts with a fixed material are listed in
+ * artimaterials[] in artilist.h.  Monsters and races that hate a material
+ * are in hates_material() in mondata.c.
  *
  * Don't reorder these without also changing materialnm[] in decl.c and the
  * per-material tables in mkobj.c (matdensities[], matac[]), shk.c
- * (matprices[]) and display.c (materialclr[]); the relative order also
- * matters for is_organic() and is_metallic() below.
+ * (matprices[]), display.c (materialclr[]) and eat.c (foodwords[]); the
+ * relative order also matters for is_organic() and is_metallic() below.
  */
 enum obj_material_types {
     NO_MATERIAL =  0,

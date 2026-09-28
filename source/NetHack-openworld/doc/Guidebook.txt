@@ -3323,7 +3323,9 @@
      fae (nymphs and imps), and copper harms fungi, molds and the bringers
      of disease and decay.  Weapons made of a material a creature hates do
      extra damage to it, and it won't wield, wear or pick up things made of
-     that material.  Elves among the heroes are affected too: cold iron
+     that material.  Copper's antimicrobial properties also let each piece
+     of worn copper armor ward off some illnesses.  Elves among the heroes
+     are affected too: cold iron
      hurts them when it strikes them or when they take hold of it, though
      they can still use iron if they are willing to put up with it (gloves
      help when wielding it).  Elven characters therefore start with copper
