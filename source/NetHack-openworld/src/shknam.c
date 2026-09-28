@@ -15,6 +15,8 @@ staticfn void mkshobj_at(const struct shclass *, int, int, boolean);
 staticfn void nameshk(struct monst *, const char *const *);
 staticfn int good_shopdoor(struct mkroom *, coordxy *, coordxy *);
 staticfn int shkinit(const struct shclass *, struct mkroom *);
+staticfn void blkmar_outfit(struct monst *);
+staticfn void stock_blkmar(struct mkroom *, int);
 
 #define VEGETARIAN_CLASS (MAXOCLASSES + 1)
 
@@ -158,6 +160,9 @@ static const char *const shklight[] = {
     "Lom", "Haskovo", "Dobrinishte", "Varvara", "Oryahovo", "Troyan",
     "Lovech", "Sliven", 0
 };
+
+/* Slash'EM: the black market's proprietor */
+static const char *const shkblack[] = { "+One-eyed Sam", 0 };
 
 static const char *const shkgeneral[] = {
     /* Suriname */
@@ -344,6 +349,18 @@ const struct shclass shtypes[] = {
         { 1, -SCR_LIGHT },
         { 1, -SPE_LIGHT } },
       shklight },
+    /* Slash'EM: One-eyed Sam's black market; stocked by stock_blkmar() */
+    { "black market", (char *) 0,
+      RANDOM_CLASS,
+      0,
+      D_SHOP,
+      { { 100, RANDOM_CLASS },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 } },
+      shkblack },
     /* sentinel */
     { (char *) 0, NULL,
       0,
@@ -631,6 +648,7 @@ shkinit(const struct shclass *shp, struct mkroom *sroom)
     coordxy sx, sy;
     struct monst *shk;
     struct eshk *eshkp;
+    long shkmoney;
 
     /* place the shopkeeper in the given room */
     sh = good_shopdoor(sroom, &sx, &sy);
@@ -659,8 +677,11 @@ shkinit(const struct shclass *shp, struct mkroom *sroom)
     if (MON_AT(sx, sy))
         (void) rloc(m_at(sx, sy), RLOC_NOMSG); /* insurance */
 
-    /* now initialize the shopkeeper monster structure */
-    if (!(shk = makemon(&mons[PM_SHOPKEEPER], sx, sy, MM_ESHK)))
+    /* now initialize the shopkeeper monster structure; One-eyed Sam
+       (Slash'EM's black marketeer) runs the black market */
+    if (!(shk = makemon(&mons[(shp->shknms == shkblack) ? PM_BLACK_MARKETEER
+                                                        : PM_SHOPKEEPER],
+                        sx, sy, MM_ESHK)))
         return -1;
     eshkp = ESHK(shk); /* makemon(...,MM_ESHK) allocates this */
     shk->isshk = shk->mpeaceful = 1;
@@ -679,7 +700,10 @@ shkinit(const struct shclass *shp, struct mkroom *sroom)
     eshkp->billct = eshkp->visitct = 0;
     eshkp->bill_p = (struct bill_x *) 0;
     eshkp->customer[0] = '\0';
-    mkmonmoney(shk, 1000L + 30L * (long) rnd(100)); /* initial capital */
+    shkmoney = 1000L + 30L * (long) rnd(100); /* initial capital */
+    if (shp->shknms == shkblack) /* Sam is rich */
+        shkmoney = 7L * shkmoney + (long) rn2(3 * (int) shkmoney);
+    mkmonmoney(shk, shkmoney);
     if (shp->shknms == shkrings)
         (void) mongets(shk, TOUCHSTONE);
     if (shp->shknms == shktools || shp->shknms == shkwands ||
@@ -687,8 +711,118 @@ shkinit(const struct shclass *shp, struct mkroom *sroom)
         (shp->shknms == shkgeneral && rn2(5)))
         (void) mongets(shk, SCR_CHARGING);
     nameshk(shk, shp->shknms);
+    if (shp->shknms == shkblack)
+        blkmar_outfit(shk);
 
     return sh;
+}
+
+/* Slash'EM: the black marketeer's equipment */
+staticfn void
+blkmar_outfit(struct monst *shk)
+{
+    static const short gear[] = { SHIELD_OF_REFLECTION,
+                                  GRAY_DRAGON_SCALE_MAIL, SPEED_BOOTS };
+    struct obj *otmp;
+    int i;
+
+    otmp = mksobj(LONG_SWORD, FALSE, FALSE);
+    otmp = oname(otmp, artiname(ART_THIEFBANE), ONAME_NO_FLAGS);
+    if (otmp->spe < 5)
+        otmp->spe += rnd(5);
+    (void) mpickobj(shk, otmp);
+    for (i = 0; i < SIZE(gear); i++) {
+        otmp = mksobj(gear[i], FALSE, FALSE);
+        if (otmp->spe < 5)
+            otmp->spe += rnd(5);
+        (void) mpickobj(shk, otmp);
+    }
+    (void) mongets(shk, AMULET_OF_LIFE_SAVING);
+    (void) mongets(shk, SKELETON_KEY);
+    /* wear armor and amulet, wield Thiefbane */
+    m_dowear(shk, TRUE);
+    shk->weapon_check = NEED_HTH_WEAPON;
+    (void) mon_wield_item(shk);
+}
+
+/* Slash'EM: stock a newly-created black market with objects; the stock is
+   laid out in bands of columns, one class of object after another, and
+   any type of object is as likely as any other within its class */
+staticfn void
+stock_blkmar(struct mkroom *sroom, int sh)
+{
+    static const char goodcl[] = { WEAPON_CLASS, ARMOR_CLASS, RING_CLASS,
+                                   AMULET_CLASS, TOOL_CLASS, FOOD_CLASS,
+                                   POTION_CLASS, SCROLL_CLASS, SPBOOK_CLASS,
+                                   WAND_CLASS, GEM_CLASS, 0 };
+    short *blkmar_gen;
+    int i, sx, sy, first = 0, next = 0, total, partial, typ;
+    const char *clp, *lastclp = goodcl;
+    struct obj *otmp;
+
+    total = 0;
+    for (clp = goodcl; *clp; clp++) {
+        lastclp = clp;
+        first = svb.bases[(int) *clp];
+        /* the luckstone and loadstone come just after the gems */
+        next = (*clp == GEM_CLASS) ? (LOADSTONE + 1)
+                                   : svb.bases[(int) *clp + 1];
+        total += next - first;
+    }
+    if (!total || sroom->hx - sroom->lx < 2)
+        return;
+    blkmar_gen = (short *) alloc(NUM_OBJECTS * sizeof (short));
+    (void) memset((genericptr_t) blkmar_gen, 0, NUM_OBJECTS * sizeof (short));
+    clp = goodcl - 1;
+    partial = 0;
+    for (sx = sroom->lx + 1; sx <= sroom->hx; sx++) {
+        if (sx == sroom->lx + 1
+            || ((sx - sroom->lx - 2) * total) / (sroom->hx - sroom->lx - 1)
+                   > partial) {
+            clp++;
+            if (clp > lastclp)
+                clp = lastclp;
+            first = svb.bases[(int) *clp];
+            next = (*clp == GEM_CLASS) ? (LOADSTONE + 1)
+                                       : svb.bases[(int) *clp + 1];
+            partial += next - first;
+        }
+        for (sy = sroom->ly; sy <= sroom->hy; sy++) {
+            if ((sx == sroom->lx && svd.doors[sh].x == sx - 1)
+                || (sx == sroom->hx && svd.doors[sh].x == sx + 1)
+                || (sy == sroom->ly && svd.doors[sh].y == sy - 1)
+                || (sy == sroom->hy && svd.doors[sh].y == sy + 1)
+                || !IS_ROOM(levl[sx][sy].typ) || rn2(3))
+                continue;
+
+            for (i = 0; i < 50; i++) {
+                typ = rn2(next - first) + first;
+                /* forbidden objects */
+                if (!typ || objects[typ].oc_nowish
+                    || typ == AMULET_OF_YENDOR
+                    || typ == CANDELABRUM_OF_INVOCATION
+                    || typ == BELL_OF_OPENING || typ == SPE_BOOK_OF_THE_DEAD
+                    /* leftovers and remains aren't merchandise */
+                    || (objects[typ].oc_class == FOOD_CLASS
+                        && !objects[typ].oc_prob))
+                    continue;
+                /* multiple copies are increasingly unlikely */
+                if (rn2(blkmar_gen[typ] + 1) && i < 49)
+                    continue;
+                otmp = mksobj_at(typ, sx, sy, TRUE, TRUE);
+                blkmar_gen[typ]++;
+                /* prevent wishing abuse */
+                if (otmp->otyp == WAN_WISHING) {
+                    otmp->spe = 0;
+                    otmp->recharged = 1;
+                } else if (otmp->otyp == MAGIC_LAMP) {
+                    otmp->spe = 0;
+                }
+                break;
+            }
+        }
+    }
+    free((genericptr_t) blkmar_gen);
 }
 
 staticfn boolean
@@ -763,6 +897,12 @@ stock_room(int shp_indx, struct mkroom *sroom)
         if (levl[m][n].typ != CORR && levl[m][n].typ != ROOM)
             levl[m][n].typ = (Is_special(&u.uz)
                               || *in_rooms(m, n, 0)) ? ROOM : CORR;
+    }
+
+    if (shp->shknms == shkblack) {
+        stock_blkmar(sroom, sh);
+        svl.level.flags.has_shop = TRUE;
+        return;
     }
 
     if (svc.context.tribute.enabled && !svc.context.tribute.bookstock) {

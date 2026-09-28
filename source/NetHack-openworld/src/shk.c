@@ -49,6 +49,8 @@ staticfn void makekops(coord *);
 staticfn void getcad(struct monst *, const char *, coordxy, coordxy, boolean,
                      boolean, boolean);
 staticfn void call_kops(struct monst *, boolean);
+staticfn boolean blkmar_shk(struct monst *);
+staticfn boolean blkmar_unwelcome(void);
 staticfn void kops_gone(boolean);
 
 #define NOTANGRY(mon) ((mon)->mpeaceful)
@@ -511,6 +513,7 @@ call_kops(struct monst *shkp, boolean nearshop)
 {
     /* Keystone Kops srt@ucla */
     boolean nokops;
+    const char *kopname = "Keystone Kops";
 
     if (!shkp)
         return;
@@ -519,10 +522,19 @@ call_kops(struct monst *shkp, boolean nearshop)
     if (!Deaf)
         pline("An alarm sounds!");
 
-    nokops = ((svm.mvitals[PM_KEYSTONE_KOP].mvflags & G_GONE)
-              && (svm.mvitals[PM_KOP_SERGEANT].mvflags & G_GONE)
-              && (svm.mvitals[PM_KOP_LIEUTENANT].mvflags & G_GONE)
-              && (svm.mvitals[PM_KOP_KAPTAIN].mvflags & G_GONE));
+    if (blkmar_shk(shkp)) {
+        /* Slash'EM: One-eyed Sam's market is protected by soldiers */
+        nokops = ((svm.mvitals[PM_SOLDIER].mvflags & G_GONE)
+                  && (svm.mvitals[PM_SERGEANT].mvflags & G_GONE)
+                  && (svm.mvitals[PM_LIEUTENANT].mvflags & G_GONE)
+                  && (svm.mvitals[PM_CAPTAIN].mvflags & G_GONE));
+        kopname = "guards";
+    } else {
+        nokops = ((svm.mvitals[PM_KEYSTONE_KOP].mvflags & G_GONE)
+                  && (svm.mvitals[PM_KOP_SERGEANT].mvflags & G_GONE)
+                  && (svm.mvitals[PM_KOP_LIEUTENANT].mvflags & G_GONE)
+                  && (svm.mvitals[PM_KOP_KAPTAIN].mvflags & G_GONE));
+    }
 
     if (!angry_guards(!!Deaf) && nokops) {
         if (flags.verbose && !Deaf)
@@ -538,18 +550,32 @@ call_kops(struct monst *shkp, boolean nearshop)
         coordxy sx = 0, sy = 0;
 
         choose_stairs(&sx, &sy, TRUE);
+        if (blkmar_shk(shkp)) {
+            struct trap *ttmp;
+
+            /* the guards gather at the market's way out */
+            for (ttmp = gf.ftrap; ttmp; ttmp = ttmp->ntrap)
+                if (ttmp->ttyp == MAGIC_PORTAL) {
+                    sx = ttmp->tx, sy = ttmp->ty;
+                    break;
+                }
+            if (!ttmp)
+                choose_stairs(&sx, &sy, FALSE);
+            /* and there's no stepping out of the market */
+            nearshop = FALSE;
+        }
 
         if (nearshop) {
             /* Create swarm around you, if you merely "stepped out" */
             if (flags.verbose)
-                pline_The("Keystone Kops appear!");
+                pline_The("%s appear!", kopname);
             mm.x = u.ux;
             mm.y = u.uy;
             makekops(&mm);
             return;
         }
         if (flags.verbose)
-            pline_The("Keystone Kops are after you!");
+            pline_The("%s are after you!", kopname);
         /* Create swarm near down staircase (hinders return to level) */
         if (isok(sx, sy)) {
             mm.x = sx;
@@ -561,6 +587,53 @@ call_kops(struct monst *shkp, boolean nearshop)
         mm.y = shkp->my;
         makekops(&mm);
     }
+}
+
+/* Slash'EM: is this One-eyed Sam, keeper of the black market? */
+staticfn boolean
+blkmar_shk(struct monst *shkp)
+{
+    return (boolean) (shkp && shkp->isshk && has_eshk(shkp)
+                      && ESHK(shkp)->shoptype == BLACKSHOP);
+}
+
+/* Slash'EM: the black marketeer won't do business with non-humans */
+staticfn boolean
+blkmar_unwelcome(void)
+{
+    return (boolean) (gy.youmonst.data->mlet != S_HUMAN);
+}
+
+/* Slash'EM: the black marketeer calls for his assistants, the peaceful,
+   named monsters of his market, who come to his aid */
+void
+blkmar_guards(struct monst *shkp)
+{
+    struct monst *mt;
+    struct eshk *eshkp = ESHK(shkp);
+    boolean mesg_given = FALSE; /* only if assistants were peaceful */
+    static boolean rlock = FALSE; /* prevent recursion (via wakeup) */
+
+    if (rlock || !blkmar_shk(shkp))
+        return;
+    rlock = TRUE;
+    for (mt = fmon; mt; mt = mt->nmon) {
+        if (DEADMONSTER(mt))
+            continue;
+        /* non-tame named monsters are presumably
+           the black marketeer's assistants */
+        if (!mt->mtame && has_mgivenname(mt) && mt->mpeaceful
+            && mt != shkp
+            && inside_shop(mt->mx, mt->my) == eshkp->shoproom) {
+            if (!mesg_given) {
+                pline("%s calls for %s assistants!", noit_Monnam(shkp),
+                      noit_mhis(shkp));
+                mesg_given = TRUE;
+            }
+            wakeup(mt, TRUE);
+        }
+    }
+    rlock = FALSE;
 }
 
 /* x,y is strictly inside shop */
@@ -620,6 +693,8 @@ u_left_shop(char *leavestring, boolean newlev)
     }
 
     if (rob_shop(shkp)) {
+        if (blkmar_shk(shkp))
+            blkmar_guards(shkp);
         call_kops(shkp, (!newlev && levl[u.ux0][u.uy0].edge));
     }
 }
@@ -676,6 +751,8 @@ remote_burglary(coordxy x, coordxy y)
         return;
 
     if (rob_shop(shkp)) {
+        if (blkmar_shk(shkp))
+            blkmar_guards(shkp);
         /*[might want to set 2nd arg based on distance from shop doorway]*/
         call_kops(shkp, FALSE);
     }
@@ -798,12 +875,25 @@ u_entered_shop(char *enterstring)
 
     if (Invis) {
         pline("%s senses your presence.", Shknam(shkp));
+        /* Slash'EM: One-eyed Sam doesn't mind invisible customers */
+        if (!blkmar_shk(shkp)) {
+            if (!Deaf && !muteshk(shkp)) {
+                SetVoice(shkp, 0, 80, 0);
+                verbalize("Invisible customers are not welcome!");
+            } else {
+                pline("%s stands firm as if %s knows you are there.",
+                      Shknam(shkp), noit_mhe(shkp));
+            }
+            return;
+        }
+    }
+    /* ...but he does mind non-human ones */
+    if (blkmar_shk(shkp) && blkmar_unwelcome()) {
         if (!Deaf && !muteshk(shkp)) {
             SetVoice(shkp, 0, 80, 0);
-            verbalize("Invisible customers are not welcome!");
+            verbalize("Non-human customers are not welcome!");
         } else {
-            pline("%s stands firm as if %s knows you are there.",
-                  Shknam(shkp), noit_mhe(shkp));
+            pline("%s stands firm, barring your way.", Shknam(shkp));
         }
         return;
     }
@@ -3000,6 +3090,18 @@ get_cost(
        inflate their shop price here without affecting score calculation */
     if (obj->oartifact)
         tmp *= 4L;
+    /* Slash'EM: black market prices are outrageous, the more so for
+       anything magical */
+    if (blkmar_shk(shkp)) {
+        if (obj->oclass == RING_CLASS || obj->oclass == AMULET_CLASS
+            || obj->oclass == POTION_CLASS || obj->oclass == SCROLL_CLASS
+            || obj->oclass == SPBOOK_CLASS || obj->oclass == WAND_CLASS
+            || obj->otyp == LUCKSTONE || obj->otyp == LOADSTONE
+            || objects[obj->otyp].oc_magic)
+            tmp *= 50L;
+        else
+            tmp *= 25L;
+    }
 
     /* anger surcharge should match rile_shk's, so we do it separately
        from the multiplier/divisor calculation */
@@ -4978,7 +5080,7 @@ shk_move(struct monst *shkp)
         avoid = FALSE;
     } else {
 #define GDIST(x, y) (dist2(x, y, gtx, gty))
-        if (Invis || u.usteed) {
+        if (blkmar_shk(shkp) ? blkmar_unwelcome() : (Invis || u.usteed)) {
             avoid = FALSE;
         } else {
             uondoor = u_at(eshkp->shd.x, eshkp->shd.y);
@@ -5134,10 +5236,14 @@ staticfn void
 makekops(coord *mm)
 {
     static const short k_mndx[4] = { PM_KEYSTONE_KOP, PM_KOP_SERGEANT,
-                                     PM_KOP_LIEUTENANT, PM_KOP_KAPTAIN };
+                                     PM_KOP_LIEUTENANT, PM_KOP_KAPTAIN },
+                       g_mndx[4] = { PM_SOLDIER, PM_SERGEANT,
+                                     PM_LIEUTENANT, PM_CAPTAIN };
     int k_cnt[4], cnt, mndx, k;
+    /* Slash'EM: the black market is guarded by soldiers */
+    boolean blkmar = Is_blackmarket(&u.uz);
 
-    k_cnt[0] = cnt = abs(depth(&u.uz)) + rnd(5);
+    k_cnt[0] = cnt = blkmar ? 7 + rnd(10) : abs(depth(&u.uz)) + rnd(5);
     k_cnt[1] = (cnt / 3) + 1; /* at least one sarge */
     k_cnt[2] = (cnt / 6);     /* maybe a lieutenant */
     k_cnt[3] = (cnt / 9);     /* and maybe a kaptain */
@@ -5145,7 +5251,7 @@ makekops(coord *mm)
     for (k = 0; k < 4; k++) {
         if ((cnt = k_cnt[k]) == 0)
             break;
-        mndx = k_mndx[k];
+        mndx = blkmar ? g_mndx[k] : k_mndx[k];
         if (svm.mvitals[mndx].mvflags & G_GONE)
             continue;
 
