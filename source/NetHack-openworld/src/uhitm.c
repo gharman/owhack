@@ -1011,6 +1011,14 @@ hmon_hitmon_barehands(struct _hitmon_data *hmd, struct monst *mon)
     }
     if (hmd->barehand_silver_rings > 0)
         hmd->silvermsg = TRUE;
+
+    /* a ghost's touch chills the living */
+    if (u_ghost() && hmd->thrown == HMON_MELEE
+        && hmd->mdat != &mons[PM_SHADE]
+        && !resists_cold(mon) && !defended(mon, AD_COLD)) {
+        hmd->dmg += rnd(4 + u.ulevel / 3);
+        hmd->ghostchill = TRUE;
+    }
 }
 
 staticfn void
@@ -1943,6 +1951,7 @@ hmon_hitmon(
     hmd.dryit = FALSE;
     hmd.doreturn = FALSE;
     hmd.retval = FALSE;
+    hmd.ghostchill = FALSE;
     hmd.saved_oname[0] = '\0';
 
     hmon_hitmon_do_hit(&hmd, mon, obj);
@@ -2021,6 +2030,13 @@ hmon_hitmon(
     hmon_hitmon_splitmon(&hmd, mon, obj);
 
     hmon_hitmon_msg_hit(&hmd, mon, obj);
+
+    if (hmd.ghostchill && canspotmon(mon) && !hmd.offmap)
+        You("chill %s.", mon_nam(mon));
+    /* a ghost's blows can put the fear of the dead into its victims */
+    if (u_ghost() && hmd.hand_to_hand && !hmd.destroyed && !hmd.offmap
+        && !rn2(4))
+        ghost_frightens(mon);
 
     if (hmd.dryit) { /* dryit implies wet towel, so 'obj' is still intact */
         assert(obj != NULL);

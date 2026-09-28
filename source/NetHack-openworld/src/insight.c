@@ -1840,7 +1840,8 @@ attributes_enlightenment(
         you_can("survive without air", from_what(MAGICAL_BREATHING));
     else if (Amphibious)
         you_can("breathe water", from_what(MAGICAL_BREATHING));
-    if (Passes_walls)
+    /* (a ghost's phasing is described with its other racial traits) */
+    if (HPasses_walls || EPasses_walls)
         you_can("walk through walls", from_what(PASSES_WALLS));
 
     /*** Physical attributes ***/

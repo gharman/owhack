@@ -554,6 +554,7 @@ struct _hitmon_data {
     boolean dryit;
     boolean doreturn;
     boolean retval;
+    boolean ghostchill; /* a ghost hero's bare hands chilled the target */
     char saved_oname[BUFSZ];
 };
 

@@ -239,6 +239,126 @@ u_death_msg(void)
     return "You die...";
 }
 
+/* a ghost hero's melee hit may frighten its (living, thinking, ordinary)
+   victim into fleeing for a little while */
+void
+ghost_frightens(struct monst *mon)
+{
+    if (DEADMONSTER(mon) || mindless(mon->data) || is_undead(mon->data)
+        || unique_corpstat(mon->data) || mon->mflee
+        || resist(mon, 0, 0, NOTELL))
+        return;
+    monflee(mon, rnd(10), TRUE, TRUE);
+}
+
+/* now and then, an ordinary peaceful human who sees a ghost hero close by
+   flees from it; shopkeepers, priests, guards, the watch, quest leaders
+   and other unique or special people know better; returns TRUE if mtmp
+   took fright */
+boolean
+ghost_scares_peaceful(struct monst *mtmp)
+{
+    if (!u_ghost() || !mtmp->mpeaceful || mtmp->mtame || mtmp->mflee
+        || !is_human(mtmp->data) || mtmp->isshk || mtmp->ispriest
+        || mtmp->isgd || mtmp->isminion || is_watch(mtmp->data)
+        || mtmp->data->msound == MS_LEADER
+        || mtmp->data->msound == MS_GUARDIAN
+        || unique_corpstat(mtmp->data) || mindless(mtmp->data)
+        || helpless(mtmp) || mdistu(mtmp) > 8 || !m_canseeu(mtmp)
+        || rn2(10))
+        return FALSE;
+    if (!u.ughostfear && canspotmon(mtmp)) {
+        /* explain it the first time */
+        pline("%s shrieks in terror at the sight of a ghost!", Monnam(mtmp));
+        u.ughostfear = 1;
+    }
+    monflee(mtmp, rnd(10), TRUE, FALSE);
+    return TRUE;
+}
+
+/*
+ * Ghost phasing.  A ghost hero drifts through walls, rock, trees, closed
+ * doors, iron bars and boulders by way of the Passes_walls machinery, but
+ * only while unburdened, and each move into solid matter costs a point of
+ * energy; with none left, it can't enter solid matter, though if already
+ * inside it can keep going at the cost of 1d2 hit points per step.
+ */
+
+/* is the ghost hero currently able to phase (see Passes_walls)? */
+boolean
+u_ghost_phasing(void)
+{
+    return (u_ghost() && near_capacity() == UNENCUMBERED);
+}
+
+/* does the hero pass through walls only by a ghost's energy-costing
+   phasing, rather than by some other means? */
+boolean
+u_ghost_phasing_only(void)
+{
+    return (!HPasses_walls && !EPasses_walls && u_ghost_phasing());
+}
+
+/* is there solid matter at <x,y> that a ghost would have to phase
+   through? */
+boolean
+ghost_solid_at(coordxy x, coordxy y)
+{
+    struct rm *lev = &levl[x][y];
+
+    return (IS_OBSTRUCTED(lev->typ) || lev->typ == IRONBARS
+            || closed_door(x, y) || sobj_at(BOULDER, x, y));
+}
+
+/* may the hero, if its only way through walls is ghostly phasing, move
+   into solid matter at <x,y>?  travel never plans a route through it */
+boolean
+ghost_phase_ok(coordxy x, coordxy y, int mode, boolean verbose)
+{
+    if (!u_ghost_phasing_only() || !ghost_solid_at(x, y))
+        return TRUE;
+    if (mode == TEST_TRAV || mode == TEST_TRAP)
+        return FALSE;
+    if (u.uen < 1 && !ghost_solid_at(u.ux, u.uy)) {
+        if (mode == DO_MOVE && verbose)
+            You("lack the energy to pass into solid matter.");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/* the ghost hero has just moved; pay for moving into solid matter */
+void
+ghost_phase_step(void)
+{
+    struct rm *lev;
+
+    if (!u_ghost() || !ghost_solid_at(u.ux, u.uy))
+        return;
+    lev = &levl[u.ux][u.uy];
+    if (!ghost_solid_at(u.ux0, u.uy0) && flags.verbose) {
+        if (sobj_at(BOULDER, u.ux, u.uy))
+            You("drift into the boulder.");
+        else if (IS_TREE(lev->typ))
+            You("drift into the tree.");
+        else if (lev->typ == STONE || lev->typ == SCORR)
+            You("drift into the solid rock.");
+        else if (closed_door(u.ux, u.uy))
+            You("drift through the door.");
+        else if (lev->typ == IRONBARS)
+            You("drift through the iron bars.");
+        else
+            You("drift through the wall.");
+    }
+    if (u.uen > 0) {
+        u.uen--;
+        disp.botl = TRUE;
+    } else {
+        Your("essence frays as you strain through solid matter!");
+        losehp(rnd(2), "straining through solid rock", KILLED_BY);
+    }
+}
+
 /* set while a draugr's bite is being resolved, so that the victim can rise
    as a zombie if it dies of it */
 static boolean racial_bite;

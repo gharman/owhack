@@ -811,6 +811,10 @@ dochug(struct monst *mtmp)
     /* check distance and scariness of attacks */
     distfleeck(mtmp, &inrange, &nearby, &scared);
 
+    /* ordinary peaceful folk may take fright at a ghost hero */
+    if (u_ghost() && mtmp->mpeaceful && ghost_scares_peaceful(mtmp))
+        distfleeck(mtmp, &inrange, &nearby, &scared);
+
     /* search for and potentially use defensive or miscellaneous items. */
     if (find_defensive(mtmp, FALSE)) {
         if (use_defensive(mtmp) != 0)

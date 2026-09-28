@@ -293,7 +293,8 @@
 
 #define HPasses_walls u.uprops[PASSES_WALLS].intrinsic
 #define EPasses_walls u.uprops[PASSES_WALLS].extrinsic
-#define Passes_walls (HPasses_walls || EPasses_walls)
+/* a ghost hero phases through walls while unburdened (racial.c) */
+#define Passes_walls (HPasses_walls || EPasses_walls || u_ghost_phasing())
 
 /*** Physical attributes ***/
 #define HSlow_digestion u.uprops[SLOW_DIGESTION].intrinsic

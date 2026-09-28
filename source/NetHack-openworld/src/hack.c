@@ -1011,8 +1011,12 @@ test_move(
     if (IS_OBSTRUCTED(tmpr->typ) || tmpr->typ == IRONBARS) {
         if (Blind && mode == DO_MOVE)
             feel_location(x, y);
-        if (Passes_walls && may_passwall(x, y)) {
+        if (Passes_walls && may_passwall(x, y)
+            && ghost_phase_ok(x, y, mode, TRUE)) {
             ; /* do nothing */
+        } else if (Passes_walls && may_passwall(x, y)) {
+            /* a ghost out of energy (message given), or travel */
+            return FALSE;
         } else if (Underwater) {
             /* note: if water_friction() changes direction due to
                turbulence, new target destination will always be water,
@@ -1030,7 +1034,10 @@ test_move(
                 return FALSE;
             }
             if (!(Passes_walls || passes_bars(gy.youmonst.data))) {
-                if (mode == DO_MOVE && flags.mention_walls)
+                if (mode == DO_MOVE && u_ghost())
+                    Your("possessions are too heavy to pass through "
+                         "solid matter.");
+                else if (mode == DO_MOVE && flags.mention_walls)
                     You("cannot pass through the bars.");
                 return FALSE;
             }
@@ -1053,6 +1060,10 @@ test_move(
                            && In_sokoban(&u.uz)) {
                     /* soko restriction stays even after puzzle is solved */
                     pline_The("Sokoban walls resist your ability.");
+                } else if (u_ghost() && may_passwall(x, y)) {
+                    /* a burdened ghost can't phase */
+                    Your("possessions are too heavy to pass through "
+                         "solid matter.");
                 } else if (flags.mention_walls) {
                     char buf[BUFSZ];
                     int glyph = back_to_glyph(x, y),
@@ -1075,7 +1086,7 @@ test_move(
         if (closed_door(x, y)) {
             if (Blind && mode == DO_MOVE)
                 feel_location(x, y);
-            if (Passes_walls) {
+            if (Passes_walls && ghost_phase_ok(x, y, mode, FALSE)) {
                 ; /* do nothing */
             } else if (can_ooze(&gy.youmonst)) {
                 if (mode == DO_MOVE)
@@ -1213,7 +1224,8 @@ test_move(
         return FALSE;
     }
 
-    if (sobj_at(BOULDER, x, y) && (Sokoban || !Passes_walls)) {
+    if (sobj_at(BOULDER, x, y)
+        && (Sokoban || !Passes_walls || !ghost_phase_ok(x, y, mode, FALSE))) {
         if (mode != TEST_TRAV && svc.context.run >= 2
             && !(Blind || Hallucination) && !could_move_onto_boulder(x, y)) {
             if (mode == DO_MOVE && flags.mention_walls)
@@ -3015,6 +3027,8 @@ domove_core(void)
         gd.domove_succeeded |=
                 (gd.domove_attempting & (DOMOVE_RUSH | DOMOVE_WALK));
         u.umoved = TRUE;
+        /* a ghost pays for drifting into solid matter */
+        ghost_phase_step();
         /* Clean old position -- vision_recalc() will print our new one. */
         newsym(u.ux0, u.uy0);
         /* Since the hero has moved, adjust what can be seen/unseen. */
