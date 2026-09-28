@@ -244,6 +244,13 @@ The rest is spread across about 60 NetHack source files, mainly
 * Several hours of NetHack's built-in `--debug:fuzzer` random-input play,
   in normal and wizard mode, including AddressSanitizer builds.  Every
   crash or sanity-check failure found was fixed.
+* The extra special levels: wizard-mode tours into and out of every new
+  branch through its portal (and down to the lower levels of the
+  two-level branches, the Gnome King's level and the dungeon beneath
+  Fort Ludios), checking the monsters of each level; every level file
+  regenerated repeatedly with sanity checking; buying, selling and
+  shoplifting in One-eyed Sam's market; save and restore inside the new
+  branches; and fuzzing with games that start inside them.
 * Performance: roughly 60 ms per move in a 200x60 terminal, world generation
   a few milliseconds per 32x32 area as you explore; save files are around
   0.5 MB early on and grow as you explore.
