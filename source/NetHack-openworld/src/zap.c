@@ -2481,6 +2481,19 @@ bhito(struct obj *obj, struct obj *otmp)
         case SPE_STONE_TO_FLESH:
             res = stone_to_flesh_obj(obj);
             break;
+        case SPE_FIRE_BOLT:
+            /* (floor objects were burnt by bhit()); the bolt may light the
+               fuse of a bomb lying on the floor */
+            if (is_bomb(obj) && !obj->oarmed && rn2(3)) {
+                if (obj->quan > 1L)
+                    obj = splitobj(obj, 1L);
+                if (cansee(obj->ox, obj->oy))
+                    pline("A bomb fuse suddenly ignites!");
+                arm_bomb(obj, TRUE);
+                res = 1;
+            } else
+                res = 0;
+            break;
         default:
             impossible("What an interesting effect (%d)", otmp->otyp);
             break;

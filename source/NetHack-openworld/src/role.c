@@ -943,8 +943,7 @@ validrace(int rolenum, int racenum)
 {
     /* Assumes validrole */
     return (boolean) (IndexOkT(racenum, races)
-                      && (roles[rolenum].allow & races[racenum].allow
-                          & ROLE_RACEMASK));
+                      && role_race_ok(rolenum, racenum));
 }
 
 int
@@ -954,7 +953,7 @@ randrace(int rolenum)
 
     /* Count the number of valid races */
     for (i = 0; races[i].noun; i++)
-        if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK)
+        if (role_race_ok(rolenum, i))
             n++;
 
     /* Pick a random race */
@@ -962,7 +961,7 @@ randrace(int rolenum)
     if (n)
         n = rn2(n * 100) / 100;
     for (i = 0; races[i].noun; i++)
-        if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK) {
+        if (role_race_ok(rolenum, i)) {
             if (n)
                 n--;
             else
@@ -1912,8 +1911,7 @@ role_selection_prolog(int which, winid where)
         allowmask = roles[r].allow;
         if ((allowmask & ROLE_RACEMASK) == MH_HUMAN)
             c = 0; /* races[human] */
-        else if (IndexOkT(c, races)
-                 && !(allowmask & ROLE_RACEMASK & races[c].allow))
+        else if (IndexOkT(c, races) && !role_race_ok(r, c))
             c = ROLE_RANDOM;
         if ((allowmask & ROLE_GENDMASK) == ROLE_MALE)
             gend = 0; /* role forces male (hypothetical) */
