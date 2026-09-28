@@ -1101,6 +1101,7 @@ done(int how)
            ugrave_arise, so check first) */
         boolean nothing_left = (how == BURNING || how == DISSOLVED
                                 || u.ugrave_arise == (NON_PM - 2));
+        int arise = u.ugrave_arise; /* restored if the revival fails */
 
         pline("But wait...  Suddenly, you start to revive!");
         (void) adjattrib(A_STR, -1, TRUE);
@@ -1126,6 +1127,8 @@ done(int how)
             livelog_printf(LL_LIFESAVE, "revived (%s)", killbuf);
             survive = TRUE;
         }
+        if (!survive)
+            u.ugrave_arise = arise;
         disp.botl = TRUE;
     }
     if (!survive && Lifesaved && (how <= GENOCIDED)
