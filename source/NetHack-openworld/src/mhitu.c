@@ -1255,6 +1255,9 @@ hitmu(struct monst *mtmp, struct attack *mattk)
             disp.botl = TRUE;
         }
 
+        /* primal roar: pets fight twice as hard, even against you */
+        if (mtmp->mtame && tech_inuse(T_PRIMAL_ROAR))
+            mhm.damage *= 2;
         mdamageu(mtmp, mhm.damage);
     }
 
@@ -1262,6 +1265,13 @@ hitmu(struct monst *mtmp, struct attack *mattk)
         res = passiveum(olduasmon, mtmp, mattk);
     else
         res = M_ATTK_HIT;
+    /* an ice mage's ice armor chills melee attackers */
+    if (!(res & M_ATTK_AGR_DIED) && tech_inuse(T_ICEARMOR)
+        && mattk->aatyp != AT_GAZE && mattk->aatyp != AT_SPIT
+        && mattk->aatyp != AT_BREA && mattk->aatyp != AT_MAGC
+        && mattk->aatyp != AT_EXPL && mattk->aatyp != AT_BOOM
+        && tech_icearmor_passive(mtmp))
+        res |= M_ATTK_AGR_DIED;
     stop_occupation();
     return res;
 }

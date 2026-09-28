@@ -12,6 +12,7 @@
 #include "prop.h" /* (needed here for util/makedefs.c) */
 #endif
 #include "skills.h"
+#include "tech.h"
 
 /*** Substructures ***/
 
@@ -164,6 +165,7 @@ struct u_conduct {     /* number of times... */
     long reserved2;
     long reserved3;
     long reserved4;
+    long techuse;      /* used a technique */
 };
 
 struct u_roleplay {
@@ -505,6 +507,9 @@ struct you {
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */
     struct monst *umonst;    /* for future conversion of &gy.youmonst to u.umonst */
+    struct tech tech_list[MAXTECH]; /* known techniques (see tech.c) */
+    d_level uwaymark_lev;    /* Cartographer's waymark: its level */
+    coordxy uwaymark_x, uwaymark_y; /* and location; uwaymark_x==0: none */
 }; /* end of `struct you' */
 
 
