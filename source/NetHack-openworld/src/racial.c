@@ -416,6 +416,24 @@ u_breakarm(void)
     return (Race_if(PM_GIANT) || Race_if(PM_TORTLE));
 }
 
+/* could the hero's race, in its natural form, ever wear this armor?  (for
+   the starting kit, so that no role's kit needs a racial substitute for
+   every piece: giants and tortles get into no body armor, cloaks or
+   shirts, and centaurs and tortles into no boots) */
+boolean
+u_race_can_wear(struct obj *obj)
+{
+    if (obj->oclass != ARMOR_CLASS)
+        return TRUE;
+    if ((is_suit(obj) || is_cloak(obj) || is_shirt(obj))
+        && (Race_if(PM_GIANT) || Race_if(PM_TORTLE))
+        && racial_exception(&gy.youmonst, obj) < 1)
+        return FALSE;
+    if (is_boots(obj) && u_race_no_boots())
+        return FALSE;
+    return TRUE;
+}
+
 /* would body armor, cloaks and shirts slip off the hero? */
 boolean
 u_sliparm(void)

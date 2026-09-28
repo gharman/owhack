@@ -1045,9 +1045,11 @@ welcome(boolean new_game) /* false => restoring an old game */
         else if (Race_if(PM_HUMAN_WEREWOLF))
             pline("Use #youpoly to change form, once you are experienced "
                   "enough.");
-        else if (Race_if(PM_GHOST))
+        else if (Race_if(PM_GHOST)) {
             pline("You can drift through solid matter, at the cost of "
                   "energy.");
+            u_init_ghost_note();
+        }
     } else {
         /* if restoring in Gehennom, give same hot/smoky message as when
            first entering it */

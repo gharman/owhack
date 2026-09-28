@@ -29,6 +29,8 @@ staticfn void u_init_race(void);
 staticfn void pauper_reinit(void);
 staticfn const struct def_skill *skills_for_role(void);
 staticfn void u_init_carry_attr_boost(void);
+staticfn void ghost_lighten_kit(void);
+static int ghost_left_behind = 0; /* objects a new ghost left behind */
 staticfn boolean restricted_spell_discipline(int);
 
 #define UNDEF_TYP 0
@@ -2005,9 +2007,11 @@ ini_inv(const struct trobj *trop)
            of body armor) */
         obj->owt = weight(obj);
 
-        /* nudist gets no armor; a ghost has no use for food */
+        /* nudist gets no armor; a ghost has no use for food; armor the
+           hero's race can never wear is left out */
         if ((u.uroleplay.nudist && obj->oclass == ARMOR_CLASS)
-            || (Race_if(PM_GHOST) && obj->oclass == FOOD_CLASS)) {
+            || (Race_if(PM_GHOST) && obj->oclass == FOOD_CLASS)
+            || !u_race_can_wear(obj)) {
             dealloc_obj(obj);
             trop++;
             quan = trquan(trop);
@@ -2061,12 +2065,58 @@ u_init_inventory_attrs(void)
     u_init_carry_attr_boost();
 }
 
+/* a ghost can carry only half of what it could in life, and it can't drift
+   through walls while burdened: the heaviest things in its starting kit
+   are left on the ground where it begins until it is unburdened (nothing
+   has been put on yet, so nothing worn is involved) */
+staticfn void
+ghost_lighten_kit(void)
+{
+    struct obj *otmp, *heaviest;
+    int nleft = 0;
+
+    while (near_capacity() > UNENCUMBERED) {
+        heaviest = (struct obj *) 0;
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+            if (otmp->otyp == AMULET_OF_YENDOR || otmp == uball
+                || otmp == uchain || otmp->owornmask)
+                continue;
+            if (!heaviest || otmp->owt > heaviest->owt)
+                heaviest = otmp;
+        }
+        if (!heaviest)
+            break;
+        freeinv(heaviest);
+        place_object(heaviest, u.ux, u.uy);
+        nleft++;
+    }
+    if (nleft)
+        newsym(u.ux, u.uy);
+    ghost_left_behind = nleft; /* told after the welcome, u_init_ghost_note() */
+}
+
+/* the ghost's starting message about what it had to leave behind; this
+   can't be given while the kit is made, before the status line is set up */
+void
+u_init_ghost_note(void)
+{
+    if (ghost_left_behind)
+        pline("Too insubstantial to bear all that you owned in life, you"
+              " have left %s of it on the %s.",
+              (ghost_left_behind > 1) ? "some" : "one piece",
+              surface(u.ux, u.uy));
+    ghost_left_behind = 0;
+}
+
 /* side effects of starting inventory (e.g. discovering it) and skills (both
    those based on role and those based on starting inventory) */
 void
 u_init_skills_discoveries(void)
 {
     struct obj *otmp;
+
+    if (Race_if(PM_GHOST))
+        ghost_lighten_kit();
     for (otmp = gi.invent; otmp; otmp = otmp->nobj)
         ini_inv_use_obj(otmp);
 

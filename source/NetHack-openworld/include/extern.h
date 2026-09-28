@@ -2841,6 +2841,7 @@ extern void vampire_starvation(void);
 extern void set_racial_bite(boolean);
 extern boolean racial_bite_active(void);
 extern boolean u_breakarm(void);
+extern boolean u_race_can_wear(struct obj *) NONNULLARG1;
 extern boolean u_sliparm(void);
 extern int u_base_ac(void);
 extern int u_race_ac_adjust(void);
@@ -3628,6 +3629,7 @@ extern void trap_sanity_check(void);
 extern void u_init_misc(void);
 extern void u_init_inventory_attrs(void);
 extern void u_init_skills_discoveries(void);
+extern void u_init_ghost_note(void);
 
 /* ### uhitm.c ### */
 
