@@ -2361,6 +2361,8 @@ genl_player_selection(void)
 staticfn boolean reset_role_filtering(void);
 staticfn winid plsel_startmenu(int, int);
 staticfn int maybe_skip_seps(int, int);
+staticfn void plsel_accel_reset(void);
+staticfn char plsel_accel(const char *, boolean);
 staticfn void setup_rolemenu(winid, boolean, int, int, int);
 staticfn void setup_racemenu(winid, boolean, int, int, int);
 staticfn void setup_gendmenu(winid, boolean, int, int, int);
@@ -2908,6 +2910,7 @@ reset_role_filtering(void)
 
     /* no extra blank line preceding this entry; end_menu supplies one */
     add_menu_str(win, "Unacceptable roles");
+    plsel_accel_reset(); /* one set of letters for the whole menu */
     setup_rolemenu(win, FALSE, ROLE_NONE, ROLE_NONE, ROLE_NONE);
 
     add_menu_str(win, "");
@@ -3021,6 +3024,51 @@ plsel_startmenu(int ttyrows, int aspect)
 #undef ALGN
 
 /* add entries a-Archeologist, b-Barbarian, &c to menu being built in 'win' */
+/* Unique selection letters for the character selection menus.  With this
+   many roles and races, first letters collide (Cartographer, Caveman and
+   Convict; gnome, giant and ghost; ...), so each entry gets the first
+   letter of its name that is still free, preferring the menu's usual
+   case, then the next letters of its name, then any free letter.  'q' is
+   always taken by "Quit". */
+static char plsel_used[128];
+
+staticfn void
+plsel_accel_reset(void)
+{
+    (void) memset((genericptr_t) plsel_used, 0, sizeof plsel_used);
+    plsel_used['q'] = 1;
+}
+
+staticfn char
+plsel_accel(const char *name, boolean upper)
+{
+    const char *p;
+    char c;
+    int pass;
+
+    for (p = name; *p; p++) {
+        if (!letter(*p))
+            continue;
+        for (pass = 0; pass < 2; pass++) {
+            c = (upper == !pass) ? highc(*p) : lowc(*p);
+            if (!plsel_used[(uchar) c]) {
+                plsel_used[(uchar) c] = 1;
+                return c;
+            }
+        }
+    }
+    for (pass = 0; pass < 2; pass++)
+        for (c = 'a'; c <= 'z'; c++) {
+            char cc = (upper == !pass) ? highc(c) : c;
+
+            if (!plsel_used[(uchar) cc]) {
+                plsel_used[(uchar) cc] = 1;
+                return cc;
+            }
+        }
+    return 0;
+}
+
 staticfn void
 setup_rolemenu(
     winid win,
@@ -3031,10 +3079,12 @@ setup_rolemenu(
     anything any;
     int i;
     boolean role_ok;
-    char thisch, lastch = '\0', rolenamebuf[50];
+    char thisch, rolenamebuf[50];
     int clr = NO_COLOR;
 
     any = cg.zeroany; /* zero out all bits */
+    if (filtering)
+        plsel_accel_reset();
     for (i = 0; roles[i].name.m; i++) {
         /* role can be constrained by any of race, gender, or alignment */
         role_ok = (ok_role(i, race, gend, algn)
@@ -3047,9 +3097,7 @@ setup_rolemenu(
             any.a_int = i + 1;
         else
             any.a_string = roles[i].name.m;
-        thisch = lowc(*roles[i].name.m);
-        if (thisch == lastch)
-            thisch = highc(thisch);
+        thisch = plsel_accel(roles[i].name.m, FALSE);
         Strcpy(rolenamebuf, roles[i].name.m);
         if (roles[i].name.f) {
             /* role has distinct name for female (C,P) */
@@ -3068,7 +3116,6 @@ setup_rolemenu(
                  ATR_NONE, clr, an(rolenamebuf),
                  (!filtering && !role_ok)
                     ? MENU_ITEMFLAGS_SELECTED : MENU_ITEMFLAGS_NONE);
-        lastch = thisch;
     }
 }
 
@@ -3085,6 +3132,8 @@ setup_racemenu(
     int clr = NO_COLOR;
 
     any = cg.zeroany;
+    if (filtering)
+        plsel_accel_reset();
     for (i = 0; races[i].noun; i++) {
         /* no ok_gend(); race isn't constrained by gender */
         race_ok = (ok_race(role, i, gend, algn)
@@ -3096,14 +3145,11 @@ setup_racemenu(
             any.a_int = i + 1;
         else
             any.a_string = races[i].noun;
-        this_ch = *races[i].noun;
-        /* filtering: picking race, so choose by first letter, with
-           capital letter as unseen accelerator;
-           !filtering: resetting filter rather than picking, choose by
-           capital letter since lowercase role letters will be present */
-        add_menu(win, &nul_glyphinfo, &any,
-                 filtering ? this_ch : highc(this_ch),
-                 filtering ? highc(this_ch) : 0,
+        /* filtering: picking race, so choose by (lowercase) letter;
+           !filtering: resetting filter rather than picking, prefer
+           capital letters since lowercase role letters will be present */
+        this_ch = plsel_accel(races[i].noun, !filtering);
+        add_menu(win, &nul_glyphinfo, &any, this_ch, 0,
                  ATR_NONE, clr, races[i].noun,
                  (!filtering && !race_ok)
                     ? MENU_ITEMFLAGS_SELECTED : MENU_ITEMFLAGS_NONE);
@@ -3123,6 +3169,8 @@ setup_gendmenu(
     int clr = NO_COLOR;
 
     any = cg.zeroany;
+    if (filtering)
+        plsel_accel_reset();
     for (i = 0; i < ROLE_GENDERS; i++) {
         /* no ok_align(); gender isn't constrained by alignment */
         gend_ok = (ok_gend(role, race, i, algn)
@@ -3134,12 +3182,10 @@ setup_gendmenu(
             any.a_int = i + 1;
         else
             any.a_string = genders[i].adj;
-        this_ch = *genders[i].adj;
         /* (see setup_racemenu for explanation of selector letters
            and setup_rolemenu for preselection) */
-        add_menu(win, &nul_glyphinfo, &any,
-                 filtering ? this_ch : highc(this_ch),
-                 filtering ? highc(this_ch) : 0,
+        this_ch = plsel_accel(genders[i].adj, !filtering);
+        add_menu(win, &nul_glyphinfo, &any, this_ch, 0,
                  ATR_NONE, clr, genders[i].adj,
                  (!filtering && !gend_ok)
                     ? MENU_ITEMFLAGS_SELECTED : MENU_ITEMFLAGS_NONE);
@@ -3159,6 +3205,8 @@ setup_algnmenu(
     int clr = NO_COLOR;
 
     any = cg.zeroany;
+    if (filtering)
+        plsel_accel_reset();
     for (i = 0; i < ROLE_ALIGNS; i++) {
         /* no ok_gend(); alignment isn't constrained by gender */
         algn_ok = (ok_align(role, race, gend, i)
@@ -3170,12 +3218,10 @@ setup_algnmenu(
             any.a_int = i + 1;
         else
             any.a_string = aligns[i].adj;
-        this_ch = *aligns[i].adj;
         /* (see setup_racemenu for explanation of selector letters
            and setup_rolemenu for preselection) */
-        add_menu(win, &nul_glyphinfo, &any,
-                 filtering ? this_ch : highc(this_ch),
-                 filtering ? highc(this_ch) : 0,
+        this_ch = plsel_accel(aligns[i].adj, !filtering);
+        add_menu(win, &nul_glyphinfo, &any, this_ch, 0,
                  ATR_NONE, clr, aligns[i].adj,
                  (!filtering && !algn_ok)
                     ? MENU_ITEMFLAGS_SELECTED : MENU_ITEMFLAGS_NONE);

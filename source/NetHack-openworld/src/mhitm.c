@@ -1070,6 +1070,10 @@ mdamagem(
     if (!mhm.damage)
         return mhm.hitflags;
 
+    /* a caveman's primal roar makes pets fight twice as hard */
+    if (magr->mtame && tech_inuse(T_PRIMAL_ROAR))
+        mhm.damage *= 2;
+
     mdef->mhp -= mhm.damage;
     if (mdef->mhp < 1) {
         if (m_at(mdef->mx, mdef->my) == magr) { /* see gulpmm() */

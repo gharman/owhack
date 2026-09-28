@@ -1,6 +1,7 @@
 #!/bin/sh
 # Rebuild NetHack: Open World and update the installed game in ../../game.
-# Saved games, high scores and sysconf in the game directory are left alone.
+# Saved games, high scores and sysconf in the game directory are left alone
+# (a missing sysconf is created, with wizard mode allowed for you).
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 game=$(cd "$here/../.." && pwd)/game
@@ -12,6 +13,10 @@ make WANT_SOURCE_INSTALL=1 HACKDIR="$game" \
      INSTDIR="$here/playground" VARDIR="$here/playground" \
      POSTINSTALL= SYSCONFINSTALL= all
 mkdir -p "$game/save"
+if [ ! -f "$game/sysconf" ]; then
+    sh sys/unix/hints/macosx.sh editsysconf sys/unix/sysconf "$game/sysconf"
+    sed -i '' "s/^WIZARDS=.*/WIZARDS=$(id -un)/" "$game/sysconf"
+fi
 for f in perm record logfile xlogfile livelog; do
     [ -f "$game/$f" ] || : > "$game/$f"
 done

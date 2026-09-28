@@ -183,15 +183,22 @@ Everything not listed here plays as it does in NetHack 5.0.
 ## Files
 
     play.sh                 launcher
-    game/                   the installed game: nethack, nhdat, sysconf,
-                            high scores, save/ directory
+    game/                   the installed game (not tracked by git): nethack,
+                            nhdat, sysconf, high scores, save/ directory
     source/NetHack-openworld/
-                            full source, as a git repository; the first
-                            commit is stock NetHack 5.0 plus a few small
-                            hooks for the automated test harness, so
-                            "git diff <first commit>" shows every change
+                            full source
     source/NetHack-openworld/build.sh
-                            rebuilds and reinstalls into ../../game
+                            rebuilds and reinstalls into ../../game (creates
+                            game/sysconf if it is missing; saves and scores
+                            are never touched)
+
+This directory is a git repository.  The source history begins with stock
+NetHack 5.0 plus a few small hooks for the automated test harness (tagged
+`nethack-5.0-baseline`), so
+
+    git diff nethack-5.0-baseline HEAD:source/NetHack-openworld
+
+shows every change made for this variant.
 
 The heart of the variant is `src/overworld.c` (world generation, rings,
 portals, zones, towns, compass, monster dormancy) and `include/openworld.h`.

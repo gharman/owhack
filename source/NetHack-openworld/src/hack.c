@@ -2329,6 +2329,16 @@ domove_fight_empty(coordxy x, coordxy y)
                 (void) use_pick_axe2(uwep);
                 return TRUE;
             }
+            /* force fight at boulder/statue bare-handed as a martial
+               artist who knows the break rock technique: focus qi to
+               break it (Hack'EM) */
+            if (svc.context.forcefight && boulder && !uwep && !uarms
+                && tech_known(T_BREAK_ROCK)
+                && P_SKILL(P_BARE_HANDED_COMBAT) >= P_SKILLED
+                && !glyph_is_invisible(glyph) && !glyph_is_monster(glyph)) {
+                (void) do_breakrock(x, y);
+                return TRUE;
+            }
         }
 
         /* about to become known empty -- remove 'I' if present */

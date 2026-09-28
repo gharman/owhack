@@ -35,6 +35,7 @@ Debug-Mode Quick Reference:
                    random engravings, epitaphs, and hallucinatory monsters
 #wizseenv       == show map locations' seen vectors
 #wizsmell       == smell a monster
+#wiztechnique   == learn or forget any technique; reset technique timeouts
 #wiztelekinesis == magically shove a monster
 #wizwhere       == show dungeon placement of all special levels
 #wmode          == show wall modes

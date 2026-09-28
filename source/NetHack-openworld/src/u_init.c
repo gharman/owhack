@@ -1233,6 +1233,9 @@ u_init_misc(void)
     u.ublesscnt = 300; /* no prayers just yet */
     u.ualignbase[A_CURRENT] = u.ualignbase[A_ORIGINAL] = u.ualign.type =
         aligns[flags.initalign].value;
+    /* techniques known from experience level 1 (needs role, race and
+       alignment, since chaotic knights are dark knights) */
+    adjtech(0, 1);
 
 #if defined(BSD) && !defined(POSIX_TYPES)
     (void) time((long *) &ubirthday);

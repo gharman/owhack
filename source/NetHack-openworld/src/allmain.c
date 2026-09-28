@@ -674,6 +674,11 @@ regen_hp(int wtcap)
                 heal += 1;
             if (Sleepy && u.usleep)
                 heal++;
+            /* the chi healing technique turns energy into health */
+            if (u.uen > 0 && tech_inuse(T_CHI_HEALING)) {
+                u.uen--;
+                heal++;
+            }
 
             if (heal) {
                 disp.botl = TRUE;

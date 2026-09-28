@@ -2427,14 +2427,20 @@ maybe_turn_mon_iter(struct monst *mtmp)
 int
 doturn(void)
 {
-    /* Knights & Priest(esse)s only please */
+    /* Knights & Priest(esse)s only please: those who know the turn undead
+       technique (#technique performs #turn for it) */
     const char *Gname;
 
-    if (!Role_if(PM_CLERIC) && !Role_if(PM_KNIGHT)) {
+    if (!tech_known(T_TURN_UNDEAD)) {
         /* Try to use the "turn undead" spell. */
         if (known_spell(SPE_TURN_UNDEAD))
             return spelleffects(SPE_TURN_UNDEAD, FALSE, FALSE);
         You("don't know how to turn undead!");
+        return ECMD_OK;
+    }
+    if (gu.urace.mnum >= LOW_PM && is_undead(&mons[gu.urace.mnum])) {
+        /* an undead knight or priest (Hack'EM) */
+        You("shudder at the thought.");
         return ECMD_OK;
     }
     if (!u.uconduct.gnostic++)

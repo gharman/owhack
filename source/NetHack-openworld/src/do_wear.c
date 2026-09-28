@@ -2506,6 +2506,7 @@ find_ac(void)
     if (HProtection & INTRINSIC)
         uac -= u.ublessed;
     uac -= u.uspellprot;
+    uac -= tech_icearmor_ac(); /* an ice mage's ice armor technique */
 
     /* put a cap on armor class [5.0: was +127,-128, now reduced to +/- 99 */
     if (abs(uac) > AC_MAX)

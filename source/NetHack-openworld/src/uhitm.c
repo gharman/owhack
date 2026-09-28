@@ -413,6 +413,8 @@ find_roll_to_hit(
     if (is_orc(mtmp->data)
         && maybe_polyd(is_elf(gy.youmonst.data), Race_if(PM_ELF)))
         tmp++;
+    /* active techniques: kiii, berserk, souleater */
+    tmp += tech_tohit_bonus();
 
     /* encumbrance: with a lot of luggage, your agility diminishes */
     if ((tmp2 = near_capacity()) != 0)
@@ -551,6 +553,8 @@ do_attack(struct monst *mtmp)
         if (flags.verbose) {
             if (uwep)
                 You("begin bashing monsters with %s.", yname(uwep));
+            else if (tech_inuse(T_EVISCERATE))
+                You("begin slashing monsters with your claws.");
             else if (!cantwield(gy.youmonst.data))
                 You("begin %s monsters with your %s %s.",
                     ing_suffix(Role_if(PM_MONK) ? "strike" : "bash"),
@@ -1103,6 +1107,10 @@ hmon_hitmon_weapon_melee(
                 hmd->dmg++;
             else if (Race_if(PM_ELF) && obj->otyp == ELVEN_ARROW
                      && uwep->otyp == ELVEN_BOW)
+                /* extra damage during a missile flurry (Slash'EM) */
+                hmd->dmg += tech_inuse(T_FLURRY) ? 3 : 1;
+            else if (Race_if(PM_ELF) && tech_inuse(T_FLURRY)
+                     && objects[obj->otyp].oc_skill == -P_BOW)
                 hmd->dmg++;
             hmd->train_weapon_skill = (hmd->dmg > 0);
         }
@@ -1851,6 +1859,9 @@ hmon_hitmon(
      *      set 'use_weapon_skill', bare-handed does.
      */
 
+    /* active techniques (kiii, berserk, chi strike, elemental fist...) */
+    if (hmd.dmg > 0 && !hmd.already_killed)
+        hmd.dmg = tech_dmg_bonus(mon, obj, thrown, hmd.dmg, &hmd.hittxt);
     if (hmd.dmg > 0)
         hmon_hitmon_dmg_recalc(&hmd, obj);
 

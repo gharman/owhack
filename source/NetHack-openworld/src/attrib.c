@@ -1112,6 +1112,9 @@ adjabil(int oldlevel, int newlevel)
             lose_weapon_skill(oldlevel - newlevel);
         mage_youpoly_msg(oldlevel, newlevel);
     }
+    /* techniques; the initial ones are set up by u_init_misc() */
+    if (oldlevel > 0)
+        adjtech(oldlevel, newlevel);
 }
 
 /* called when gaining a level (before u.ulevel gets incremented);

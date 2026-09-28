@@ -1918,6 +1918,8 @@ struct ext_func_tab extcmdlist[] = {
               dotakeoff, 0, NULL },
     { 'A',    "takeoffall", "remove all armor",
               doddoremarm, 0, NULL },
+    { M('x'), "technique", "perform a technique (special ability)",
+              dotech, IFBURIED | AUTOCOMPLETE, NULL },
     { C('t'), "teleport", "teleport around the level",
               dotelecmd, IFBURIED | CMD_M_PREFIX, NULL },
     /* \177 == <del> aka <delete> aka <rubout>; some terminals have an
@@ -2024,6 +2026,8 @@ struct ext_func_tab extcmdlist[] = {
               wiz_show_nhuuid, AUTOCOMPLETE | WIZMODECMD, NULL },
     { '\0',   "wizsmell", "smell monster",
               wiz_smell, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
+    { '\0',   "wiztechnique", "learn or forget any technique",
+              dowiztech, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
     { '\0',   "wiztelekinesis", "telekinesis",
               wiz_telekinesis, IFBURIED | AUTOCOMPLETE | WIZMODECMD, NULL },
     { '\0',   "wizwhere", "show locations of special levels",
