@@ -453,10 +453,13 @@ mattackm(
                     break;
                 }
                 res[i] = hitmm(magr, mdef, mattk, mwep, dieroll);
+                /* a glass weapon might have shattered */
+                if (mwep && MON_WEP(magr) != mwep)
+                    mwep = (struct obj *) 0;
                 if ((mdef->data == &mons[PM_BLACK_PUDDING]
                      || mdef->data == &mons[PM_BROWN_PUDDING])
-                    && (mwep && (objects[mwep->otyp].oc_material == IRON
-                                 || objects[mwep->otyp].oc_material == METAL))
+                    && (mwep && (mwep->material == IRON
+                                 || mwep->material == STEEL))
                     && mdef->mhp > 1 && !mdef->mcan) {
                     struct monst *mclone;
 
@@ -572,7 +575,11 @@ mattackm(
         if (attk && !(res[i] & M_ATTK_AGR_DIED)
             && distmin(magr->mx, magr->my, mdef->mx, mdef->my) <= 1)
             res[i] = passivemm(magr, mdef, strike,
-                               (res[i] & M_ATTK_DEF_DIED), mwep);
+                               (res[i] & M_ATTK_DEF_DIED),
+                               /* mwep might have been destroyed (a glass
+                                  weapon that shattered) */
+                               (mwep && MON_WEP(magr) == mwep)
+                                   ? mwep : (struct obj *) 0);
 
         if (res[i] & M_ATTK_DEF_DIED)
             return res[i];
@@ -651,8 +658,8 @@ hitmm(
     int compat;
     boolean weaponhit = (mattk->aatyp == AT_WEAP
                          || (mattk->aatyp == AT_CLAW && mwep)),
-            silverhit = (weaponhit && mwep
-                         && objects[mwep->otyp].oc_material == SILVER);
+            hatedhit = (weaponhit && mwep
+                        && mon_hates_material(mdef, mwep->material));
 
     pre_mm_attack(magr, mdef);
 
@@ -703,27 +710,10 @@ hitmm(
             if (*buf)
                 pline("%s %s.", buf, mon_nam_too(mdef, magr));
 
-            if (mon_hates_silver(mdef) && silverhit) {
-                char *mdef_name = mon_nam_too(mdef, magr);
-
-                /* note: mon_nam_too returns a modifiable buffer; so
-                   does s_suffix, but it returns a single static buffer
-                   and we might be calling it twice for this message */
-                Strcpy(magr_name, s_suffix(magr_name));
-                if (!noncorporeal(mdef->data) && !amorphous(mdef->data)) {
-                    if (mdef != magr) {
-                        mdef_name = s_suffix(mdef_name);
-                    } else {
-                        (void) strsubst(mdef_name, "himself", "his own");
-                        (void) strsubst(mdef_name, "herself", "her own");
-                        (void) strsubst(mdef_name, "itself", "its own");
-                    }
-                    Strcat(mdef_name, " flesh");
-                }
-
-                pline("%s %s sears %s!", magr_name, /* s_suffix(magr_name), */
-                      simpleonames(mwep), mdef_name);
-            }
+            /* silver sears demons, cold iron makes elves recoil, &c;
+               dmgval() adds the extra damage */
+            if (hatedhit)
+                searmsg(magr, mdef, mwep, FALSE);
         }
     } else
         noises(magr, mattk);
@@ -1053,6 +1043,19 @@ mdamagem(
             else if (magr->mtame && !gv.vis)
                 You(brief_feeling, "peculiarly sad");
             return M_ATTK_AGR_DIED;
+        }
+    }
+
+    /* touch attacks made with (or by a body made of) something mdef hates:
+       an iron golem's fists vs an elf, silver gloves vs a demon */
+    {
+        long armask = attack_contact_slots(magr, mattk->aatyp);
+        struct obj *hated_obj = (struct obj *) 0;
+
+        if (armask) {
+            mhm.damage += special_dmgval(magr, mdef, armask, &hated_obj);
+            if (hated_obj && gv.vis)
+                searmsg(magr, mdef, hated_obj, FALSE);
         }
     }
 

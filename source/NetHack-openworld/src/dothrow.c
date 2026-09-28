@@ -394,7 +394,7 @@ autoquiver(void)
                    || (otmp->otyp == FLINT
                        && objects[otmp->otyp].oc_name_known)
                    || (otmp->oclass == GEM_CLASS
-                       && objects[otmp->otyp].oc_material == GLASS
+                       && otmp->material == GLASS
                        && objects[otmp->otyp].oc_name_known)) {
             if (uslinging())
                 oammo = otmp;
@@ -833,6 +833,11 @@ hurtle_step(genericptr_t arg, coordxy x, coordxy y)
         }
         if (why) {
             dmg = rnd(2 + *range);
+            /* elves (and other cold-iron haters) are hurt by the bars */
+            if (ltyp == IRONBARS && Hate_material(IRON)) {
+                pline_The("iron hurts to touch!");
+                dmg += rnd(sear_damage(IRON));
+            }
             losehp(Maybe_Half_Phys(dmg), why, KILLED_BY);
             wake_nearto(x, y, 10);
             return FALSE;
@@ -1240,7 +1245,7 @@ harmless_missile(struct obj *obj)
     default:
         if (obj->oclass == SCROLL_CLASS) /* scrolls but not all paper objs */
             return TRUE;
-        if (objects[otyp].oc_material == CLOTH)
+        if (obj->material == CLOTH)
             return TRUE;
         break;
     }
@@ -1339,10 +1344,10 @@ toss_up(struct obj *obj, boolean hitsroof)
         hitfloor(obj, FALSE);
         gt.thrownobj = 0;
     } else { /* neither potion nor other breaking object */
-        int material = objects[otyp].oc_material;
+        int material = obj->material;
         boolean is_silver = (material == SILVER),
-                less_damage = (hard_helmet(uarmh)
-                               && (!is_silver || !Hate_silver)),
+                hatemat = Hate_material(material),
+                less_damage = (hard_helmet(uarmh) && !hatemat),
                 harmless = (stone_missile(obj)
                             && passes_rocks(gy.youmonst.data)),
                 artimsg = FALSE;
@@ -1368,8 +1373,8 @@ toss_up(struct obj *obj, boolean hitsroof)
                 dmg = 0;
             if (obj->blessed && mon_hates_blessings(&gy.youmonst))
                 dmg += rnd(4);
-            if (is_silver && Hate_silver)
-                dmg += rnd(20);
+            if (hatemat)
+                dmg += rnd(sear_damage(material));
         }
         if (dmg > 1 && less_damage)
             dmg = 1;
@@ -1412,8 +1417,11 @@ toss_up(struct obj *obj, boolean hitsroof)
             done(STONING);
             return obj ? TRUE : FALSE;
         }
-        if (is_silver && Hate_silver)
-            pline_The("silver sears you!");
+        if (hatemat) {
+            /* dmgval() or the code above already added extra damage */
+            searmsg((struct monst *) 0, &gy.youmonst, obj, TRUE);
+            exercise(A_CON, FALSE);
+        }
         if (harmless)
             hit(thesimpleoname(obj), &gy.youmonst, " but doesn't hurt.");
 
@@ -1786,6 +1794,12 @@ throwit(
                         if (obj->oartifact)
                             (void) artifact_hit((struct monst *) 0,
                                                 &gy.youmonst, obj, &dmg, 0);
+                        if (Hate_material(obj->material)) {
+                            dmg += rnd(sear_damage(obj->material));
+                            exercise(A_CON, FALSE);
+                            searmsg((struct monst *) 0, &gy.youmonst, obj,
+                                    TRUE);
+                        }
                         losehp(Maybe_Half_Phys(dmg), killer_xname(obj),
                                KILLED_BY);
                     }
@@ -2141,7 +2155,7 @@ thitmonst(
        5.0: treat rocks and gray stones as attacks rather than like glass
        and also treat gems or glass shot via sling as attacks */
     if (obj->oclass == GEM_CLASS && is_unicorn(mon->data)
-        && objects[obj->otyp].oc_material != MINERAL && !uslinging()) {
+        && obj->material != MINERAL && !uslinging()) {
         if (helpless(mon)) {
             tmiss(obj, mon, FALSE);
             return 0;
@@ -2374,7 +2388,7 @@ gem_accept(struct monst *mon, struct obj *obj)
         addluck[]    = " gratefully";
     char buf[BUFSZ];
     boolean is_buddy = sgn(mon->data->maligntyp) == sgn(u.ualign.type);
-    boolean is_gem = objects[obj->otyp].oc_material == GEMSTONE;
+    boolean is_gem = obj->material == GEMSTONE;
     int ret = 0;
 
     Strcpy(buf, Monnam(mon));
@@ -2527,6 +2541,29 @@ release_camera_demon(struct obj *obj, coordxy x, coordxy y)
     }
 }
 
+/* Possibly crack a glass weapon or piece of armor through its use in
+ * combat (a glass weapon that hits something).  Unlike breakobj(), this
+ * doesn't happen every time.  Return TRUE if obj was destroyed.
+ */
+boolean
+crack_glass_obj(struct obj *obj)
+{
+    boolean ucarried, it_broke;
+    coordxy x = 0, y = 0;
+
+    if (!obj || !is_crackable(obj))
+        return FALSE;
+    /* breaktest() makes glass armor and weapons usually resist */
+    if (!breaktest(obj))
+        return FALSE;
+    ucarried = carried(obj);
+    (void) get_obj_location(obj, &x, &y, BURIED_TOO | CONTAINED_TOO);
+    it_broke = breakobj(obj, x, y, !svc.context.mon_moving, ucarried);
+    if (ucarried && !it_broke)
+        update_inventory();
+    return it_broke;
+}
+
 /*
  * Break an object.  Breakable armor goes through erosion steps; other
  * items break unconditionally.  Assumes all resistance checks
@@ -2545,8 +2582,10 @@ breakobj(
     boolean explosion = FALSE;
 
     if (is_crackable(obj)) /* if erodeproof, erode_obj() will say so */
-        return (erode_obj(obj, armor_simple_name(obj), ERODE_CRACK,
-                          EF_DESTROY | EF_VERBOSE) == ER_DESTROYED);
+        return (erode_obj(obj, (obj->oclass == ARMOR_CLASS)
+                                   ? armor_simple_name(obj) : cxname(obj),
+                          ERODE_CRACK, EF_DESTROY | EF_VERBOSE)
+                == ER_DESTROYED);
 
     switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
     case MIRROR:
@@ -2641,15 +2680,16 @@ breaktest(struct obj *obj)
 {
     int nonbreakchance = 1; /* chance for non-artifacts to resist */
 
-    /* this may need to be changed if actual glass armor gets added someday;
-       for now, it affects crystal plate mail and helm of brilliance;
-       either of them will have to be cracked 4 times before breaking */
-    if (obj->oclass == ARMOR_CLASS && objects[obj->otyp].oc_material == GLASS)
+    /* this affects all glass armor and weapons (crystal plate mail, helm
+       of brilliance, glass daggers...); they crack rather than shatter
+       outright and have to be cracked 4 times before breaking */
+    if (is_crackable(obj))
         nonbreakchance = 90;
 
     if (obj_resists(obj, nonbreakchance, 99))
         return FALSE;
-    if (objects[obj->otyp].oc_material == GLASS && !obj->oartifact
+    if (obj->material == GLASS && !obj->oartifact
+        && !(is_crackable(obj) && obj->oerodeproof)
         && obj->oclass != GEM_CLASS)
         return TRUE;
     switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
@@ -2676,9 +2716,10 @@ breakmsg(struct obj *obj, boolean in_view)
 
     to_pieces = "";
     switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
-    default: /* glass or crystal wand */
-        if (obj->oclass != WAND_CLASS)
-            impossible("breaking odd object (%d)?", obj->otyp);
+    default: /* glass or crystal wand, glass tool */
+        if (obj->material != GLASS)
+            impossible("breaking odd object (%d, material %d)?", obj->otyp,
+                       obj->material);
         FALLTHROUGH;
         /*FALLTHRU*/
     case LENSES:

@@ -164,6 +164,7 @@ typedef struct {
     short lit;
     short eroded, locked, trapped, tknown, recharged, invis, greased, broken,
           achievement;
+    short material; /* NO_MATERIAL: whatever the object gets at random */
 } object;
 
 typedef struct {

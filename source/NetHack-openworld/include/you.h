@@ -528,11 +528,14 @@ struct _hitmon_data {
     struct permonst *mdat;
     boolean use_weapon_skill;
     boolean train_weapon_skill;
-    int barehand_silver_rings;
-    boolean silvermsg;
-    boolean silverobj;
+    struct obj *hated_obj; /* worn gloves or ring (or &hands_obj for the
+                            * hero's own body) made of a material that the
+                            * target hates, for bare-handed hits */
+    boolean hatedmsg;      /* give a "silver sears" or "recoils from the
+                            * cold iron" message */
+    boolean hatedobj;      /* ... about the weapon, named saved_oname */
     boolean lightobj;
-    int material;
+    int material;          /* weapon's material */
     int jousting;
     boolean hittxt;
     boolean get_dmg_bonus;

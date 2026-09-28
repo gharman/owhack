@@ -78,6 +78,15 @@ resetobjs(struct obj *ochain, boolean restore)
             } else if (has_oname(otmp)) {
                 sanitize_name(ONAME(otmp));
             }
+            /* the materials of rings and wands depend on their shuffled
+               descriptions, which differ from game to game, so a ring
+               from the dead hero's game might not be able to be made of
+               its material in this one */
+            if (!valid_obj_material(otmp, otmp->material)) {
+                set_material(otmp, objects[otmp->otyp].oc_material);
+                if (otmp->where == OBJ_CONTAINED)
+                    container_weight(otmp->ocontainer);
+            }
             /* 3.6.3: set no_charge for partly eaten food in shop;
                all other items become goods for sale if in a shop */
             if (otmp->oclass == FOOD_CLASS && otmp->oeaten) {
@@ -169,6 +178,7 @@ resetobjs(struct obj *ochain, boolean restore)
             } else if (otmp->otyp == AMULET_OF_YENDOR) {
                 /* no longer the real Amulet */
                 otmp->otyp = FAKE_AMULET_OF_YENDOR;
+                set_material(otmp, objects[otmp->otyp].oc_material);
                 curse(otmp);
             } else if (otmp->otyp == CANDELABRUM_OF_INVOCATION) {
                 if (otmp->lamplit)
@@ -178,10 +188,14 @@ resetobjs(struct obj *ochain, boolean restore)
                 if (otmp->spe > 0)
                     otmp->quan = (long) otmp->spe;
                 otmp->spe = 0;
+                otmp->material = objects[otmp->otyp].oc_material;
                 otmp->owt = weight(otmp);
                 curse(otmp);
             } else if (otmp->otyp == BELL_OF_OPENING) {
                 otmp->otyp = BELL;
+                /* bell is still silver (a valid material for bells) */
+                if (!valid_obj_material(otmp, otmp->material))
+                    set_material(otmp, objects[otmp->otyp].oc_material);
                 curse(otmp);
             } else if (otmp->otyp == SPE_BOOK_OF_THE_DEAD) {
                 otmp->otyp = SPE_BLANK_PAPER;

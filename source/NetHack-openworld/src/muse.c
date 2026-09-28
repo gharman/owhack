@@ -2587,10 +2587,10 @@ use_misc(struct monst *mtmp)
             if (!where_to) {
                 pline_The("whip slips free."); /* not `The_whip' */
                 return 1;
-            } else if (where_to == 3 && mon_hates_silver(mtmp)
-                       && objects[obj->otyp].oc_material == SILVER) {
-                /* this monster won't want to catch a silver
-                   weapon; drop it at hero's feet instead */
+            } else if (where_to == 3
+                       && mon_hates_material(mtmp, obj->material)) {
+                /* this monster won't want to catch a silver (or other
+                   hated material) weapon; drop it at hero's feet instead */
                 where_to = 2;
             }
             remove_worn_item(obj, FALSE);

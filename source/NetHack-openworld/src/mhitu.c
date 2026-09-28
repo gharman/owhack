@@ -1101,6 +1101,11 @@ magic_negation(struct monst *mon)
         /* a_can field is only applicable for armor (which must be worn) */
         if ((o->owornmask & W_ARMOR) != 0L) {
             armpro = objects[o->otyp].a_can;
+            /* mithril body armor or cloak grants at least MC 2, as the
+               old elven and dwarvish mithril-coats did */
+            if ((o->owornmask & (W_ARM | W_ARMC)) != 0L
+                && o->material == MITHRIL && armpro < 2)
+                armpro = 2;
             if (armpro > mc)
                 mc = armpro;
         } else if ((o->owornmask & W_AMUL) != 0L) {
@@ -1209,6 +1214,23 @@ hitmu(struct monst *mtmp, struct attack *mattk)
         mhm.damage -= rnd(-u.uac);
         if (mhm.damage < 1)
             mhm.damage = 1;
+    }
+
+    /* touch attacks by a monster wearing (or made of) something the hero
+       hates, such as an iron golem's fists against an elf; this comes
+       after the AC damage reduction */
+    if (!mhm.done && (Upolyd ? u.mh : u.uhp) > 0) {
+        long armask = attack_contact_slots(mtmp, mattk->aatyp);
+        struct obj *hated_obj = (struct obj *) 0;
+
+        if (armask) {
+            mhm.damage += special_dmgval(mtmp, &gy.youmonst, armask,
+                                         &hated_obj);
+            if (hated_obj) {
+                searmsg(mtmp, &gy.youmonst, hated_obj, FALSE);
+                exercise(A_CON, FALSE);
+            }
+        }
     }
 
     if (mhm.damage > 0) {
@@ -2638,5 +2660,31 @@ cloneu(void)
 }
 
 #undef ld
+
+/* Return the worn-item mask of the slots of magr's equipment that touch
+   the target for an attack of type aatyp: hands (gloves or rings), feet,
+   head or torso.  Used with special_dmgval() for materials that the
+   target hates.  Weapon attacks are handled via dmgval() instead. */
+long
+attack_contact_slots(struct monst *magr, int aatyp)
+{
+    struct obj *mwep = (magr == &gy.youmonst) ? uwep : MON_WEP(magr);
+
+    if (aatyp == AT_CLAW || aatyp == AT_TUCH || (aatyp == AT_WEAP && !mwep)
+        || (aatyp == AT_HUGS && hug_throttles(magr->data))) {
+        /* attack with hands; gloves and rings might touch */
+        return W_ARMG | W_RINGL | W_RINGR;
+    }
+    if (aatyp == AT_HUGS) {
+        /* bear hug which is not a strangling attack; gloves and rings
+           might touch, but also all torso slots */
+        return W_ARMG | W_RINGL | W_RINGR | W_ARMC | W_ARM | W_ARMU;
+    }
+    if (aatyp == AT_KICK)
+        return W_ARMF;
+    if (aatyp == AT_BUTT)
+        return W_ARMH;
+    return 0L;
+}
 
 /*mhitu.c*/

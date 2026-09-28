@@ -460,7 +460,7 @@ dosit(void)
                 }
                 useupf(obj, obj->quan);
             } else if (!(Is_box(obj)
-                         || objects[obj->otyp].oc_material == CLOTH))
+                         || obj->material == CLOTH))
                 pline("It's not very comfortable...");
         }
     } else if (trap != 0 || (u.utrap && (u.utraptype >= TT_LAVA))) {
@@ -472,9 +472,13 @@ dosit(void)
                 u.utrap++;
             } else if (u.utraptype == TT_PIT) {
                 if (trap && trap->ttyp == SPIKED_PIT) {
+                    int dmg = Half_physical_damage ? rn2(2) : 1;
+
+                    /* elves are hurt more by the cold iron */
+                    if (Hate_material(IRON))
+                        dmg += Maybe_Half_Phys(rnd(sear_damage(IRON)));
                     You("sit down on a spike.  Ouch!");
-                    losehp(Half_physical_damage ? rn2(2) : 1,
-                           "sitting on an iron spike", KILLED_BY);
+                    losehp(dmg, "sitting on an iron spike", KILLED_BY);
                     exercise(A_STR, FALSE);
                 } else
                     You("sit down in the pit.");

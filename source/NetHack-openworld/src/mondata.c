@@ -528,6 +528,97 @@ hates_silver(struct permonst *ptr)
                       || (ptr->mlet == S_IMP && ptr != &mons[PM_TENGU]));
 }
 
+/* True if specific monster (or the hero) is especially affected by
+   weapons and other objects made of the given material */
+boolean
+mon_hates_material(struct monst *mon, int material)
+{
+    if (material == SILVER) {
+        /* Hate_silver covers the hero's lycanthropy and current form */
+        if (mon == &gy.youmonst)
+            return (boolean) (Hate_silver
+                              || hates_silver((struct permonst *)
+                                              raceptr(&gy.youmonst)));
+        return mon_hates_silver(mon);
+    }
+    /* raceptr() is the hero's race when not polymorphed */
+    return hates_material((struct permonst *) raceptr(mon), material);
+}
+
+/* True if monster-type is especially affected by weapons and other objects
+   made of the given material:
+     silver: demons, vampires, lycanthropes, shades and imps;
+     cold iron: elves and the fae (nymphs, imps), but not undead ones;
+     copper: fungi and molds, and bringers of disease and decay (copper
+       is antibacterial and antifungal) */
+boolean
+hates_material(struct permonst *ptr, int material)
+{
+    switch (material) {
+    case SILVER:
+        return hates_silver(ptr);
+    case IRON:
+        if (is_undead(ptr))
+            return FALSE;
+        return (boolean) (is_elf(ptr)
+                          || ptr->mlet == S_NYMPH || ptr->mlet == S_IMP);
+    case COPPER:
+        return (boolean) (ptr->mlet == S_FUNGUS
+                          || dmgtype(ptr, AD_DISE) || dmgtype(ptr, AD_DCAY)
+                          || dmgtype(ptr, AD_PEST));
+    default:
+        break;
+    }
+    return FALSE;
+}
+
+/* maximum extra damage (rnd(sear_damage(mat))) done to a monster by
+   touching a material it hates */
+int
+sear_damage(int material)
+{
+    switch (material) {
+    case SILVER:
+        return 20;
+    case IRON:
+    case COPPER:
+    default:
+        return 6;
+    }
+}
+
+/* the material a monster's body is made of, when that matters because
+   some other monster might hate it (an iron golem's fists are cold iron);
+   0 for ordinary flesh and blood */
+int
+monmaterial(int mndx)
+{
+    switch (mndx) {
+    case PM_GARGOYLE:
+    case PM_WINGED_GARGOYLE:
+    case PM_EARTH_ELEMENTAL:
+    case PM_CLAY_GOLEM:
+    case PM_STONE_GOLEM:
+        return MINERAL;
+    case PM_SKELETON:
+        return BONE;
+    case PM_PAPER_GOLEM:
+        return PAPER;
+    case PM_GOLD_GOLEM:
+        return GOLD;
+    case PM_LEATHER_GOLEM:
+        return LEATHER;
+    case PM_WOOD_GOLEM:
+        return WOOD;
+    case PM_GLASS_GOLEM:
+        return GLASS;
+    case PM_IRON_GOLEM:
+        return IRON;
+    default:
+        return NO_MATERIAL;
+    }
+}
+
 /* True if specific monster is especially affected by blessed objects */
 boolean
 mon_hates_blessings(struct monst *mon)

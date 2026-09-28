@@ -1891,8 +1891,17 @@ attributes_enlightenment(
     }
     if (Unchanging && Upolyd) /* !Upolyd handled above */
         you_can("not change from your current form", from_what(UNCHANGING));
-    if (Hate_silver)
-        you_are("harmed by silver", "");
+    {
+        int mat;
+
+        /* silver while in demon or were form, cold iron for elves, &c */
+        for (mat = NO_MATERIAL + 1; mat < NUM_MATERIAL_TYPES; ++mat)
+            if (Hate_material(mat)) {
+                Sprintf(buf, "harmed by %s", (mat == IRON) ? "cold iron"
+                                             : materialnm[mat]);
+                you_are(buf, "");
+            }
+    }
     /* movement and non-armor-based protection */
     if (Fast)
         you_are(Very_fast ? "very fast" : "fast", from_what(FAST));

@@ -810,7 +810,7 @@ scatter(
 
             /* 1 in 10 chance of destruction of obj; glass, egg destruction */
         } else if ((scflags & MAY_DESTROY) != 0
-                   && (!rn2(10) || (objects[otmp->otyp].oc_material == GLASS
+                   && (!rn2(10) || (otmp->material == GLASS
                                     || otmp->otyp == EGG))) {
             if (breaks(otmp, sx, sy))
                 used_up = TRUE;

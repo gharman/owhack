@@ -2735,8 +2735,8 @@ use_stone(struct obj *tstone)
     oclass = obj->oclass;
     /* prevent non-gemstone rings from being treated like gems */
     if (oclass == RING_CLASS
-        && objects[obj->otyp].oc_material != GEMSTONE
-        && objects[obj->otyp].oc_material != MINERAL)
+        && obj->material != GEMSTONE
+        && obj->material != MINERAL)
         oclass = RANDOM_CLASS; /* something that's neither gem nor ring */
 
     switch (oclass) {
@@ -2754,7 +2754,7 @@ use_stone(struct obj *tstone)
             return ECMD_TIME;
         } else {
             /* either a ring or the touchstone was not effective */
-            if (objects[obj->otyp].oc_material == GLASS) {
+            if (obj->material == GLASS) {
                 do_scratch = TRUE;
                 break;
             }
@@ -2763,7 +2763,7 @@ use_stone(struct obj *tstone)
         break; /* gem or ring */
 
     default:
-        switch (objects[obj->otyp].oc_material) {
+        switch (obj->material) {
         case CLOTH:
             pline("%s a little more polished now.", Tobjnam(tstone, "look"));
             return ECMD_TIME;
@@ -4228,7 +4228,7 @@ doapply(void)
     if (!obj)
         return ECMD_CANCEL;
 
-    if (!retouch_object(&obj, FALSE))
+    if (!retouch_object_prot(&obj, FALSE, !will_touch_skin(W_WEP)))
         return ECMD_TIME; /* evading your grasp costs a turn; just be
                              grateful that you don't drop it as well */
 

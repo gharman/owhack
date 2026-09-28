@@ -9,6 +9,40 @@
 /* [misnamed] definition of a type of object; many objects are composites
    (liquid potion inside glass bottle, metal arrowhead on wooden shaft)
    and object definitions only specify one type on a best-fit basis */
+/*
+ * Materials.
+ *
+ * Every object has a material, obj->material (see obj.h).  It defaults to
+ * the oc_material given for its type in objects.h, and many weapons, armor
+ * pieces, tools and amulets can instead be generated in some other material
+ * (a "mithril chain mail", a "silver long sword", a "wooden dagger").
+ * The material affects weight, armor class, damage and to-hit, erosion,
+ * price, which monsters are hurt by the object (silver, cold iron, copper),
+ * how the object is named and whether it stacks with others.
+ *
+ * To give a new object type alternative materials:
+ *  - its default material is simply its oc_material in objects.h;
+ *  - the lists of alternative materials and their probabilities are in
+ *    mkobj.c; material_list() picks the list for an object.  Weapons, armor
+ *    and tools whose default is IRON, STEEL, WOOD, CLOTH or LEATHER, and
+ *    elven, dwarvish and orcish gear and amulets, get a list automatically;
+ *    add a "case" for the object's otyp in material_list() to give it a
+ *    different list, or add it to the list of fixed-material objects at the
+ *    top of material_list() when it must always be made of its default
+ *    material (typically because its name or description states a
+ *    material, like "iron shoes", or because it shares a shuffled
+ *    description with such an object);
+ *  - nonsensical_obj_material() vetoes individual combinations (glass
+ *    pick-axes, paper armor, iron elven gear, ...).
+ * Nothing else is needed: generation, wishing, polymorph, bones, level
+ * files (des.object({ material = "..." })) and the sanity checker all use
+ * valid_obj_material() and init_obj_material().
+ *
+ * Don't reorder these without also changing materialnm[] in decl.c and the
+ * per-material tables in mkobj.c (matdensities[], matac[]), shk.c
+ * (matprices[]) and display.c (materialclr[]); the relative order also
+ * matters for is_organic() and is_metallic() below.
+ */
 enum obj_material_types {
     NO_MATERIAL =  0,
     LIQUID      =  1, /* currently only for venom */
@@ -21,9 +55,10 @@ enum obj_material_types {
     WOOD        =  8,
     BONE        =  9,
     DRAGON_HIDE = 10, /* not leather! */
-    IRON        = 11, /* Fe - includes steel */
-    METAL       = 12, /* Sn, &c. */
-    COPPER      = 13, /* Cu - includes brass */
+    IRON        = 11, /* Fe - plain (cold, rusting) iron */
+    STEEL       = 12, /* stainless steel and other hard alloys: doesn't
+                       * rust; called METAL in vanilla NetHack */
+    COPPER      = 13, /* Cu - includes brass and bronze */
     SILVER      = 14, /* Ag */
     GOLD        = 15, /* Au */
     PLATINUM    = 16, /* Pt */
@@ -31,8 +66,11 @@ enum obj_material_types {
     PLASTIC     = 18,
     GLASS       = 19,
     GEMSTONE    = 20,
-    MINERAL     = 21
+    MINERAL     = 21,
+    NUM_MATERIAL_TYPES
 };
+/* vanilla's name for STEEL; object definitions may use either */
+#define METAL STEEL
 
 enum obj_armor_types {
     ARM_SUIT   = 0,
@@ -190,25 +228,33 @@ extern NEARDATA struct objdescr obj_descr[NUM_OBJECTS + 1];
 #define OBJ_NAME(obj) (obj_descr[(obj).oc_name_idx].oc_name)
 #define OBJ_DESCR(obj) (obj_descr[(obj).oc_descr_idx].oc_descr)
 
-#define is_organic(otmp) (objects[otmp->otyp].oc_material <= WOOD)
+/* these all look at the individual object's material (obj->material),
+   not at the default material for its type */
+#define is_organic(otmp) ((otmp)->material <= WOOD)
 #define is_metallic(otmp) \
-    (objects[otmp->otyp].oc_material >= IRON            \
-     && objects[otmp->otyp].oc_material <= MITHRIL)
+    ((otmp)->material >= IRON && (otmp)->material <= MITHRIL)
 
 /* primary damage: fire/rust/--- */
 /* is_flammable(otmp), is_rottable(otmp) in mkobj.c */
-#define is_rustprone(otmp) (objects[otmp->otyp].oc_material == IRON)
+#define is_rustprone(otmp) ((otmp)->material == IRON)
+/* glass armor and weapons crack (and eventually shatter) instead of
+   eroding; erosion_matters() */
 #define is_crackable(otmp) \
-    (objects[(otmp)->otyp].oc_material == GLASS         \
-     && (otmp)->oclass == ARMOR_CLASS) /* erosion_matters() */
+    ((otmp)->material == GLASS                                         \
+     && ((otmp)->oclass == ARMOR_CLASS || (otmp)->oclass == WEAPON_CLASS))
 /* secondary damage: rot/acid/acid */
 #define is_corrodeable(otmp) \
-    (objects[otmp->otyp].oc_material == COPPER          \
-     || objects[otmp->otyp].oc_material == IRON)
+    ((otmp)->material == COPPER || (otmp)->material == IRON)
 /* subject to any damage */
 #define is_damageable(otmp) \
     (is_rustprone(otmp) || is_flammable(otmp)           \
      || is_rottable(otmp) || is_corrodeable(otmp)       \
      || is_crackable(otmp))
+
+/* Always show the material in the object's name, even when it is the
+ * default one, for types whose default material isn't what players would
+ * assume from the name (elven chain mail is mithril unless stated
+ * otherwise). */
+#define force_material_name(typ) ((typ) == ELVEN_CHAIN_MAIL)
 
 #endif /* OBJCLASS_H */

@@ -1541,9 +1541,10 @@ typedef uint32_t mmflags_nht;     /* makemon MM_ flags */
 #define LIMIT_TO_RANGE_INT(lo, hi, var) \
     ((int) ((var) < (lo) ? (lo) : (var) > (hi) ? (hi) : (var)))
 
-#define ARM_BONUS(obj) \
-    (objects[(obj)->otyp].a_ac + (obj)->spe                             \
-     - min((int) greatest_erosion(obj), objects[(obj)->otyp].a_ac))
+/* how much a piece of worn armor lowers its wearer's AC: its type's base
+   AC adjusted for its material (see material_bonus() in mkobj.c), plus
+   enchantment, less erosion (which can't make it worse than nothing) */
+#define ARM_BONUS(obj) armor_bonus(obj)
 
 #define makeknown(x) discover_object((x), TRUE, TRUE, TRUE)
 #define distu(xx, yy) dist2((coordxy) (xx), (coordxy) (yy), u.ux, u.uy)

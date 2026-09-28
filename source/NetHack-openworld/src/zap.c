@@ -1533,7 +1533,7 @@ polyuse(struct obj *objhdr, int mat, int minwt)
             continue;
 #endif
 
-        if (((int) objects[otmp->otyp].oc_material == mat)
+        if (((int) otmp->material == mat)
             == (rn2(minwt + 1) != 0)) {
             /* appropriately add damage to bill */
             if (costly_spot(otmp->ox, otmp->oy)) {
@@ -1662,7 +1662,7 @@ do_osshock(struct obj *obj)
         /* some may metamorphose */
         for (i = obj->quan; i; i--)
             if (!rn2(Luck + 45)) {
-                gp.poly_zapped = objects[obj->otyp].oc_material;
+                gp.poly_zapped = obj->material;
                 break;
             }
     }
@@ -1896,13 +1896,20 @@ poly_obj(struct obj *obj, int id)
 
     case GEM_CLASS:
         if (otmp->quan > (long) rnd(4)
-            && objects[obj->otyp].oc_material == MINERAL
-            && objects[otmp->otyp].oc_material != MINERAL) {
+            && obj->material == MINERAL
+            && otmp->material != MINERAL) {
             otmp->otyp = ROCK; /* transmutation backfired */
             otmp->quan /= 2L;  /* some material has been lost */
         }
         break;
     }
+
+    /* the new object is made of whatever a newly generated object of its
+       type would be made of; if its type was changed above (crocodile
+       corpse to boots, wand of wishing to another wand...), make sure
+       that its material is still one it can have */
+    if (!valid_obj_material(otmp, otmp->material))
+        set_material(otmp, objects[otmp->otyp].oc_material);
 
     /* update the weight */
     otmp->owt = weight(otmp);
@@ -2013,8 +2020,8 @@ stone_to_flesh_obj(struct obj *obj) /* nonnull */
     boolean smell = FALSE, golem_xform = FALSE;
     int res = 1; /* affected object by default */
 
-    if (objects[obj->otyp].oc_material != MINERAL
-        && objects[obj->otyp].oc_material != GEMSTONE)
+    if (obj->material != MINERAL
+        && obj->material != GEMSTONE)
         return 0;
     /* Heart of Ahriman usually resists; ordinary items rarely do */
     if (obj_resists(obj, 2, 98))
@@ -5570,6 +5577,7 @@ fracture_rock(struct obj *obj) /* no texts here! */
         sokoban_guilt();
 
     obj->otyp = ROCK;
+    obj->material = MINERAL; /* rocks are stone whatever this was */
     obj->oclass = GEM_CLASS;
     obj->quan = (long) rn1(60, 7);
     obj->owt = weight(obj);
@@ -5603,6 +5611,12 @@ break_statue(struct obj *obj)
     if (trap && trap->ttyp == STATUE_TRAP
         && activate_statue_trap(trap, obj->ox, obj->oy, TRUE))
         return FALSE;
+    /* copper and gold statues don't shatter into rocks */
+    if (is_metallic(obj)) {
+        if (!Deaf)
+            pline("Clang!");
+        return FALSE;
+    }
     /* drop any objects contained inside the statue */
     while ((item = obj->cobj) != 0) {
         obj_extract_self(item);

@@ -114,7 +114,7 @@ burnarmor(struct monst *victim)
         case 0:
             item = hitting_u ? uarmh : which_armor(victim, W_ARMH);
             if (item) {
-                mat_idx = objects[item->otyp].oc_material;
+                mat_idx = item->material;
                 Sprintf(buf, "%s %s", materialnm[mat_idx],
                         helm_simple_name(item));
             }
@@ -400,6 +400,8 @@ mk_trap_statue(coordxy x, coordxy y)
              && sgn(u.ualign.type) == sgn(mptr->maligntyp));
     statue = mkcorpstat(STATUE, (struct monst *) 0, mptr, x, y,
                         CORPSTAT_NONE);
+    /* randomize the material (mostly stone, occasionally copper or gold) */
+    init_obj_material(statue);
     mtmp = makemon(&mons[statue->corpsenm], 0, 0, MM_NOCOUNTBIRTH | MM_NOMSG);
     if (!mtmp)
         return; /* should never happen */
@@ -1098,7 +1100,9 @@ boolean
 wearing_iron_shoes(struct monst *mtmp)
 {
     struct obj *armf = which_armor(mtmp, W_ARMF);
-    return armf && objects[armf->otyp].oc_material == IRON;
+
+    /* any metal footwear (iron, steel, mithril...) will do */
+    return armf && is_metallic(armf);
 }
 
 /* is trap ttmp harmless to monster mtmp? */
@@ -1923,9 +1927,15 @@ trapeffect_pit(
         set_utrap((unsigned) rn1(6, 2), TT_PIT);
         if (!steedintrap(trap, (struct obj *) 0)) {
             if (relevant_spikes) {
-                int oldumort = u.umortality;
+                int oldumort = u.umortality,
+                    spikedmg = rnd(conj_pit ? 4 : adj_pit ? 6 : 10);
 
-                losehp(Maybe_Half_Phys(rnd(conj_pit ? 4 : adj_pit ? 6 : 10)),
+                /* the spikes are cold iron */
+                if (Hate_material(IRON)) {
+                    pline_The("iron spikes sear you!");
+                    spikedmg += rnd(sear_damage(IRON));
+                }
+                losehp(Maybe_Half_Phys(spikedmg),
                        /* note: these don't need locomotion() handling;
                           if fatal while poly'd and Unchanging, the
                           death reason will be overridden with
@@ -2002,9 +2012,15 @@ trapeffect_pit(
         }
         mselftouch(mtmp, "Falling, ", FALSE);
         if (wearing_iron_shoes(mtmp)) relevant_spikes = FALSE;
-        if (DEADMONSTER(mtmp) || thitm(0, mtmp, (struct obj *) 0,
-                                       rnd(relevant_spikes ? 10 : 6), FALSE))
-            trapkilled = TRUE;
+        {
+            int dmg = rnd(relevant_spikes ? 10 : 6);
+
+            if (relevant_spikes && mon_hates_material(mtmp, IRON))
+                dmg += rnd(sear_damage(IRON));
+            if (DEADMONSTER(mtmp)
+                || thitm(0, mtmp, (struct obj *) 0, dmg, FALSE))
+                trapkilled = TRUE;
+        }
 
         return trapkilled ? Trap_Killed_Mon : mtmp->mtrapped
             ? Trap_Caught_Mon : Trap_Effect_Finished;
@@ -4590,7 +4606,7 @@ lava_damage(struct obj *obj, coordxy x, coordxy y)
        and books--let fire damage deal with them), cloth, leather, wood, bone
        unless it's inherently or explicitly fireproof or contains something;
        note: potions are glass so fall through to fire_damage() and boil */
-    if (objects[otyp].oc_material < DRAGON_HIDE
+    if (obj->material < DRAGON_HIDE
         && ocls != SCROLL_CLASS && ocls != SPBOOK_CLASS
         && objects[otyp].oc_oprop != FIRE_RES
         && otyp != WAN_FIRE && otyp != FIRE_HORN
@@ -6752,6 +6768,10 @@ thitm(
             dam = dmgval(obj, mon);
             if (dam < 1)
                 dam = 1;
+            /* extra damage (silver, cold iron...) already from dmgval() */
+            if (!harmless && mon_hates_material(mon, obj->material)
+                && cansee(mon->mx, mon->my))
+                searmsg((struct monst *) 0, mon, obj, TRUE);
         }
         if (!harmless) {
             mon->mhp -= dam;
