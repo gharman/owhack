@@ -285,8 +285,12 @@ staticfn boolean
 find_guard_dest(struct monst *guard, coordxy *rx, coordxy *ry)
 {
     coordxy x, y, dd, lx, ly;
+    /* open world: there are no corridors outdoors; the guard leads the
+       hero out through the rock to the nearest open ground instead */
+    boolean outdoors = In_overworld;
+    int maxdd = outdoors ? 100 : max(ROWNO, COLNO);
 
-    for (dd = 2; (dd < ROWNO || dd < COLNO); dd++) {
+    for (dd = 2; dd < maxdd; dd++) {
         for (y = u.uy - dd; y <= u.uy + dd; y++) {
             if (y < 0 || y > ROWNO - 1)
                 continue;
@@ -298,10 +302,17 @@ find_guard_dest(struct monst *guard, coordxy *rx, coordxy *ry)
                 if (guard && ((x == guard->mx && y == guard->my)
                               || (guard->isgd && in_fcorridor(guard, x, y))))
                     continue;
-                if (levl[x][y].typ == CORR) {
+                if (levl[x][y].typ == CORR
+                    || (outdoors && ACCESSIBLE(levl[x][y].typ)
+                        && levl[x][y].typ != DOOR
+                        && levl[x][y].roomno == NO_ROOM
+                        && !t_at(x, y))) {
                     lx = (x < u.ux) ? x + 1 : (x > u.ux) ? x - 1 : x;
                     ly = (y < u.uy) ? y + 1 : (y > u.uy) ? y - 1 : y;
-                    if (levl[lx][ly].typ != STONE && levl[lx][ly].typ != CORR)
+                    if (levl[lx][ly].typ != STONE && levl[lx][ly].typ != CORR
+                        /* outdoors, the nearest open ground usually
+                           borders a mountain's face rather than rock */
+                        && !(outdoors && IS_STWALL(levl[lx][ly].typ)))
                         goto incr_radius;
                     *rx = x;
                     *ry = y;

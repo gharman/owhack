@@ -1673,7 +1673,7 @@ see_traps(void)
     int glyph;
 
     for (trap = gf.ftrap; trap; trap = trap->ntrap) {
-        glyph = _glyph_at(trap->tx, trap->ty);
+        glyph = glyph_at(trap->tx, trap->ty);
         if (glyph_is_trap(glyph))
             newsym(trap->tx, trap->ty);
     }

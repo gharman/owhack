@@ -2053,8 +2053,11 @@ induced_align(int pct)
 boolean
 Invocation_lev(d_level *lev)
 {
-    return (boolean) (In_hell(lev)
-                   && lev->dlevel == svd.dungeons[lev->dnum].num_dunlevs - 1);
+    /* open world: Gehennom is split into several hellish branch dungeons;
+       the invocation level is the one just above Moloch's Sanctum */
+    return (boolean) (Lassigned(&sanctum_level)
+                      && lev->dnum == sanctum_level.dnum
+                      && lev->dlevel == sanctum_level.dlevel - 1);
 }
 
 /* use instead of depth() wherever a degree of difficulty is made
@@ -2487,6 +2490,10 @@ recbranch_mapseen(d_level *source, d_level *dest)
 
     /* not a branch */
     if (source->dnum == dest->dnum)
+        return;
+    /* open world: the overworld has many branches; its overview lists
+       the rings of portals instead (see ow_overview_lines()) */
+    if (Is_overworld(source))
         return;
 
     /* we only care about forward branches */

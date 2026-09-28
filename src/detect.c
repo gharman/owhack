@@ -2337,7 +2337,7 @@ reveal_terrain_getglyph(
 void
 dump_map(void)
 {
-    char buf[COLBUFSZ];
+    char buf[BUFSZ]; /* (open world: the dumped area can exceed COLNO) */
     coordxy x, y;
     int glyph, skippedrows, lastnonblank;
     boolean blankrow, toprow;
@@ -2368,10 +2368,12 @@ dump_map(void)
                                             default_glyph, subset);
             map_glyphinfo(x, y, glyph, 0, &glyphinfo);
             ch = glyphinfo.ttychar;
-            buf[x - 1] = ch;
+            if (x - DET_LX >= BUFSZ - 1)
+                break;
+            buf[x - DET_LX] = ch;
             if (ch != ' ') {
                 blankrow = FALSE;
-                lastnonblank = x - 1;
+                lastnonblank = x - DET_LX;
             }
         }
         if (!blankrow) {

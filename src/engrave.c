@@ -1562,8 +1562,10 @@ engraving_sanity_check(void)
         }
         levtyp = SURFACE_AT(x, y);
         if (is_pool_or_lava(x, y) || IS_AIR(levtyp) || !ACCESSIBLE(levtyp)) {
-            impossible("engraving sanity: illegal surface (%d: \"%s\")",
-                       levtyp, surface(x, y));
+            impossible("engraving sanity: illegal surface (%d: \"%s\")"
+                       " at <%d,%d>: \"%s\"",
+                       levtyp, surface(x, y), x, y,
+                       ep->engr_txt[actual_text]);
             continue;
         }
     }

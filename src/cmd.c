@@ -1041,6 +1041,30 @@ makemap_prepost(boolean pre, boolean wiztower)
         tmpnhfp = get_freeing_nhfile();
         savelev(tmpnhfp, ledger_no(&u.uz));
         close_nhfile(tmpnhfp);
+        /* open world: the whole overworld gets regenerated, lazily, with
+           the hero put back where they were */
+        if (In_overworld) {
+            (void) memset((genericptr_t) svow.genmap, 0,
+                          sizeof svow.genmap);
+            svow.lt_x = u.ux, svow.lt_y = u.uy, svow.lt_exact = TRUE;
+        }
+    } else if (In_overworld) {
+        vision_reset();
+        gv.vision_full_recalc = 1;
+        cls();
+        ow_arrive(svow.lt_x ? OWARR_LEVTELE : OWARR_NEWGAME);
+        losedogs();
+        kill_genocided_monsters();
+        if ((mtmp = m_at(u.ux, u.uy)) != 0)
+            u_collide_m(mtmp);
+        initrack();
+        if (Punished) {
+            unplacebc();
+            placebc();
+        }
+        ow_maintain();
+        docrt();
+        flush_screen(1);
     } else {
         vision_reset();
         gv.vision_full_recalc = 1;

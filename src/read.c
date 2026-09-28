@@ -1925,7 +1925,9 @@ seffect_earth(struct obj **sobjp)
     boolean confused = (Confusion != 0);
 
     /* TODO: handle steeds */
-    if (!Is_rogue_level(&u.uz) && has_ceiling(&u.uz)
+    /* (open world: out under the open sky, boulders materialize from
+       thin air rather than dropping from a ceiling) */
+    if (!Is_rogue_level(&u.uz) && (has_ceiling(&u.uz) || In_overworld)
         && (!In_endgame(&u.uz) || Is_earthlevel(&u.uz))) {
         coordxy x, y;
         int nboulders = 0;

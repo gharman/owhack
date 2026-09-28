@@ -73,8 +73,10 @@ staticfn boolean ow_rndspot_near(int, int, int, int, coord *, boolean);
 static int ow_want_ring = 0; /* if nonzero, ow_rndspot_near() must pick a
                                 spot in this ring */
 staticfn void ow_generate_area(int, int, int);
+staticfn boolean ow_mysterious_force(int);
 staticfn int ow_circumference_portals(int);
 void ow_test_hook(void);
+void ow_world_dump(void);
 
 /* hero's current depth while in the overworld, or the depth being
    generated; see depth() in dungeon.c */
@@ -942,6 +944,8 @@ ow_maintain(void)
         ow_generate_area(u.ux, u.uy, OW_GEN_RADIUS);
         lastcx = cx, lastcy = cy;
     }
+    if (wizard && getenv("OWHACK_TELEFILE"))
+        ow_test_hook();
     if (getenv("OWHACK_MAPDUMP"))
         ow_debug_dump(u.ux, u.uy, 110, 45);
     {
@@ -959,7 +963,16 @@ ow_maintain(void)
         if (ring > 1)
             livelog_printf(LL_DEBUG, "reached depth %d of the Overworld",
                            ring);
+        /* reaching new depths is like arriving on a new dungeon level */
+        if (Role_if(PM_TOURIST)) {
+            more_experienced(level_difficulty(), 0);
+            newexplevel();
+        }
     }
+    if (ring < svow.last_ring_seen && u.uhave.amulet && u_in_gehennom()
+        && ring + 3 < ow_branch_ring(sanctum_level.dnum) + 1
+        && ow_mysterious_force(ring))
+        return;
     if (ring != svow.last_ring_seen) {
         if (ring > svow.last_ring_seen && flags.verbose)
             You_feel("that the land grows more dangerous.");
@@ -1019,6 +1032,46 @@ ow_maintain(void)
         u.uevent.gehennom_entered = 1;
         record_achievement(ACH_HELL);
     }
+}
+
+/*
+ * Climbing out of Gehennom with the Amulet: each time the hero crosses
+ * inward into a shallower ring there is a chance of the "mysterious force"
+ * sending them back outward, as with climbing stairs in the classic game.
+ * Returns TRUE if the hero was moved.
+ */
+staticfn boolean
+ow_mysterious_force(int ring)
+{
+    int odds, diff, x, y, want;
+    coord cc;
+
+    if (rn2(4 + svc.context.mysteryforce))
+        return FALSE;
+    odds = 3 + (int) u.ualign.type; /* 2..4 */
+    diff = (odds <= 1) ? 0 : rn2(odds);
+    want = ring + diff;
+    if (want > svow.max_ring - 1)
+        want = svow.max_ring - 1;
+    diff = want - ring;
+    pline("A mysterious force momentarily surrounds you...");
+    svc.context.mysteryforce += rn2(diff + 2); /* L:0-4,N:0-3,C:0-2 */
+    /* back out along the hero's bearing, into the middle of the ring */
+    ow_polar((want - 1) * OW_RING_WIDTH + OW_RING_WIDTH / 2,
+             ow_bearing(u.ux, u.uy), &x, &y);
+    ow_ensure_generated(x, y);
+    ow_want_ring = want;
+    if (ow_rndspot_near(x, y, 14, 60, &cc, TRUE)) {
+        ow_want_ring = 0;
+        teleds(cc.x, cc.y, TELEDS_TELEPORT);
+    } else {
+        ow_want_ring = 0;
+        (void) safe_teleds(TELEDS_NO_FLAGS);
+    }
+    svow.last_ring_seen = (xint16) ow_ring_at(u.ux, u.uy);
+    disp.botl = TRUE;
+    ow_maintain();
+    return TRUE;
 }
 
 /* the sacred plaza at the center of the world, with the three high
@@ -1194,6 +1247,19 @@ ow_gen_chunk(int cx, int cy)
                             break;
                         }
             }
+    }
+    /* wall fixups may have turned rock under an engraving into wall */
+    if (!getenv("OWHACK_NOSWEEP")) {
+        struct engr *ep, *nep;
+
+        for (ep = head_engr; ep; ep = nep) {
+            nep = ep->nxt_engr;
+            if (ep->engr_x >= x0 - 1 && ep->engr_x <= x1 + 1
+                && ep->engr_y >= y0 - 1 && ep->engr_y <= y1 + 1
+                && (!ACCESSIBLE(levl[ep->engr_x][ep->engr_y].typ)
+                    || is_pool_or_lava(ep->engr_x, ep->engr_y)))
+                del_engr(ep);
+        }
     }
     c3 = clock();
     ow_populate(cx, cy, x0, y0, x1, y1);
@@ -1544,9 +1610,11 @@ ow_house(int x0, int y0, int x1, int y1, int side, boolean townhouse,
 staticfn void
 ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
 {
-    int W = size ? 27 : 19, H = size ? 17 : 11, x1 = x0 + W - 1,
+    /* building rows are 6 rows including walls, with a main street
+       (holding the fountain square) between the two rows */
+    int W = size ? 27 : 19, H = size ? 17 : 13, x1 = x0 + W - 1,
         y1 = y0 + H - 1, col, row, ncols = size ? 3 : 2, bx, by, kind,
-        nshops = 0, ntemples = 0, i;
+        nshops = 0, ntemples = 0, i, townno;
     struct mkroom *town, *croom;
     coord cc;
     boolean haswatch = (!ruined && ring <= 14 && size);
@@ -1624,11 +1692,13 @@ ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
         for (i = 0; i < town->nsubrooms; i++)
             fill_special_room(town->sbrooms[i]);
     }
-    /* town population */
+    /* town population, out in the streets (the town's own room number,
+       not inside one of its buildings) */
+    townno = town ? (int) (town - svr.rooms) + ROOMOFFSET : 0;
     if (haswatch) {
         if (!(svm.mvitals[PM_WATCH_CAPTAIN].mvflags & G_GONE)
             && ow_find_spot(x0, y0, x1, y1, &cc, TRUE)
-            && !levl[cc.x][cc.y].roomno) {
+            && levl[cc.x][cc.y].roomno == townno) {
             struct monst *m = makemon(&mons[PM_WATCH_CAPTAIN], cc.x, cc.y,
                                       NO_MM_FLAGS);
 
@@ -1638,7 +1708,7 @@ ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
         for (i = rn1(3, 2); i > 0; i--)
             if (!(svm.mvitals[PM_WATCHMAN].mvflags & G_GONE)
                 && ow_find_spot(x0, y0, x1, y1, &cc, TRUE)
-                && !levl[cc.x][cc.y].roomno) {
+                && levl[cc.x][cc.y].roomno == townno) {
                 struct monst *m = makemon(&mons[PM_WATCHMAN], cc.x, cc.y,
                                           NO_MM_FLAGS);
 
@@ -1649,7 +1719,7 @@ ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
     if (!ruined) {
         for (i = rn1(4, 2); i > 0; i--)
             if (ow_find_spot(x0, y0, x1, y1, &cc, TRUE)
-                && !levl[cc.x][cc.y].roomno)
+                && levl[cc.x][cc.y].roomno == townno)
                 (void) ow_townsperson(cc.x, cc.y);
     } else {
         /* ghost towns are haunted, or overrun */
@@ -1701,7 +1771,10 @@ ow_vault(int x0, int y0, int x1, int y1, int ring)
         fill_special_room(croom);
         svl.level.flags.has_vault = 1;
         gv.vault_x = vx, gv.vault_y = vy;
+        /* (the overworld otherwise counts its branch as already made) */
+        gm.made_branch = FALSE;
         mk_knox_portal(vx + 1, vy + 1);
+        gm.made_branch = TRUE;
         /* sometimes a teleporter nearby leads into the vault */
         if (!rn2(3) && ow_find_spot(max(vx - 12, x0), max(vy - 12, y0),
                                     min(vx + 12, x1), min(vy + 12, y1),
@@ -1811,7 +1884,7 @@ ow_shrine(int x0, int y0, int x1, int y1, int ring)
             }
     levl[cc.x][cc.y].typ = ALTAR;
     levl[cc.x][cc.y].altarmask = Align2amask(rn2(3) - 1);
-    if (!rn2(3))
+    if (!rn2(3) && levl[cc.x][cc.y + 1].typ == ROOM)
         make_engr_at(cc.x, cc.y + 1, "Pray here", NULL, 0L, ENGRAVE);
 }
 
@@ -1829,8 +1902,9 @@ ow_camp(int x0, int y0, int x1, int y1, int ring)
     if (!ow_find_spot(x0 + 4, y0 + 4, x1 - 4, y1 - 4, &ctr, FALSE))
         return;
     /* ring deeper camps get tougher bands */
-    cls = camp_classes[min((int) SIZE(camp_classes) - 1,
-                           rn2(3) + ring / 5)];
+    cls = rn2(3) + ring / 5; /* (not inside min(): rn2() would be
+                                 evaluated twice) */
+    cls = camp_classes[max(0, min((int) SIZE(camp_classes) - 1, cls))];
     for (i = 0; i < n; i++) {
         if (!ow_find_spot(ctr.x - 3, ctr.y - 3, ctr.x + 3, ctr.y + 3, &cc,
                           FALSE))
@@ -1954,8 +2028,8 @@ ow_structures(int cx, int cy, int x0, int y0, int x1, int y1)
         && biome != OWB_SWAMP && biome != OWB_BARRENS) {
         boolean big = (roll < 25);
 
-        tx = x0 + (big ? 2 : 6), ty = y0 + (big ? 7 : 10);
-        if (ow_rect_clear(tx, ty, tx + (big ? 26 : 18), ty + (big ? 16 : 10),
+        tx = x0 + (big ? 2 : 6), ty = y0 + (big ? 7 : 9);
+        if (ow_rect_clear(tx, ty, tx + (big ? 26 : 18), ty + (big ? 16 : 12),
                           FALSE)) {
             ow_town(tx, ty, ring, biome, big ? 1 : 0,
                     (boolean) (ring > 16 && rn2(3)));
@@ -2168,6 +2242,7 @@ mkoverworld(void)
 {
     if (!svow.inited)
         ow_init();
+    ow_world_dump(); /* (only when testing) */
     svl.level.flags.hero_memory = 1;
     svl.level.flags.is_maze_lev = 0;
     svl.level.flags.temperature = 0;
@@ -2773,6 +2848,10 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
         for (tt = gf.ftrap; tt; tt = tt->ntrap)
             if (tt->ttyp == MAGIC_PORTAL)
                 fprintf(fp, "portal %d,%d\n", tt->tx, tt->ty);
+            else if (tt->ttyp == VIBRATING_SQUARE)
+                fprintf(fp, "vibsq %d,%d\n", tt->tx, tt->ty);
+            else
+                fprintf(fp, "trap %d,%d %d\n", tt->tx, tt->ty, tt->ttyp);
         {
             stairway *st;
 
@@ -2829,6 +2908,32 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
             fputc(c, fp);
         }
         fputc('\n', fp);
+    }
+    for (x = 0; x < svn.nroom; x++) {
+        struct mkroom *r = &svr.rooms[x];
+
+        if (r->hx >= cx - rx && r->lx <= cx + rx && r->hy >= cy - ry
+            && r->ly <= cy + ry)
+            fprintf(fp, "room %d %d %d %d %d\n", r->lx, r->ly, r->hx, r->hy,
+                    r->rtype);
+    }
+    {
+        struct engr *ep;
+
+        for (ep = head_engr; ep; ep = ep->nxt_engr)
+            if (!ACCESSIBLE(levl[ep->engr_x][ep->engr_y].typ)
+                || is_pool_or_lava(ep->engr_x, ep->engr_y))
+                fprintf(fp, "badengr %d,%d typ %d \"%s\"\n", ep->engr_x,
+                        ep->engr_y, levl[ep->engr_x][ep->engr_y].typ,
+                        ep->engr_txt[actual_text]);
+    }
+    for (x = 0; x < gn.nsubroom; x++) {
+        struct mkroom *r = &gs.subrooms[x];
+
+        if (r->hx >= cx - rx && r->lx <= cx + rx && r->hy >= cy - ry
+            && r->ly <= cy + ry)
+            fprintf(fp, "room %d %d %d %d %d\n", r->lx, r->ly, r->hx, r->hy,
+                    r->rtype);
     }
     fclose(fp);
 }
@@ -2924,6 +3029,71 @@ ow_overview_lines(winid win)
 void
 ow_test_hook(void)
 {
+    const char *f;
+
+    /* automated playtesting (wizard mode only): place the hero exactly */
+    if (wizard && (f = getenv("OWHACK_TELEFILE")) != 0) {
+        FILE *fp = fopen(f, "r");
+        int x, y;
+
+        if (fp) {
+            int n = fscanf(fp, "%d %d", &x, &y);
+
+            (void) fclose(fp);
+            (void) remove(f);
+            if (n == 2 && isok(x, y)) {
+                coord cc;
+
+                if (In_overworld)
+                    ow_ensure_generated(x, y);
+                cc.x = x, cc.y = y;
+                if (!goodpos(x, y, &gy.youmonst, 0))
+                    (void) enexto(&cc, x, y, gy.youmonst.data);
+                teleds(cc.x, cc.y, TELEDS_TELEPORT);
+            }
+        }
+    }
     if (!In_overworld && getenv("OWHACK_MAPDUMP"))
         ow_debug_dump(u.ux, u.uy, 0, 0);
+}
+
+/* test aid: a coarse picture of the whole world's biomes (one character per
+   8x8 cells), written when OWHACK_WORLDMAP names a file */
+void
+ow_world_dump(void)
+{
+    static const char bch[NUM_OW_BIOMES] = {
+        '.', 't', 'T', 'M', 'h', '~', ',', '*', ':', 'r', '_', '#', 'x',
+        'L', 'z', 'c', ' ', '@'
+    };
+    const char *fname = getenv("OWHACK_WORLDMAP");
+    FILE *fp;
+    int x, y, r, k, px, py;
+    static char grid[OW_SIZE / 8 + 2][OW_SIZE / 8 + 2];
+
+    if (!fname || !*fname || !svow.inited)
+        return;
+    for (y = 0; y < OW_SIZE / 8; y++)
+        for (x = 0; x < OW_SIZE / 8; x++)
+            grid[y][x] = bch[ow_biome_at(x * 8 + 4, y * 8 + 4)];
+    for (r = 0; r < svow.nrings; r++)
+        for (k = 0; k < svow.rings[r].nportals; k++) {
+            ow_portal_pos(&svow.rings[r], k, &px, &py);
+            grid[py / 8][px / 8] = 'A' + (svow.rings[r].dnum % 26);
+        }
+    if (!(fp = fopen(fname, "w")))
+        return;
+    for (r = 0; r < svow.nrings; r++)
+        fprintf(fp, "ring %2d: %c = %s (%d portals)\n", svow.rings[r].ring,
+                'A' + (svow.rings[r].dnum % 26),
+                ow_portal_dest_name(svow.rings[r].dnum),
+                svow.rings[r].nportals);
+    fprintf(fp, "barrier ring %d, max ring %d\n", svow.barrier_ring,
+            svow.max_ring);
+    for (y = 0; y < OW_SIZE / 8; y += 2) { /* half vertical resolution */
+        for (x = 0; x < OW_SIZE / 8; x++)
+            fputc(grid[y][x], fp);
+        fputc('\n', fp);
+    }
+    fclose(fp);
 }

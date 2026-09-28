@@ -1773,6 +1773,13 @@ nhl_gamestate(lua_State *L)
             }
         /* some restored state would confuse the level change in progress */
         u.uz = cur_uz, u.uz0 = cur_uz0;
+        /* open world: the saved position was on the (enormous) overworld,
+           but the current level is still the tutorial's */
+        if (u.ux >= COLNO || u.uy >= ROWNO || u.ux0 >= COLNO
+            || u.uy0 >= ROWNO) {
+            u.ux = min(u.ux, COLNO - 1), u.uy = min(u.uy, ROWNO - 1);
+            u.ux0 = min(u.ux0, COLNO - 1), u.uy0 = min(u.uy0, ROWNO - 1);
+        }
         init_uhunger();
         free_tutorial(); /* release gg.gmst_XYZ */
         gg.gmst_stored = FALSE;

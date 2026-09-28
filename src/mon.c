@@ -1179,6 +1179,9 @@ mcalcdistress(void)
 staticfn void
 m_calcdistress(struct monst *mtmp)
 {
+    /* open world: monsters far away from the hero are dormant */
+    if (ow_mon_dormant(mtmp))
+        return;
     /* must check non-moving monsters once/turn in case they managed
        to end up in water or lava; note: when not in liquid they regen,
        shape-shift, timeout temporary maladies just like other monsters */
@@ -5471,7 +5474,10 @@ newcham(
 
     mtmp->meverseen = 0; /* never seen mon in present shape; newsym() ->
                           * display_monster() may change it right back */
-    newsym(mtmp->mx, mtmp->my);
+    /* (a migrating monster being restored to its natural shape as it
+       arrives isn't on the map yet) */
+    if (mtmp->mx)
+        newsym(mtmp->mx, mtmp->my);
 
     if (msg) {
         /* oldname is capitalized and might be an assigned name */

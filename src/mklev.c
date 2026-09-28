@@ -855,6 +855,19 @@ set_level_dims(int cols, int rows)
     nh_colno = cols, nh_rowno = rows;
     gx.x_maze_max = (COLNO - 1) & ~1;
     gy.y_maze_max = (ROWNO - 1) & ~1;
+    /* the hero's coordinates are still those of the previous level while
+       the new one is created or loaded; if the new level is smaller (the
+       overworld is much bigger than anything else), keep them in bounds
+       so that nothing displays or examines a location off the map; the
+       arrival code will put the hero in the right spot afterward */
+    if (u.ux >= COLNO)
+        u.ux = COLNO - 1;
+    if (u.uy >= ROWNO)
+        u.uy = ROWNO - 1;
+    if (u.ux0 >= COLNO)
+        u.ux0 = COLNO - 1;
+    if (u.uy0 >= ROWNO)
+        u.uy0 = ROWNO - 1;
     vp_invalidate();
 }
 
