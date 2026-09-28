@@ -2883,9 +2883,16 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
                 else if (!DEADMONSTER(mtmp)
                          && mtmp->data->msound == MS_NEMESIS)
                     fprintf(fp, "nemesis %d,%d\n", mtmp->mx, mtmp->my);
+            coordxy ax, ay;
+
             for (otmp = fobj; otmp; otmp = otmp->nobj)
                 if (is_quest_artifact(otmp))
                     fprintf(fp, "questart %d,%d\n", otmp->ox, otmp->oy);
+            for (ax = 1; ax < COLNO; ax++)
+                for (ay = 0; ay < ROWNO; ay++)
+                    if (IS_ALTAR(levl[ax][ay].typ))
+                        fprintf(fp, "altar %d,%d %d\n", ax, ay,
+                                levl[ax][ay].altarmask);
         }
         fclose(fp);
         return;

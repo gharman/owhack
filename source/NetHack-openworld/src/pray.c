@@ -2025,7 +2025,9 @@ dosacrifice(void)
             return ECMD_TIME;
         } else {
             offer_real_amulet(otmp, altaralign);
-            /*NOTREACHED*/
+            /* only reached by an Infidel: Moloch imbued the Idol (the
+               Amulet is gone) or refused, or the Idol isn't imbued yet */
+            return ECMD_TIME;
         }
     } /* real Amulet */
 
