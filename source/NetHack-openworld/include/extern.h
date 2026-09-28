@@ -1768,6 +1768,7 @@ extern struct obj *init_dummyobj(struct obj *, short, long);
 extern void init_obj_material(struct obj *) NONNULLARG1;
 extern boolean valid_obj_material(struct obj *, int) NONNULLARG1;
 extern void set_material(struct obj *, int) NONNULLARG1;
+extern void fixup_obj_material(struct obj *) NONNULLARG1;
 extern int material_weight(struct obj *, int) NONNULLARG1;
 extern int material_bonus(struct obj *) NONNULLARG1;
 extern int armor_bonus(struct obj *) NONNULLARG1;

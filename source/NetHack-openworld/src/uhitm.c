@@ -1224,6 +1224,7 @@ hmon_hitmon_misc_obj(
                     obj_stop_timers(obj);
                 obj->otyp = ROCK;
                 obj->oclass = GEM_CLASS;
+                fixup_obj_material(obj); /* eggs turn to stone */
                 obj->oartifact = 0;
                 obj->spe = 0;
                 obj->known = obj->dknown = obj->bknown = 0;

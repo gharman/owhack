@@ -1021,6 +1021,7 @@ give_spell(void)
                 break;
         }
         otmp->otyp = rnd_class(svb.bases[SPBOOK_CLASS], SPE_BLANK_PAPER);
+        fixup_obj_material(otmp);
     }
     /*
      * 25% chance of learning the spell directly instead of

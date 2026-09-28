@@ -4668,6 +4668,7 @@ acid_damage(struct obj *obj)
             }
         }
         obj->otyp = SCR_BLANK_PAPER;
+        fixup_obj_material(obj);
         obj->spe = 0;
         obj->dknown = 0;
     } else
@@ -4806,6 +4807,7 @@ water_damage(
             Your("%s %s.", ostr, vtense(ostr, "fade"));
 
         obj->otyp = SCR_BLANK_PAPER;
+        fixup_obj_material(obj);
         obj->dknown = 0;
         obj->spe = 0;
         if (in_invent)
@@ -4830,6 +4832,7 @@ water_damage(
             Your("%s %s.", ostr, vtense(ostr, "fade"));
 
         obj->otyp = SPE_BLANK_PAPER;
+        fixup_obj_material(obj);
         /* same re-init as over-reading or polymorph; matters if it gets
            polymorphed into non-blank; doesn't matter if eventually written
            on since that replaces it with new book and studied count of 0 */

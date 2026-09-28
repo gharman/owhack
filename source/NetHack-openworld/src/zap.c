@@ -1330,12 +1330,14 @@ cancel_item(struct obj *obj)
         case SCROLL_CLASS:
             costly_alteration(obj, COST_CANCEL);
             obj->otyp = SCR_BLANK_PAPER;
+            fixup_obj_material(obj);
             obj->spe = 0;
             break;
         case SPBOOK_CLASS:
             if (otyp != SPE_CANCELLATION && otyp != SPE_BOOK_OF_THE_DEAD) {
                 costly_alteration(obj, COST_CANCEL);
                 obj->otyp = SPE_BLANK_PAPER;
+                fixup_obj_material(obj);
                 /* cancelling a novel is more involved than a spellbook */
                 if (otyp == SPE_NOVEL) /* old type */
                     blank_novel(obj);
@@ -1354,6 +1356,7 @@ cancel_item(struct obj *obj)
                 obj->otyp = POT_WATER;
                 obj->odiluted = 0; /* same as any other water */
             }
+            fixup_obj_material(obj);
             break;
         }
     }

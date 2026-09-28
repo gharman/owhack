@@ -2916,8 +2916,10 @@ hornoplenty(
             what = (obj->quan > 1L) ? "Some potions" : "A potion";
         } else {
             obj = mkobj(FOOD_CLASS, FALSE);
-            if (obj->otyp == FOOD_RATION && !rn2(7))
+            if (obj->otyp == FOOD_RATION && !rn2(7)) {
                 obj->otyp = LUMP_OF_ROYAL_JELLY;
+                fixup_obj_material(obj);
+            }
             what = "Some food";
         }
         ++objcount;
@@ -4325,6 +4327,20 @@ set_material(struct obj *otmp, int material)
         otmp->oeroded2 = 0;
     if (otmp->oerodeproof && !is_damageable(otmp))
         otmp->oerodeproof = 0;
+}
+
+/* After an object's type has been changed (a spellbook fading to blank
+   paper, a scroll getting wet, ...), make sure that it is still made of
+   something that its new type can be made of; parchment spellbooks are
+   leather, for instance, but blank ones are paper. */
+void
+fixup_obj_material(struct obj *obj)
+{
+    if (!valid_obj_material(obj, obj->material)) {
+        set_material(obj, objects[obj->otyp].oc_material);
+        if (obj->where == OBJ_CONTAINED)
+            container_weight(obj->ocontainer);
+    }
 }
 
 /* Relative weights of different materials.  These are arbitrary units

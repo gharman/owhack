@@ -4335,8 +4335,13 @@ not_actually_specifying_material(const char *const str, const char *matstr)
             const char *aftermat = str + matlen + 1, /* past material */
                        *clsname = def_oc_syms[(int) objects[i].oc_class]
                                       .explain;
+            size_t clslen = clsname ? strlen(clsname) : 0;
 
-            if (clsname && !strncmpi(aftermat, clsname, strlen(clsname)))
+            /* "copper ring" or "copper rings" but not "copper ring mail" */
+            if (clsname && !strncmpi(aftermat, clsname, clslen)
+                && (!aftermat[clslen]
+                    || (lowc(aftermat[clslen]) == 's'
+                        && !aftermat[clslen + 1])))
                 return TRUE;
         }
     }

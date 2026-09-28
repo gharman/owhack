@@ -199,6 +199,7 @@ resetobjs(struct obj *ochain, boolean restore)
                 curse(otmp);
             } else if (otmp->otyp == SPE_BOOK_OF_THE_DEAD) {
                 otmp->otyp = SPE_BLANK_PAPER;
+                fixup_obj_material(otmp);
                 curse(otmp);
             }
         }
