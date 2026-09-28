@@ -799,6 +799,7 @@ polyatwill(void)
                 morehungry(-u.uen);
                 u.uen = 0;
             }
+            disp.botl = TRUE;
         }
         return ECMD_TIME;
     } else if (Race_if(PM_HUMAN_WEREWOLF)

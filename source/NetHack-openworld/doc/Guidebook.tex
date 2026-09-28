@@ -183,6 +183,28 @@ roles have restrictions on which races are eligible for them):
 %.pg
 %
 \begin{description}
+\item[Centaurs]
+have the torso of a human on the body of a horse.  They are very fast
+and deliver powerful kicks, fire bows and crossbows with great skill,
+and wield polearms and lances as though mounted; but they can neither
+wear boots nor ride.
+%.pg
+%
+\item[Doppelgangers]
+are shapeshifters who remember the creatures they have eaten.  They can
+polymorph at will ({\tt \#youpoly}), paying for it in energy, change
+back for free, and gain control over their shape as they grow in
+experience.
+%.pg
+%
+\item[Draugr]
+are undead warriors risen from their burial mounds.  They need no air
+and resist cold, sleep, poison, sickness and level drain, and they can
+revive a few times after being destroyed; but they eat only rotten meat,
+fire and blessings hurt them, and shopkeepers, town watchmen and the
+priests of lawful and neutral gods will have nothing to do with them.
+%.pg
+%
 \item[Dwarves]
 are smaller than humans or elves, but are stocky and solid
 individuals.  Dwarves' most notable trait is their great expertise in mining
@@ -194,6 +216,21 @@ mithril armor of the Elves.
 are agile, quick, and perceptive; very little of what goes
 on will escape an Elf.  The quality of Elven craftsmanship often gives
 them an advantage in arms and armor.
+%.pg
+%
+\item[Ghosts]
+are the incorporeal spirits of the dead.  They fly, need neither food
+nor air, drift through walls and rock (at a cost in energy, and only
+while unburdened), are only half hurt by ordinary blows and missiles,
+chill the living with their touch and frighten those they strike; but
+they can carry little, and armor protects them only half as well.
+%.pg
+%
+\item[Giants]
+are huge and immensely strong.  They can carry and throw boulders, dig
+and kick down doors with ease, and know gems at a touch; but they are
+slow, can wear no body armor or cloak, and nothing can make them
+stealthy.
 %.pg
 %
 \item[Gnomes]
@@ -209,11 +246,37 @@ are thus the norm to which other races are often compared.  Although
 they have no special abilities, they can succeed in any role.
 %.pg
 %
+\item[Illithids]
+are mind flayers:  telepathic and resistant to psychic attack, they eat
+brains with their tentacles and assail minds with their psionics ({\tt
+\#monster} and the psionic wave), which a metal helmet blocks.
+%.pg
+%
 \item[Orcs]
 are a cruel and barbaric race that hate every living thing
 (including other orcs).  Above all others, Orcs hate Elves with a passion
 unequalled, and will go out of their way to kill one at any opportunity.
 The armor and weapons fashioned by the Orcs are typically of inferior quality.
+%.pg
+%
+\item[Tortles]
+are turtle folk, born swimmers whose shell grows harder as they gain
+experience.  They can hide in it ({\tt \#monster}), but they cannot wear
+body armor or boots.
+%.pg
+%
+\item[Vampires]
+are undead who live on blood, drinking it from fresh corpses and potions
+and draining life with their bite.  With experience they fly and can
+take the form of a bat, a fog cloud or a warg ({\tt \#monster}); but
+silver, fire and blessings hurt them, and they cannot eat solid food.
+%.pg
+%
+\item[Werewolves]
+are humans whose lycanthropy is their nature rather than a curse.  They
+regenerate and, once experienced, change between human and wolf form at
+will ({\tt \#youpoly}); but silver hurts them, and attempts to purify
+them do them harm.
 \end{description}
 
 %.hn 1
@@ -5116,8 +5179,11 @@ objects or monsters is less intrusive.
 Default is off.  Persistent.
 %.lp
 \item[race]
-Choices are \texttt{human}, \texttt{dwarf}, \texttt{elf}, \texttt{gnome}, and
-\texttt{orc} but most roles restrict which of the non-human races are allowed.
+Choices are \texttt{human}, \texttt{dwarf}, \texttt{elf}, \texttt{gnome},
+\texttt{orc}, \texttt{giant}, \texttt{centaur}, \texttt{illithid},
+\texttt{tortle}, \texttt{draugr}, \texttt{vampire}, \texttt{werewolf},
+\texttt{doppelganger}, and \texttt{ghost}
+but most roles restrict which of the non-human races are allowed.
 See \textit{role}
 for a description of how to use negation to exclude choices.
 %.lp ""
