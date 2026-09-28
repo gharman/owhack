@@ -2494,8 +2494,10 @@ ow_mon_dormant(struct monst *mtmp)
         dy = -dy;
     if (dx <= OW_ACTIVE_RX && dy <= OW_ACTIVE_RY)
         return FALSE;
-    /* the Wizard and those who covet what the hero carries don't rest */
-    if (mtmp->iswiz)
+    /* the Wizard and those who covet what the hero carries don't rest,
+       nor does a shopkeeper pursuing a thief or a vault guard on duty */
+    if (mtmp->iswiz || mtmp->isgd
+        || (mtmp->isshk && ESHK(mtmp) && ESHK(mtmp)->following))
         return FALSE;
     if (is_covetous(mtmp->data)
         && (u.uhave.amulet || u.uhave.bell || u.uhave.book
