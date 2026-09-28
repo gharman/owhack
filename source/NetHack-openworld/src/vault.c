@@ -492,6 +492,19 @@ invault(void)
             mongone(guard);
             return;
         }
+        /* vault guards know the faces of escaped convicts (EvilHack) */
+        if (Convict_recognizable) {
+            setmangry(guard, FALSE);
+            if (!Deaf) {
+                SetVoice(guard, 0, 80, 0);
+                verbalize("I saw your picture on the wanted poster!");
+            }
+            if (!MON_WEP(guard)) {
+                guard->weapon_check = NEED_HTH_WEAPON;
+                (void) mon_wield_item(guard);
+            }
+            return;
+        }
         if (Strangled || is_silent(gy.youmonst.data) || gm.multi < 0) {
             /* [we ought to record whether this message has already
                been given in order to vary it upon repeat visits, but

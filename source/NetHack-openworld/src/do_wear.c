@@ -816,6 +816,7 @@ Shirt_on(void)
     switch (uarmu->otyp) {
     case HAWAIIAN_SHIRT:
     case T_SHIRT:
+    case STRIPED_SHIRT:
         break;
     default:
         impossible(unknown_type, c_shirt, uarmu->otyp);
@@ -837,6 +838,7 @@ Shirt_off(void)
     switch (uarmu->otyp) {
     case HAWAIIAN_SHIRT:
     case T_SHIRT:
+    case STRIPED_SHIRT:
         break;
     default:
         impossible(unknown_type, c_shirt, uarmu->otyp);
@@ -945,6 +947,7 @@ Armor_on(void)
         uarm->known = 1; /* suit's +/- evident because of status line AC */
         update_inventory();
     }
+    check_wings(FALSE);
     dragon_armor_handling(uarm, TRUE, TRUE);
     /* gold DSM requires extra handling since it emits light when worn;
        do that after the special armor handling */
@@ -967,6 +970,7 @@ Armor_off(void)
     svc.context.takeoff.mask &= ~W_ARM;
     setworn((struct obj *) 0, W_ARM);
     svc.context.takeoff.cancelled_don = FALSE;
+    check_wings(FALSE);
 
     /* taking off yellow dragon scales/mail might be fatal; arti_light
        comes from gold dragon scales/mail so they don't overlap, but
@@ -997,6 +1001,7 @@ Armor_gone(void)
     svc.context.takeoff.mask &= ~W_ARM;
     setnotworn(uarm);
     svc.context.takeoff.cancelled_don = FALSE;
+    check_wings(FALSE);
 
     /* losing yellow dragon scales/mail might be fatal; arti_light
        comes from gold dragon scales/mail so they don't overlap, but
@@ -1968,8 +1973,10 @@ cursed(struct obj *otmp)
         impossible("cursed without otmp");
         return 0;
     }
-    /* Curses, like chickens, come home to roost. */
-    if ((otmp == uwep) ? welded(otmp) : (int) otmp->cursed) {
+    /* Curses, like chickens, come home to roost; but Infidels are immune
+       to curses */
+    if ((otmp == uwep) ? welded(otmp)
+                       : (int) (otmp->cursed && !Role_if(PM_INFIDEL))) {
         boolean use_plural = (is_boots(otmp) || is_gloves(otmp)
                               || otmp->otyp == LENSES || otmp->quan > 1L);
 

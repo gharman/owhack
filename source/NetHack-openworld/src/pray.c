@@ -15,8 +15,6 @@ staticfn void at_your_feet(const char *);
 staticfn void gcrownu(void);
 staticfn void give_spell(void);
 staticfn void pleased(aligntyp);
-staticfn void godvoice(aligntyp, const char *);
-staticfn void god_zaps_you(aligntyp);
 staticfn void fry_by_god(aligntyp, boolean);
 staticfn void gods_angry(aligntyp);
 staticfn void gods_upset(aligntyp);
@@ -292,6 +290,14 @@ staticfn struct obj *
 worst_cursed_item(void)
 {
     struct obj *otmp;
+
+    /* Infidels are immune to curses, but a cursed luckstone is still bad */
+    if (Role_if(PM_INFIDEL)) {
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+            if (confers_luck(otmp) && otmp->cursed)
+                return otmp;
+        return (struct obj *) 0;
+    }
 
     /* if strained or worse, check for loadstone first */
     if (near_capacity() >= HVY_ENCUMBER) {
@@ -610,7 +616,7 @@ fix_worst_trouble(int trouble)
  * bathroom walls, but who is foiled by bathrobes." --Bertrand Russell, 1943
  * Divine wrath, dungeon walls, and armor follow the same principle.
  */
-staticfn void
+void
 god_zaps_you(aligntyp resp_god)
 {
     if (u.uswallow) {
@@ -814,12 +820,15 @@ gcrownu(void)
     short class_gift;
 #define ok_wep(o) ((o) && ((o)->oclass == WEAPON_CLASS || is_weptool(o)))
 
-    HSee_invisible |= FROMOUTSIDE;
-    HFire_resistance |= FROMOUTSIDE;
-    HCold_resistance |= FROMOUTSIDE;
-    HShock_resistance |= FROMOUTSIDE;
-    HSleep_resistance |= FROMOUTSIDE;
-    HPoison_resistance |= FROMOUTSIDE;
+    /* Moloch's worshippers get their intrinsics from becoming a demon */
+    if (u.ualign.type != A_NONE) {
+        HSee_invisible |= FROMOUTSIDE;
+        HFire_resistance |= FROMOUTSIDE;
+        HCold_resistance |= FROMOUTSIDE;
+        HShock_resistance |= FROMOUTSIDE;
+        HSleep_resistance |= FROMOUTSIDE;
+        HPoison_resistance |= FROMOUTSIDE;
+    }
     godvoice(u.ualign.type, (char *) 0);
 
     class_gift = STRANGE_OBJECT;
@@ -838,7 +847,36 @@ gcrownu(void)
 
     obj = ok_wep(uwep) ? uwep : 0;
     already_exists = in_hand = FALSE; /* lint suppression */
+    if (Role_if(PM_PIRATE)) {
+        /* the Pirate King (or Queen); treated as neutral for titles */
+        u.uevent.uhand_of_elbereth = 2;
+        in_hand = u_wield_art(ART_REAVER);
+        already_exists = exist_artifact(SCIMITAR, artiname(ART_REAVER));
+        SetVoice((struct monst *) 0, 0, 80, voice_deity);
+        verbalize("Hurrah for our Pirate %s!",
+                  flags.female ? "Queen" : "King");
+        livelog_printf(LL_DIVINEGIFT,
+                       "was granted the title of \"Pirate %s\" by %s",
+                       flags.female ? "Queen" : "King", u_gname());
+    } else
     switch (u.ualign.type) {
+    case A_NONE:
+        /* Infidel: crowned the Emissary of Moloch, becomes a demon */
+        u.uevent.uhand_of_elbereth = 4;
+        SetVoice((struct monst *) 0, 0, 80, voice_deity);
+        verbalize("Thou shalt be my vassal of suffering and terror!");
+        livelog_printf(LL_DIVINEGIFT, "became the Emissary of Moloch");
+        unrestrict_weapon_skill(P_TRIDENT);
+        P_MAX_SKILL(P_TRIDENT) = P_EXPERT;
+        /* infidels can reach skilled riding, so don't just unrestrict it */
+        if (P_RESTRICTED(P_RIDING)) {
+            P_SKILL(P_RIDING) = P_UNSKILLED;
+            P_MAX_SKILL(P_RIDING) = P_SKILLED;
+            P_ADVANCE(P_RIDING) = 0;
+        }
+        class_gift = SPE_FIREBALL; /* no special weapon */
+        infidel_demonize();
+        break;
     case A_LAWFUL:
         u.uevent.uhand_of_elbereth = 1;
         SetVoice((struct monst *) 0, 0, 80, voice_deity);
@@ -898,6 +936,29 @@ gcrownu(void)
             obj = uwep; /* to be blessed,&c */
     }
 
+    if (Role_if(PM_PIRATE)) {
+        /* the Pirate King's cutlass */
+        if (class_gift != STRANGE_OBJECT) {
+            ; /* already got bonus above */
+        } else if (obj && in_hand) {
+            Your("%s gleams wickedly!", xname(obj));
+            observe_object(obj);
+        } else if (!already_exists) {
+            obj = mksobj(SCIMITAR, FALSE, FALSE);
+            obj = oname(obj, artiname(ART_REAVER),
+                        ONAME_GIFT | ONAME_KNOW_ARTI);
+            obj->spe = 1;
+            at_your_feet("A cutlass");
+            dropy(obj);
+            u.ugifts++;
+            livelog_printf(LL_DIVINEGIFT | LL_ARTIFACT,
+                           "was bestowed with %s", artiname(ART_REAVER));
+        }
+        /* acquire Reaver's skill regardless of weapon or gift */
+        unrestrict_weapon_skill(P_SABER);
+        if (is_art(obj, ART_REAVER))
+            discover_artifact(ART_REAVER);
+    } else
     switch (u.ualign.type) {
     case A_LAWFUL:
         if (class_gift != STRANGE_OBJECT) {
@@ -977,9 +1038,13 @@ gcrownu(void)
         break;
     }
 
-    /* enhance weapon regardless of alignment or artifact status */
+    /* enhance weapon regardless of alignment or artifact status;
+       Moloch curses it instead of blessing it */
     if (ok_wep(obj)) {
-        bless(obj);
+        if (u.ualign.type == A_NONE)
+            curse(obj);
+        else
+            bless(obj);
         obj->oeroded = obj->oeroded2 = 0;
         obj->oerodeproof = TRUE;
         obj->bknown = obj->rknown = 1; /* ok to skip set_bknown() */
@@ -1292,10 +1357,26 @@ pleased(aligntyp g_align)
             if (Blind)
                 You_feel("the power of %s.", u_gname());
             else
-                You("are surrounded by %s aura.", an(hcolor(NH_LIGHT_BLUE)));
+                You("are surrounded by %s aura.",
+                    an(hcolor((g_align == A_NONE) ? NH_BLACK
+                                                  : NH_LIGHT_BLUE)));
             for (otmp = gi.invent; otmp; otmp = nextobj) {
                 nextobj = otmp->nobj;
-                if (otmp->cursed
+                if (g_align == A_NONE) {
+                    /* Moloch curses any blessed or uncursed piece of
+                       armor or weapon */
+                    if (!otmp->cursed && (otmp->oclass == ARMOR_CLASS
+                                          || otmp->oclass == WEAPON_CLASS)) {
+                        if (!Blind) {
+                            pline("%s %s.", Yobjnam2(otmp, "softly glow"),
+                                  hcolor(NH_BLACK));
+                            iflags.last_msg = PLNMSG_OBJ_GLOWS;
+                            otmp->bknown = 1; /* ok to bypass set_bknown() */
+                            ++any;
+                        }
+                        curse(otmp);
+                    }
+                } else if (otmp->cursed
                     && (otmp != uarmh /* [see worst_cursed_item()] */
                         || uarmh->otyp != HELM_OF_OPPOSITE_ALIGNMENT)) {
                     if (!Blind) {
@@ -1419,7 +1500,7 @@ water_prayer(boolean bless_water)
     return (boolean) (changed > 0L);
 }
 
-staticfn void
+void
 godvoice(aligntyp g_align, const char *words)
 {
     const char *quot = "";
@@ -1474,7 +1555,9 @@ consume_offering(struct obj *otmp)
                 ? "flash of light"
                 : (u.ualign.type == A_NEUTRAL)
                     ? "plume of smoke"
-                    : "burst of flame");
+                    : (u.ualign.type == A_NONE)
+                      ? "torrent of hellfire"
+                      : "burst of flame");
     if (carried(otmp))
         useup(otmp);
     else
@@ -1498,6 +1581,10 @@ offer_too_soon(aligntyp altaralign)
     }
     You_feel("%s.", Hallucination
                     ? "homesick"
+                    /* an Infidel must take the Amulet to Moloch's
+                       Sanctum, at the bottom of Gehennom */
+                    : (Role_if(PM_INFIDEL) && !u.uidol_imbued)
+                        ? "an urge to descend deeper"
                     /* if on track, give a big hint */
                     : (altaralign == u.ualign.type)
                         ? "an urge to return to the high altar at the center of the world"
@@ -1538,6 +1625,42 @@ offer_real_amulet(struct obj *otmp, aligntyp altaralign)
 {
     static NEARDATA const char
         cloud_of_smoke[] = "A cloud of %s smoke surrounds you...";
+
+    /* An Infidel returns the Amulet to Moloch, who imbues the Idol of Moloch
+       with its power; the Idol is what they must carry to their victory */
+    if (Role_if(PM_INFIDEL) && altaralign == A_NONE) {
+        struct obj *idol = find_quest_artifact(1 << OBJ_INVENT);
+
+        You("offer the Amulet of Yendor to %s...", a_gname());
+        godvoice(A_NONE, (char *) 0);
+        if (!idol) {
+            /* Moloch won't take the Amulet without the Idol */
+            qt_pager("moloch_noidol");
+            return;
+        }
+        if (uamul == otmp)
+            Amulet_off();
+        if (carried(otmp))
+            useup(otmp);
+        else
+            useupf(otmp, 1L);
+        qt_pager("moloch_imbue");
+        if (idol->where == OBJ_CONTAINED) {
+            /* the Idol cannot be contained now, so we have to remove it */
+            obj_extract_self(idol);
+            idol = hold_another_object(idol, "Oops!", (const char *) 0,
+                                       (const char *) 0);
+        }
+        if (idol)
+            imbue_idol(idol);
+        return;
+    }
+    /* an Infidel whose Idol isn't imbued doesn't give the Amulet to the
+       false gods of heaven */
+    if (Role_if(PM_INFIDEL) && !u.uidol_imbued) {
+        offer_too_soon(altaralign);
+        return;
+    }
 
     /* The final Test.  Did you win? */
     if (uamul == otmp)
@@ -1643,8 +1766,9 @@ offer_different_alignment_altar(
     /* Is this a conversion ? */
     /* An unaligned altar in Gehennom will always elicit rejection. */
     if (ugod_is_angry() || (altaralign == A_NONE && Inhell)) {
+        /* Infidels will never be accepted by the gods of heaven */
         if (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL]
-            && altaralign != A_NONE) {
+            && altaralign != A_NONE && !Role_if(PM_INFIDEL)) {
             You("have a strong feeling that %s is angry...", u_gname());
             consume_offering(otmp);
             pline("%s accepts your allegiance.", a_gname());
@@ -1666,7 +1790,12 @@ offer_different_alignment_altar(
     } else {
         consume_offering(otmp);
         You("sense a conflict between %s and %s.", u_gname(), a_gname());
-        if (rn2(8 + u.ulevel) > 5) {
+        if (rn2(8 + u.ulevel) > 5
+            /* Moloch has difficulty converting altars far from Gehennom,
+               unless his worshipper carries the Idol of Moloch */
+            && !(u.ualign.type == A_NONE
+                 && !(Role_if(PM_INFIDEL) && u.uhave.questart)
+                 && !Inhell && rn2(5))) {
             struct monst *pri;
             boolean shrine;
 
@@ -1681,6 +1810,7 @@ offer_different_alignment_altar(
             if (!Blind)
                 pline_The("altar glows %s.",
                           hcolor((u.ualign.type == A_LAWFUL) ? NH_WHITE
+                                 : (u.ualign.type == A_NONE) ? NH_RED
                                  : u.ualign.type ? NH_BLACK
                                    : (const char *) "gray"));
 
@@ -1710,17 +1840,18 @@ sacrifice_your_race(
 {
     int pm;
 
-    if (is_demon(gy.youmonst.data) || Race_if(PM_HUMAN_WEREWOLF)) {
+    if (is_demon(raceptr(&gy.youmonst)) || Race_if(PM_HUMAN_WEREWOLF)) {
         /* werewolves too (Slash'EM) */
         You("find the idea very satisfying.");
         exercise(A_WIS, TRUE);
-    } else if (u.ualign.type != A_CHAOTIC) {
+    } else if (u.ualign.type > A_CHAOTIC) {
         pline("You'll regret this infamous offense!");
         exercise(A_WIS, FALSE);
     }
 
     if (highaltar
-        && (altaralign != A_CHAOTIC || u.ualign.type != A_CHAOTIC)) {
+        && (altaralign != A_CHAOTIC || u.ualign.type != A_CHAOTIC)
+        && (altaralign != A_NONE || u.ualign.type != A_NONE)) {
         desecrate_altar(highaltar, altaralign);
         return;
     } else if (altaralign != A_CHAOTIC && altaralign != A_NONE) {
@@ -1733,7 +1864,8 @@ sacrifice_your_race(
             pline_The("altar is stained with %s blood.",
                       is_human(&mons[otmp->corpsenm]) ? "human"
                                                       : gu.urace.adj);
-        levl[u.ux][u.uy].altarmask = AM_CHAOTIC;
+        levl[u.ux][u.uy].altarmask = (u.ualign.type == A_NONE) ? AM_NONE
+                                                                : AM_CHAOTIC;
         newsym(u.ux, u.uy); /* in case Invisible to self */
         angry_priest();
     } else {
@@ -1754,7 +1886,9 @@ sacrifice_your_race(
         } else {
             /* either you're chaotic or altar is Moloch's or both */
             pline_The("blood covers the altar!");
-            change_luck(altaralign == A_NONE ? -2 : 2);
+            change_luck((altaralign == u.ualign.type
+                         || (altaralign == A_CHAOTIC
+                             && u.ualign.type == A_CHAOTIC)) ? 2 : -2);
             demonless_msg = "blood coagulates";
         }
         if ((pm = dlord(altaralign)) != NON_PM
@@ -1778,7 +1912,7 @@ sacrifice_your_race(
             pline_The("%s.", demonless_msg);
     }
 
-    if (u.ualign.type != A_CHAOTIC) {
+    if (u.ualign.type > A_CHAOTIC) {
         adjalign(-5);
         u.ugangr += 3;
         (void) adjattrib(A_WIS, -1, TRUE);
@@ -1910,7 +2044,9 @@ dosacrifice(void)
             return ECMD_TIME;
         } else {
             offer_real_amulet(otmp, altaralign);
-            /*NOTREACHED*/
+            /* only reached by an Infidel: Moloch imbued the Idol (the
+               Amulet is gone) or refused, or the Idol isn't imbued yet */
+            return ECMD_TIME;
         }
     } /* real Amulet */
 
@@ -1954,12 +2090,17 @@ eval_offering(struct obj *otmp, aligntyp altaralign)
 
     ptr = &mons[otmp->corpsenm];
 
+    /* sacrifices made with Secespita are worth half again as much */
+    if (u_wield_art(ART_SECESPITA))
+        value += value / 2;
+
     if (is_undead(ptr)) { /* Not demons--no demon corpses */
         /* most undead that leave a corpse yield 'human' (or other race)
            corpse so won't get here; the exception is wraith; give the
            bonus for wraith to chaotics too because they are sacrificing
-           something valuable (unless hero refuses to eat such things) */
-        if (u.ualign.type != A_CHAOTIC
+           something valuable (unless hero refuses to eat such things);
+           Moloch's worshippers get no bonus */
+        if (u.ualign.type > A_CHAOTIC
             /* reaching this side of the 'or' means hero is chaotic */
             || (ptr == &mons[PM_WRAITH] && u.uconduct.unvegetarian))
             value += 1;
@@ -2043,7 +2184,9 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
     }
     if (has_omonst(otmp)
                && (mtmp = get_mtraits(otmp, FALSE)) != 0
-               && mtmp->mtame) {
+               && mtmp->mtame
+               /* Moloch is fine with the sacrifice of pets */
+               && !(u.ualign.type == A_NONE && altaralign == A_NONE)) {
             /* mtmp is a temporary pointer to a tame monster's attributes,
              * not a real monster */
         pline("So this is how you repay loyalty?");
@@ -2059,6 +2202,11 @@ offer_corpse(struct obj *otmp, boolean highaltar, aligntyp altaralign)
         pline1(nothing_happens);
         return;
     }
+    /* even cross-aligned sacrifices count, as long as they're ultimately
+       made to Moloch (not a conversion attempt) */
+    if (u.ualign.type == A_NONE && value > 0
+        && !(ugod_is_angry() && altaralign != A_NONE))
+        moloch_offering(value);
     if (value < 0) {
         offer_negative_valued(highaltar, altaralign);
         return;
@@ -2087,7 +2235,7 @@ offer_valued(
     /* OK, you get brownie points. */
     if (u.ugangr) {
         int saved_anger = u.ugangr;
-        u.ugangr -= ((value * (u.ualign.type == A_CHAOTIC ? 2 : 3))
+        u.ugangr -= ((value * (u.ualign.type <= A_CHAOTIC ? 2 : 3))
                      / MAXVALUE);
         if (u.ugangr < 0)
             u.ugangr = 0;
@@ -2121,7 +2269,7 @@ offer_valued(
         You_feel("partially absolved.");
     } else if (u.ublesscnt > 0) {
         int saved_cnt = u.ublesscnt;
-        u.ublesscnt -= ((value * (u.ualign.type == A_CHAOTIC ? 500 : 300))
+        u.ublesscnt -= ((value * (u.ualign.type <= A_CHAOTIC ? 500 : 300))
                         / MAXVALUE);
         if (u.ublesscnt < 0)
             u.ublesscnt = 0;
@@ -2185,8 +2333,9 @@ can_pray(boolean praying) /* false means no messages should be given */
     gp.p_aligntyp = on_altar() ? a_align(u.ux, u.uy) : u.ualign.type;
     gp.p_trouble = in_trouble();
 
-    if (is_demon(gy.youmonst.data) /* ok if chaotic or none (Moloch) */
-        && (gp.p_aligntyp == A_LAWFUL || gp.p_aligntyp != A_NEUTRAL)) {
+    if (maybe_polyd(is_demon(gy.youmonst.data), Race_if(PM_DEMON))
+        /* ok if chaotic or none (Moloch) */
+        && gp.p_aligntyp > A_CHAOTIC) {
         if (praying)
             pline_The("very idea of praying to a %s god is repugnant to you.",
                       gp.p_aligntyp ? "lawful" : "neutral");
@@ -2203,8 +2352,10 @@ can_pray(boolean praying) /* false means no messages should be given */
     else
         alignment = u.ualign.record;
 
-    if (gp.p_aligntyp == A_NONE) /* praying to Moloch */
-        gp.p_type = -2;
+    if (gp.p_aligntyp == A_NONE && u.ualign.type != A_NONE)
+        gp.p_type = -2; /* praying to Moloch */
+    else if (gp.p_aligntyp == A_NONE && !moloch_hears_prayer())
+        gp.p_type = -3; /* Moloch's worshipper praying far from Gehennom */
     else if ((gp.p_trouble > 0) ? (u.ublesscnt > 200)   /* big trouble */
              : (gp.p_trouble < 0) ? (u.ublesscnt > 100) /* minor difficulty */
                : (u.ublesscnt > 0))                     /* not in trouble */
@@ -2226,7 +2377,9 @@ can_pray(boolean praying) /* false means no messages should be given */
        return value a non-deterministic approximation for enlightenment.
        This case should be uncommon enough to live with... */
 
-    return !praying ? (boolean) (gp.p_type == 3 && !Inhell) : TRUE;
+    return !praying ? (boolean) (gp.p_type == 3
+                                 && (!Inhell || u.ualign.type == A_NONE))
+                    : TRUE;
 }
 
 /* return TRUE if praying revived a pet corpse */
@@ -2319,7 +2472,7 @@ dopray(void)
     gn.nomovemsg = "You finish your prayer.";
     ga.afternmv = prayer_done;
 
-    if (gp.p_type == 3 && !Inhell) {
+    if (gp.p_type == 3 && (!Inhell || u.ualign.type == A_NONE)) {
         /* if you've been true to your god you can't die while you pray */
         if (!Blind)
             You("are surrounded by a shimmering light.");
@@ -2347,6 +2500,11 @@ prayer_done(void) /* M. Stephenson (1.0.3b) */
             pline("Nothing else happens."); /* not actually true... */
             return 1;
         } /* else use regular Inhell result below */
+    } else if (gp.p_type == -3) {
+        pline("Unfortunately, this far from Gehennom %s can't hear you.",
+              align_gname(alignment));
+        /* no further effects */
+        return 0;
     } else if (gp.p_type == -1) {
         /* praying while poly'd into an undead creature while non-chaotic */
         godvoice(alignment,
@@ -2361,7 +2519,7 @@ prayer_done(void) /* M. Stephenson (1.0.3b) */
         exercise(A_CON, FALSE);
         return 1;
     }
-    if (Inhell) {
+    if (Inhell && u.ualign.type != A_NONE) {
         pline("Since you are in Gehennom, %s can't help you.",
               align_gname(alignment));
         /* haltingly aligned is least likely to anger */
@@ -2389,10 +2547,10 @@ prayer_done(void) /* M. Stephenson (1.0.3b) */
         } else
             pleased(alignment);
     } else {
-        /* coaligned */
+        /* coaligned; Moloch makes unholy water */
         if (on_altar()) {
             (void) pray_revive();
-            (void) water_prayer(TRUE);
+            (void) water_prayer(alignment != A_NONE);
         }
         pleased(alignment); /* nice */
     }
@@ -2506,7 +2664,8 @@ doturn(void)
         return (u.uconduct.gnostic == 1) ? ECMD_TIME : ECMD_OK;
     }
     if ((u.ualign.type != A_CHAOTIC
-         && (is_demon(gy.youmonst.data) || u_undead()))
+         && (maybe_polyd(is_demon(gy.youmonst.data), Race_if(PM_DEMON))
+             || u_undead() || is_vampshifter(&gy.youmonst)))
         || u.ugangr > 6) { /* "Die, mortal!" */
         pline("For some reason, %s seems to ignore you.", Gname);
         aggravate();

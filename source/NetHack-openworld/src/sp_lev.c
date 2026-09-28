@@ -1979,6 +1979,10 @@ create_monster(monster *m, struct mkroom *croom)
     if (In_mines(&u.uz) && pm && your_race(pm)
         && (Race_if(PM_DWARF) || Race_if(PM_GNOME)) && rn2(3))
         pm = (struct permonst *) 0;
+    /* the servants of Moloch in his Sanctum welcome his cultists
+       (EvilHack) */
+    if (Role_if(PM_INFIDEL) && Is_sanctum(&u.uz) && m->peaceful == 0 && pm)
+        m->peaceful = 1;
 
     if (pm) {
         int loc = pm_to_humidity(pm);

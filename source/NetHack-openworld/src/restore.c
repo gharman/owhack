@@ -613,6 +613,9 @@ restgamestate(NHFILE *nhfp)
     gy.youmonst.cham = u.mcham;
 
 #ifndef SFCTOOL
+    /* an Infidel crowned by Moloch has become a demon */
+    if (u.uevent.uhand_of_elbereth == 4)
+        set_demon_race();
     if (restoring_special && iflags.explore_error_flag) {
         /* savefile has wizard or explore mode, but player is no longer
            authorized to access either; can't downgrade mode any further, so

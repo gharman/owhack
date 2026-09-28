@@ -582,7 +582,7 @@ dump_everything(
 
     /* character name and basic role info */
     Sprintf(pbuf, "%s, %s %s %s %s",
-            svp.plname, aligns[1 - u.ualign.type].adj,
+            svp.plname, aligns[alignidx(u.ualign.type)].adj,
             genders[flags.female].adj, gu.urace.adj,
             (flags.female && gu.urole.name.f) ? gu.urole.name.f
                                              : gu.urole.name.m);
@@ -755,7 +755,8 @@ savelife(int how)
     if (u.utrap && u.utraptype == TT_LAVA)
         reset_utrap(FALSE);
     disp.botl = TRUE;
-    u.ugrave_arise = NON_PM;
+    /* dead pirates rise as skeletal pirates */
+    u.ugrave_arise = Role_if(PM_PIRATE) ? PM_SKELETAL_PIRATE : NON_PM;
     HUnchanging = 0L;
     curs_on_u();
     if (!svc.context.mon_moving)
@@ -1421,7 +1422,9 @@ really_done(int how)
         }
     }
 
-    if (ismnum(u.ugrave_arise) && !done_stopprint) {
+    /* (a dead Pirate always rises as a skeletal pirate, so don't tell) */
+    if (ismnum(u.ugrave_arise) && u.ugrave_arise != PM_SKELETAL_PIRATE
+        && !done_stopprint) {
         /* give this feedback even if bones aren't going to be created,
            so that its presence or absence doesn't tip off the player to
            new bones or their lack; it might be a lie if makemon fails */
@@ -1479,7 +1482,12 @@ really_done(int how)
     }
 #endif
     if (u.uhave.amulet) {
-        Strcat(svk.killer.name, " (with the Amulet)");
+        /* an Infidel starts out with the Amulet and may later carry its
+           power in the imbued Idol of Moloch */
+        if (Role_if(PM_INFIDEL) && u.uidol_imbued && u.uhave.questart)
+            Strcat(svk.killer.name, " (with the Idol)");
+        else if (!Role_if(PM_INFIDEL))
+            Strcat(svk.killer.name, " (with the Amulet)");
     } else if (how == ESCAPED) {
         if (Is_astralevel(&u.uz)) /* offered Amulet to wrong deity */
             Strcat(svk.killer.name, " (in celestial disgrace)");
@@ -1493,6 +1501,8 @@ really_done(int how)
                 ? (const char *) ((flags.female && gu.urole.name.f)
                     ? gu.urole.name.f
                     : gu.urole.name.m)
+                /* an Infidel can only ascend through Moloch */
+                : Role_if(PM_INFIDEL) ? "Archfiend of Moloch"
                 : (const char *) (flags.female ? "Demigoddess" : "Demigod"));
     dump_forward_putstr(endwin, 0, pbuf, done_stopprint);
     dump_forward_putstr(endwin, 0, "", done_stopprint);

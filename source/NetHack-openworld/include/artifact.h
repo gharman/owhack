@@ -42,6 +42,7 @@
 #define SPFX_REFLECT 0x04000000L /* Reflection */
 #define SPFX_PROTECT 0x08000000L /* Protection */
 #define SPFX_FAST   0x10000000L /* Speed (like speed boots) */
+#define SPFX_DIG    0x20000000L /* can be used to dig like a pick-axe */
 
 struct artifact {
     short otyp;
@@ -82,7 +83,10 @@ enum invoke_prop_types {
     PATHFINDING,   /* controlled level teleport */
     SUMMON_FIRE_ELEMENTAL,  /* Candle of Eternal Flame */
     SUMMON_WATER_ELEMENTAL, /* Storm Whistle: a creature of the storm */
-    CONJURE_SPHERE          /* Firewall, Deep Freeze: elemental spheres */
+    CONJURE_SPHERE,         /* Firewall, Deep Freeze: elemental spheres */
+    OBJECT_DET,     /* object detection (Marauder's Map) */
+    PHASING,        /* walk through walls for a while (Iron Spoon) */
+    CHANNEL         /* channel Moloch's power (Idol of Moloch) */
 };
 
 /* artifact tracking; gift and wish imply found; it also gets set for items

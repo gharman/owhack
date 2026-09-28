@@ -37,13 +37,14 @@ staticfn void add_skills_to_menu(winid, boolean, boolean);
 #define PN_ESCAPE_SPELL (-13)
 #define PN_MATTER_SPELL (-14)
 #define PN_LIGHTSABER (-15)
+#define PN_FIREARMS (-16)
 
 static NEARDATA const short skill_names_indices[P_NUM_SKILLS] = {
     /* Weapon */
     0, DAGGER, KNIFE, AXE, PICK_AXE, SHORT_SWORD, BROADSWORD, LONG_SWORD,
     TWO_HANDED_SWORD, PN_SABER, CLUB, MACE, MORNING_STAR, FLAIL, PN_HAMMER,
     QUARTERSTAFF, PN_POLEARMS, SPEAR, TRIDENT, LANCE, PN_LIGHTSABER, BOW, SLING,
-    CROSSBOW, DART, SHURIKEN, BOOMERANG, PN_WHIP, UNICORN_HORN,
+    CROSSBOW, PN_FIREARMS, DART, SHURIKEN, BOOMERANG, PN_WHIP, UNICORN_HORN,
     /* Spell */
     PN_ATTACK_SPELL, PN_HEALING_SPELL, PN_DIVINATION_SPELL,
     PN_ENCHANTMENT_SPELL, PN_CLERIC_SPELL, PN_ESCAPE_SPELL, PN_MATTER_SPELL,
@@ -57,7 +58,7 @@ static NEARDATA const char *const odd_skill_names[] = {
     "two weapon combat", "riding", "polearms", "saber", "hammer", "whip",
     "attack spells", "healing spells", "divination spells",
     "enchantment spells", "clerical spells", "escape spells", "matter spells",
-    "lightsaber",
+    "lightsaber", "firearms",
 };
 /* indexed via is_martial() */
 static NEARDATA const char *const barehands_or_martial[] = {
@@ -129,6 +130,9 @@ weapon_descr(struct obj *obj)
     case P_CROSSBOW:
         if (is_ammo(obj))
             descr = "bolt";
+        break;
+    case P_FIREARM:
+        descr = is_ammo(obj) ? "bullet" : "gun";
         break;
     case P_FLAIL:
         if (obj->otyp == GRAPPLING_HOOK)
@@ -217,6 +221,13 @@ hitval(struct obj *otmp, struct monst *mon)
     /* Blessed weapons used against undead or demons */
     if (Is_weapon && otmp->blessed && mon_hates_blessings(mon))
         tmp += 2;
+
+    /* Infidels get a slight bonus against lawful or neutral monsters when
+       using cursed weapons (EvilHack) */
+    if (Is_weapon && otmp->cursed && Role_if(PM_INFIDEL) && carried(otmp)
+        && mon != &gy.youmonst
+        && (mon_aligntyp(mon) == A_LAWFUL || mon_aligntyp(mon) == A_NEUTRAL))
+        tmp += 1;
 
     if (is_spear(otmp) && strchr(kebabable, ptr->mlet))
         tmp += 2;
@@ -419,6 +430,11 @@ dmgval(struct obj *otmp, struct monst *mon)
 
         if (otmp->blessed && mon_hates_blessings(mon))
             bonus += rnd(4);
+        if (otmp->cursed && Role_if(PM_INFIDEL) && carried(otmp)
+            && mon != &gy.youmonst
+            && (mon_aligntyp(mon) == A_LAWFUL
+                || mon_aligntyp(mon) == A_NEUTRAL))
+            bonus += rnd(2);
         if (is_axe(otmp) && is_wooden(ptr))
             bonus += rnd(4);
         /* silver vs demons, cold iron vs elves, &c */
@@ -681,6 +697,9 @@ oselect(struct monst *mtmp, int type)
         if (is_lightsaber(otmp) && !otmp->age
             && !is_art(otmp, ART_LIGHTSABER_PROTOTYPE))
             continue;
+        /* never select a jammed firearm */
+        if (is_firearm(otmp) && otmp->obroken)
+            continue;
 
         return otmp;
     }
@@ -688,7 +707,8 @@ oselect(struct monst *mtmp, int type)
 }
 
 static NEARDATA const int rwep[] = {
-    FIRE_BOMB, DWARVISH_SPEAR, SILVER_SPEAR, ELVEN_SPEAR, SPEAR, ORCISH_SPEAR, JAVELIN,
+    FIRE_BOMB, BULLET, DWARVISH_SPEAR, SILVER_SPEAR, ELVEN_SPEAR, SPEAR,
+    ORCISH_SPEAR, JAVELIN,
     SHURIKEN, YA, SILVER_ARROW, ELVEN_ARROW, ARROW, ORCISH_ARROW,
     CROSSBOW_BOLT, SILVER_DAGGER, ELVEN_DAGGER, DAGGER, ORCISH_DAGGER, KNIFE,
     FLINT, ROCK, LOADSTONE, LUCKSTONE, DART, CREAM_PIE,
@@ -832,6 +852,10 @@ select_rwep(struct monst *mtmp)
                 break;
             case P_CROSSBOW:
                 gp.propellor = oselect(mtmp, CROSSBOW);
+                break;
+            case P_FIREARM:
+                gp.propellor = oselect(mtmp, FLINTLOCK);
+                break;
             }
             if ((otmp = MON_WEP(mtmp)) && mwelded(otmp) && otmp != gp.propellor
                 && mtmp->weapon_check == NO_WEAPON_WANTED)
@@ -1798,6 +1822,9 @@ weapon_type(struct obj *obj)
 
     if (!obj)
         return P_BARE_HANDED_COMBAT; /* Not using a weapon */
+    /* convicts know how to fight with their ball and chain */
+    if (obj->otyp == HEAVY_IRON_BALL && Role_if(PM_CONVICT))
+        return P_FLAIL;
     if (obj->oclass != WEAPON_CLASS && obj->oclass != TOOL_CLASS
         && obj->oclass != GEM_CLASS)
         return P_NONE; /* Not a weapon, weapon-tool, or ammo */
@@ -2066,6 +2093,8 @@ skill_init(const struct def_skill *class_skill)
         P_SKILL(P_HEALING_SPELL) = P_BASIC;
     } else if (Role_if(PM_CLERIC)) {
         P_SKILL(P_CLERIC_SPELL) = P_BASIC;
+    } else if (Role_if(PM_INFIDEL)) { /* knows drain life (EvilHack) */
+        P_SKILL(P_ATTACK_SPELL) = P_BASIC;
     } else if (Role_if(PM_WIZARD)) {
         P_SKILL(P_ATTACK_SPELL) = P_BASIC;
         P_SKILL(P_ENCHANTMENT_SPELL) = P_BASIC;

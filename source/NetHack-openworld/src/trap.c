@@ -4677,7 +4677,9 @@ acid_damage(struct obj *obj)
 
     if (obj->greased) {
         grease_protect(obj, (char *) 0, victim);
-    } else if (obj->oclass == SCROLL_CLASS && obj->otyp != SCR_BLANK_PAPER) {
+    } else if (obj->oclass == SCROLL_CLASS && obj->otyp != SCR_BLANK_PAPER
+               /* the Marauder's Map is proof against such mischief */
+               && !obj->oartifact) {
         if (obj->otyp != SCR_BLANK_PAPER
 #ifdef MAIL_STRUCTURES
             && obj->otyp != SCR_MAIL
@@ -4826,6 +4828,7 @@ water_damage(
 #ifdef MAIL_STRUCTURES
             || obj->otyp == SCR_MAIL
 #endif
+            || obj->oartifact /* the Marauder's Map */
            ) return 0;
         if (in_invent)
             Your("%s %s.", ostr, vtense(ostr, "fade"));

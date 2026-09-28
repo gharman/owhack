@@ -49,7 +49,8 @@ struct u_event {
     Bitfield(uopened_dbridge, 1);   /* opened the drawbridge */
     Bitfield(invoked, 1);           /* invoked Gate to the Sanctum level */
     Bitfield(gehennom_entered, 1);  /* entered Gehennom via Valley */
-    Bitfield(uhand_of_elbereth, 2); /* became Hand of Elbereth */
+    Bitfield(uhand_of_elbereth, 3); /* became Hand of Elbereth; 4 means
+                                     * crowned Emissary of Moloch (Infidel) */
     Bitfield(udemigod, 1);          /* killed the wiz */
     Bitfield(uvibrated, 1);         /* stepped on "vibrating square" */
     Bitfield(ascended, 1);          /* has offered the Amulet */
@@ -214,6 +215,7 @@ struct Role {
 #define ROLE_LAWFUL    AM_LAWFUL
 #define ROLE_NEUTRAL   AM_NEUTRAL
 #define ROLE_CHAOTIC   AM_CHAOTIC
+#define ROLE_NORACEALIGN 0x0100   /* role ignores racial alignment (Con) */
 
     /*** Attributes (from attrib.c and exper.c) ***/
     xint16 attrbase[A_MAX];    /* lowest initial attributes */
@@ -246,6 +248,7 @@ struct Role {
 };
 
 extern const struct Role roles[]; /* table of available roles */
+extern const struct Race race_demon; /* crowned Infidels (moloch.c) */
 #define Role_if(X) (gu.urole.mnum == (X))
 #define Role_switch (gu.urole.mnum)
 
@@ -506,6 +509,14 @@ struct you {
     short mcham;             /* vampire mndx if shapeshifted to bat/cloud */
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */
+    /* Infidel and Pirate roles */
+    boolean uidol_imbued;    /* Infidel: Moloch has imbued the Idol of Moloch
+                              * with the power of the Amulet of Yendor */
+    xint16 uinf_aligns;      /* Infidel: permutation of the pantheon's gods
+                              * chosen at game start (see inf_align()) */
+    int uprotean;            /* Pirate: turns until the Treasury of Proteus
+                              * next changes what is kept inside it */
+    long umoloch_due;        /* turn by which Moloch demands a sacrifice */
     struct monst *umonst;    /* for future conversion of &gy.youmonst to u.umonst */
     struct tech tech_list[MAXTECH]; /* known techniques (see tech.c) */
     d_level uwaymark_lev;    /* Cartographer's waymark: its level */
@@ -567,6 +578,14 @@ struct _hitmon_data {
 };
 
 #define Upolyd (u.umonnum != u.umonster)
+/* an escaped convict whose face can be recognized from the wanted posters
+   (not while polymorphed or with a blindfold or towel over the face) */
+/* a Pirate who carries off the Treasury of Proteus, the Pirate quest
+   artifact, is hunted by the undead crews of its former owners */
+#define Pirate_kinghill (Role_if(PM_PIRATE) && u.uhave.questart)
+#define Convict_recognizable \
+    (Role_if(PM_CONVICT) && !Upolyd                                   \
+     && !(ublindf && (ublindf->otyp == TOWEL || ublindf->otyp == BLINDFOLD)))
 #define Ugender ((Upolyd ? u.mfemale : flags.female) ? 1 : 0)
 
 /* point px,py is adjacent to (or same location as) hero */

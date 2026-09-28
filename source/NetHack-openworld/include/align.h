@@ -22,6 +22,10 @@ typedef struct align { /* alignment & record */
 #define A_NEUTRAL 0
 #define A_LAWFUL 1
 
+/* index into aligns[] (role.c) for an alignment: [0] lawful, [1] neutral,
+   [2] chaotic, [3] unaligned (Infidels worship Moloch) */
+#define alignidx(a) (((a) == A_NONE) ? 3 : 1 - (a))
+
 #define A_COALIGNED 1
 #define A_OPALIGNED (-1)
 

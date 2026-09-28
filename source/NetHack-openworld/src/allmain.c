@@ -360,6 +360,12 @@ moveloop_core(void)
                 invault();
                 if (u.uhave.amulet)
                     amulet();
+                /* Moloch demands regular sacrifices */
+                if (u.ualign.type == A_NONE
+                    || u.ualignbase[A_CURRENT] == A_NONE)
+                    moloch_demands();
+                /* the Treasury of Proteus changes what it holds */
+                treasury_of_proteus();
                 if (!rn2(40 + (int) (ACURR(A_DEX) * 3)))
                     u_wipe_engr(rnd(3));
                 if (u.uevent.udemigod && !u.uinvulnerable) {
@@ -450,8 +456,11 @@ moveloop_core(void)
     /* Cartographer's surveyor's eye; Celestial Sextant's portal sense */
     survey_surroundings();
 
-    /* the Amulet of Yendor gives a wish when initially picked up */
-    if (u.uhave.amulet && !u.uevent.amulet_wish) {
+    /* the Amulet of Yendor gives a wish when initially picked up; an
+       Infidel starts out carrying it, and is only granted the wish once
+       Moloch imbues the Idol of Moloch with the Amulet's power */
+    if (u.uhave.amulet && !u.uevent.amulet_wish
+        && (!Role_if(PM_INFIDEL) || u.uidol_imbued)) {
         u.uevent.amulet_wish = 1;
         display_nhwindow(WIN_MESSAGE, TRUE);
         urgent_pline("The Amulet is bestowing a wish upon you!");
@@ -617,8 +626,14 @@ regen_pw(int wtcap)
     if (u.uen < u.uenmax
         && ((wtcap < MOD_ENCUMBER
              && (!(svm.moves % ((MAXULEV + 8 - u.ulevel)
-                              * (Role_if(PM_WIZARD) ? 3 : 4)
-                              / 6)))) || Energy_regeneration)) {
+                              * ((Role_if(PM_WIZARD) || Role_if(PM_INFIDEL))
+                                 ? 3 : 4)
+                              / 6)))) || Energy_regeneration
+            /* the Idol of Moloch grants energy regeneration to those in
+               good standing with Moloch */
+            || (Role_if(PM_INFIDEL) && u.uhave.questart
+                && u.ualign.type == A_NONE
+                && u.ualign.record > rn2(20)))) {
         int upper = (int) (ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1;
 
         if (EMagical_breathing)
@@ -669,8 +684,14 @@ regen_hp(int wtcap)
         /* [when this code was in-line within moveloop(), there was
            no !Upolyd check here, so poly'd hero recovered lost u.uhp
            once u.mh reached u.mhmax; that may have been convenient
-           for the player, but it didn't make sense for gameplay...] */
-        if (u.uhp < u.uhpmax && (encumbrance_ok || U_CAN_REGEN())) {
+           for the player, but it didn't make sense for gameplay...]
+           Infidels won't heal at all without the Amulet of Yendor until
+           Moloch has imbued the Idol of Moloch with its power */
+        if (u.uhp < u.uhpmax && infidel_no_amulet()) {
+            if (!rn2(20))
+                You_feel("unable to rest or heal without the Amulet "
+                         "of Yendor.");
+        } else if (u.uhp < u.uhpmax && (encumbrance_ok || U_CAN_REGEN())) {
             heal = (u.ulevel + (int)ACURR(A_CON)) > rn2(100);
 
             if (U_CAN_REGEN())
@@ -886,13 +907,25 @@ newgame(void)
     }
     u_init_skills_discoveries();
 
+    /* convicts escape still wearing their ball and chain */
+    if (Role_if(PM_CONVICT)) {
+        setworn(mkobj(CHAIN_CLASS, TRUE), W_CHAIN);
+        setworn(mkobj(BALL_CLASS, TRUE), W_BALL);
+        /* the convict knows the ball and chain well (EvilHack) */
+        uball->dknown = uball->bknown = uball->rknown = 1;
+        uchain->dknown = uchain->bknown = uchain->rknown = 1;
+        placebc();
+        newsym(u.ux, u.uy);
+    }
+
     if (wizard) {
         read_wizkit();
         obj_delivery(FALSE); /* finish wizkit */
     }
 
     if (flags.legacy) {
-        com_pager(u.uroleplay.pauper ? "pauper_legacy" : "legacy");
+        /* the Convict and the Infidel have their own introductions */
+        qt_pager(u.uroleplay.pauper ? "pauper_legacy" : "legacy");
     }
 
     urealtime.realtime = 0L;
@@ -974,9 +1007,12 @@ welcome(boolean new_game) /* false => restoring an old game */
             (currentgend && gu.urole.name.f) ? gu.urole.name.f
                                              : gu.urole.name.m);
 
-    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s."
-                   : "%s %s, the%s, welcome back to NetHack!",
-          Hello((struct monst *) 0), svp.plname, buf);
+    if (new_game) /* "a chaotic ...", "an unaligned ..." */
+        pline("%s %s, welcome to NetHack!  You are %s.",
+              Hello((struct monst *) 0), svp.plname, an(buf + 1));
+    else
+        pline("%s %s, the%s, welcome back to NetHack!",
+              Hello((struct monst *) 0), svp.plname, buf);
 
     if (new_game) {
         /* guarantee that 'major' event category is never empty */
@@ -986,6 +1022,13 @@ welcome(boolean new_game) /* false => restoring an old game */
             /* open world: explain the lay of the land */
             pline("You stand on the high altar of %s at the heart of the "
                   "world.", u_gname());
+            pline("The further you roam, the deadlier the land; "
+                  "the compass points home.  (Press ? for more.)");
+        } else if (In_overworld && u.ualign.type == A_NONE) {
+            /* an Infidel has no altar here, yet */
+            pline("You stand in the sacred plaza at the heart of the world.");
+            pline("Here stand the high altars of the gods %s would "
+                  "overthrow.", u_gname());
             pline("The further you roam, the deadlier the land; "
                   "the compass points home.  (Press ? for more.)");
         }

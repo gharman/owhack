@@ -243,6 +243,7 @@ explode(
         case PM_CLERIC:
         case PM_FLAME_MAGE:
         case PM_ICE_MAGE:
+        case PM_INFIDEL:
         case PM_MONK:
         case PM_NECROMANCER:
         case PM_WIZARD:

@@ -17,8 +17,8 @@
  * Incrementing EDITLEVEL can be used to force invalidation of old bones
  * and save files.
  */
-#define EDITLEVEL 3 /* open world pass 2: techniques, materials, levels,
-                      * new roles... */
+#define EDITLEVEL 4 /* open world pass 2: techniques, materials, levels,
+                      * new roles and races */
 
 /*
  * Development status possibilities.

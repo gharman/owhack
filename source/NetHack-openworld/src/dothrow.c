@@ -24,6 +24,8 @@ staticfn int throw_gold(struct obj *);
 staticfn void check_shop_obj(struct obj *, coordxy, coordxy, boolean);
 staticfn void breakmsg(struct obj *, boolean);
 staticfn boolean mhurtle_step(genericptr_t, coordxy, coordxy);
+staticfn boolean firearm_jams(struct obj *, struct obj *);
+staticfn void spend_bullet(struct obj *, coordxy, coordxy);
 
 /* uwep might already be removed from inventory so test for W_WEP instead;
    for Valk+Mjollnir, caller needs to validate the strength requirement */
@@ -159,6 +161,12 @@ throw_obj(struct obj *obj, int shotlimit)
         res = ECMD_TIME;
         goto unsplit_stack;
     }
+    if (uwep && is_firearm(uwep) && uwep->obroken
+        && ammo_and_launcher(obj, uwep)) {
+        pline("%s is jammed and cannot be fired.", Yname2(uwep));
+        res = ECMD_OK;
+        goto unsplit_stack;
+    }
     if (is_wet_towel(obj))
         dry_a_towel(obj, -1, FALSE);
 
@@ -178,6 +186,7 @@ throw_obj(struct obj *obj, int shotlimit)
                          || Role_if(PM_NECROMANCER)
                          || (Role_if(PM_HEALER) && skill != P_KNIFE)
                          || (Role_if(PM_ICE_MAGE) && skill != P_KNIFE)
+                         || (Role_if(PM_INFIDEL) && skill != P_DAGGER)
                          || (Role_if(PM_TOURIST) && skill != -P_DART)
                          /* poor dexterity also inhibits multishot */
                          || Fumbling || ACURR(A_DEX) <= 6);
@@ -248,6 +257,13 @@ throw_obj(struct obj *obj, int shotlimit)
 
         /* missile flurry technique: let 'em rip! */
         multishot += tech_flurry_bonus(obj);
+        /* a firearm's rate of fire is intrinsic to the weapon */
+        if (uwep && is_firearm(uwep) && ammo_and_launcher(obj, uwep)) {
+            multishot += firearm_rof(uwep->otyp) - 1;
+            if (multishot < 1)
+                multishot = 1;
+        }
+
         multishot = rnd(multishot);
         if ((long) multishot > obj->quan)
             multishot = (int) obj->quan;
@@ -260,7 +276,8 @@ throw_obj(struct obj *obj, int shotlimit)
        attempted to specify a count */
     if (multishot > 1 || shotlimit > 0) {
         /* "You shoot N arrows." or "You throw N daggers." */
-        You("%s %d %s.", gm.m_shot.s ? "shoot" : "throw",
+        You("%s %d %s.",
+            gm.m_shot.s ? (is_bullet(obj) ? "fire" : "shoot") : "throw",
             multishot, /* (might be 1 if player gave shotlimit) */
             (multishot == 1) ? singular(obj, xname) : xname(obj));
     }
@@ -1483,6 +1500,86 @@ sho_obj_return_to_u(struct obj *obj)
     }
 }
 
+/* maximum range of a shot from a firearm (Slash'EM, Hack'EM) */
+int
+firearm_range(int otyp)
+{
+    switch (otyp) {
+    case FLINTLOCK:
+        return 8;
+    default:
+        return BOLT_LIM;
+    }
+}
+
+/* rate of fire of a firearm: added to the multishot volley size less one;
+   a flintlock has to be reloaded after every shot, so it fires singly */
+int
+firearm_rof(int otyp)
+{
+    switch (otyp) {
+    case FLINTLOCK:
+        return -2;
+    default:
+        return 0;
+    }
+}
+
+/* does the wielded firearm jam when firing ammo? (Hack'EM) */
+staticfn boolean
+firearm_jams(struct obj *gun, struct obj *ammo)
+{
+    boolean jam = FALSE,
+            /* low Str and Dex are punished */
+            limp_wristing = (ACURR(A_STR) + ACURR(A_DEX) - rnd(5)) < 20;
+
+    if (gun->cursed && !rn2(2))
+        jam = TRUE;
+    else if (ammo->cursed && !rn2(2))
+        jam = TRUE;
+    else if ((ammo->oeroded > 0 || ammo->oeroded2 > 0) && !rn2(4))
+        jam = TRUE;
+    else if ((gun->oeroded > 0 || gun->oeroded2 > 0) && !rn2(4))
+        jam = TRUE;
+    else if ((limp_wristing || Fumbling) && !rn2(4))
+        jam = TRUE;
+    else if (!gun->greased && Luck < 0 && rnl(8) > 6)
+        jam = TRUE; /* bad luck and no grease */
+    else if (P_SKILL(P_FIREARM) <= P_UNSKILLED && rnl(8) > 6)
+        jam = TRUE; /* no skill: fairly likely */
+    else if (P_SKILL(P_FIREARM) >= P_BASIC && rnl(50) == 49)
+        jam = TRUE; /* unlikely, but still possible */
+    if (!jam)
+        return FALSE;
+
+    if (gun->greased) {
+        /* grease is the first level of protection */
+        if (!rn2(2)) {
+            pline_The("grease wears off %s.", yname(gun));
+            gun->greased = 0;
+            update_inventory();
+        }
+        return FALSE;
+    }
+    /* single-shot firearms resist jamming more often; blessed ones
+       resist 3 times out of 4 */
+    if (rn2(3) || (gun->blessed && rn2(4)))
+        return FALSE;
+    pline("%s jams!", Yname2(gun));
+    gun->obroken = 1;
+    update_inventory();
+    return TRUE;
+}
+
+/* a bullet fired from a firearm is used up */
+staticfn void
+spend_bullet(struct obj *obj, coordxy x, coordxy y)
+{
+    if (*u.ushops || obj->unpaid)
+        check_shop_obj(obj, x, y, TRUE);
+    obfree(obj, (struct obj *) 0);
+}
+
 staticfn void
 throwit_return(boolean clear_thrownobj)
 {
@@ -1548,10 +1645,31 @@ throwit(
             impaired = (Confusion || Stunned || Blind
                         || Hallucination || Fumbling),
             tethered_weapon = (arw && arw->tethered && (wep_mask & W_WEP) != 0),
-            tether_released_msg = FALSE;
+            tether_released_msg = FALSE,
+            /* firing a bullet from a flintlock */
+            gunning = (uwep && is_firearm(uwep)
+                       && ammo_and_launcher(obj, uwep));
 
     gn.notonhead = FALSE; /* reset potentially stale value */
-    if ((obj->cursed || obj->greased) && (u.dx || u.dy) && !rn2(7)) {
+    /* a cursed firearm loaded with cursed ammunition blows up (Slash'EM) */
+    if (gunning && uwep->cursed && obj->cursed) {
+        struct obj *gun = uwep;
+        int dmg = d(abs(gun->spe) + 2, 6) + dmgval(obj, &gy.youmonst);
+
+        pline("%s suddenly explodes!", Yname2(gun));
+        Sprintf(svk.killer.name, "exploding %s", simpleonames(gun));
+        svk.killer.format = KILLED_BY_AN;
+        spend_bullet(obj, u.ux, u.uy);
+        useup(gun);
+        explode(u.ux, u.uy, -11, dmg, MON_EXPLODE, EXPL_FIERY);
+        endmultishot(FALSE);
+        return;
+    }
+    /* a flintlock often misfires, like cursed or greased ammunition;
+       Infidels are immune to curses */
+    if (((obj->cursed && u.ualign.type != A_NONE) || obj->greased
+         || (gunning && uwep->otyp == FLINTLOCK))
+        && (u.dx || u.dy) && !rn2(7)) {
         boolean slipok = TRUE;
 
         if (ammo_and_launcher(obj, uwep)) {
@@ -1609,6 +1727,15 @@ throwit(
         if (tethered_weapon)
             tmp_at(DISP_TETHER, obj_to_glyph(obj, rn2_on_display_rng));
     } else if (u.dz) {
+        if (gunning) {
+            /* the shot is spent against the ceiling or the floor */
+            if (!Deaf)
+                pline("Bang!");
+            wake_nearto(u.ux, u.uy, 10 * 10);
+            spend_bullet(obj, u.ux, u.uy);
+            throwit_return(TRUE);
+            return;
+        }
         if (u.dz < 0
             /* Mjollnir must we wielded to be thrown--caller verifies this;
                aklys must we wielded as primary to return when thrown */
@@ -1642,6 +1769,22 @@ throwit(
             return;
         }
     } else {
+        /* firearms can jam (Hack'EM) */
+        if (gunning && firearm_jams(uwep, obj)) {
+            spend_bullet(obj, u.ux, u.uy);
+            endmultishot(TRUE);
+            throwit_return(TRUE);
+            return;
+        }
+        if (gunning) {
+            if (!objects[uwep->otyp].oc_name_known) {
+                if (!Deaf)
+                    pline("Boom!");
+                makeknown(uwep->otyp);
+            }
+            /* gunfire is loud */
+            wake_nearto(u.ux, u.uy, 10 * 10);
+        }
         /* crossbow range is independent of strength */
         crossbowing = (ammo_and_launcher(obj, uwep)
                        && weapon_type(uwep) == P_CROSSBOW);
@@ -1666,7 +1809,9 @@ throwit(
 
         if (is_ammo(obj)) {
             if (ammo_and_launcher(obj, uwep)) {
-                if (crossbowing)
+                if (gunning)
+                    range = firearm_range(uwep->otyp);
+                else if (crossbowing)
                     range = BOLT_LIM;
                 else
                     range++;
@@ -1745,6 +1890,11 @@ throwit(
             }
             tmp_at(DISP_END, 0);
         }
+    } else if (gunning) {
+        /* a fired bullet that missed is spent (SLASH'EM) */
+        spend_bullet(obj, gb.bhitpos.x, gb.bhitpos.y);
+        throwit_return(TRUE);
+        return;
     } else if (u.uswallow && !iflags.returning_missile) {
         swallowit(obj);
         return;
@@ -2084,6 +2234,9 @@ should_mulch_missile(struct obj *obj)
         || obj->otyp == BOOMERANG
         || objects[obj->otyp].oc_magic)
         return FALSE;
+    /* a bullet that hits is always spent */
+    if (is_bullet(obj))
+        return TRUE;
 
     /* we had been breaking 2/3 of everything unconditionally.  we still don't
        want anything to survive unconditionally, but we need ammo to stay

@@ -46,6 +46,11 @@ static const struct innate {
                  { 15, &(HWarning), "sensitive", "" },
                  { 0, 0, 0, 0 } },
 
+  con_abil[] = { { 1, &(HSick_resistance), "", "" },
+                 { 7, &(HPoison_resistance), "healthy", "" },
+                 { 20, &(HSearching), "perceptive", "unaware" },
+                 { 0, 0, 0, 0 } },
+
   fla_abil[] = { { 1, &(HFire_resistance), "", "" },
                  { 5, &(HVulnerable_cold), "sensitive to cold",
                    "less sensitive to cold" },
@@ -59,6 +64,11 @@ static const struct innate {
                  { 5, &(HVulnerable_fire), "sensitive to heat",
                    "less sensitive to heat" },
                  { 15, &(HWwalking), "unsinkable", "like you might sink" },
+                 { 0, 0, 0, 0 } },
+
+  inf_abil[] = { { 1, &(HFire_resistance), "", "" },
+                 { 15, &(HWarning), "sensitive", "" },
+                 { 20, &(HShock_resistance), "insulated", "conductive" },
                  { 0, 0, 0, 0 } },
 
   jed_abil[] = { { 1, &(HStealth), "", "" },
@@ -87,6 +97,11 @@ static const struct innate {
   nec_abil[] = { { 1, &(HDrain_resistance), "", "" },
                  { 1, &(HSick_resistance), "hale", "" },
                  { 3, &(HUndead_warning), "sensitive", "" },
+                 { 0, 0, 0, 0 } },
+
+  pir_abil[] = { { 1, &(HSwimming), "", "" },
+                 { 7, &(HStealth), "stealthy", "" }, /* with cat-like tread */
+                 { 11, &(HFast), "quick", "slow" },
                  { 0, 0, 0, 0 } },
 
   pri_abil[] = { { 15, &(HWarning), "sensitive", "" },
@@ -200,7 +215,16 @@ static const struct innate {
                  { 13, &HWarning, "sensitive", "" },
                  { 0, 0, 0, 0 } },
 
-  hum_abil[] = { { 0, 0, 0, 0 } };
+  hum_abil[] = { { 0, 0, 0, 0 } },
+
+  /* an Infidel crowned by Moloch becomes a demon (EvilHack); flying is
+     from form, see set_uasmon() */
+  dem_abil[] = { { 1, &HInfravision, "", "" },
+                 { 1, &HFire_resistance, "", "" },
+                 { 1, &HPoison_resistance, "", "" },
+                 { 1, &HSee_invisible, "", "" },
+                 { 1, &HSick_resistance, "hale", "" },
+                 { 0, 0, 0, 0 } };
 
 staticfn void exerper(void);
 staticfn int rnd_attr(void);
@@ -539,7 +563,10 @@ stone_luck(boolean include_uncursed)
 
     for (otmp = gi.invent; otmp; otmp = otmp->nobj)
         if (confers_luck(otmp)) {
-            if (otmp->cursed)
+            /* the Pirates' quest artifact never counts as cursed for
+               them (Hack'EM) */
+            if (otmp->cursed
+                && !(Role_if(PM_PIRATE) && is_quest_artifact(otmp)))
                 bonchance -= otmp->quan;
             else if (otmp->blessed || include_uncursed)
                 bonchance += otmp->quan;
@@ -921,13 +948,16 @@ role_abil(int r)
         { PM_BARBARIAN, bar_abil },
         { PM_CARTOGRAPHER, car_abil },
         { PM_CAVE_DWELLER, cav_abil },
+        { PM_CONVICT, con_abil },
         { PM_FLAME_MAGE, fla_abil },
         { PM_HEALER, hea_abil },
         { PM_ICE_MAGE, ice_abil },
+        { PM_INFIDEL, inf_abil },
         { PM_JEDI, jed_abil },
         { PM_KNIGHT, kni_abil },
         { PM_MONK, mon_abil },
         { PM_NECROMANCER, nec_abil },
+        { PM_PIRATE, pir_abil },
         { PM_CLERIC, pri_abil },
         { PM_RANGER, ran_abil },
         { PM_ROGUE, rog_abil },
@@ -977,6 +1007,8 @@ race_abil(int r)
         return dop_abil;
     case PM_GHOST:
         return gho_abil;
+    case PM_DEMON: /* an Infidel crowned by Moloch (EvilHack) */
+        return dem_abil;
     default:
         break;
     }
@@ -1512,7 +1544,7 @@ uchangealign(
     if (reason == A_CG_CONVERT) {
         /* conversion via altar */
         livelog_printf(LL_ALIGNMENT, "permanently converted to %s",
-                       aligns[1 - newalign].adj);
+                       aligns[alignidx(newalign)].adj);
         u.ualignbase[A_CURRENT] = (aligntyp) newalign;
         /* worn helm of opposite alignment might block change */
         if (!uarmh || uarmh->otyp != HELM_OF_OPPOSITE_ALIGNMENT)
@@ -1530,7 +1562,7 @@ uchangealign(
                 summon_furies(Is_astralevel(&u.uz) ? 0 : 1);
             /* don't livelog taking it back off */
             livelog_printf(LL_ALIGNMENT, "used a helm to turn %s",
-                           aligns[1 - newalign].adj);
+                           aligns[alignidx(newalign)].adj);
         } else if (reason == A_CG_HELM_OFF) {
             Your("mind is %s.", Hallucination
                                     ? "much of a muchness"

@@ -1505,9 +1505,12 @@ spelleffects_check(int spell, int *res, int *energy)
        the attempt may fail due to lack of energy after the draining, in
        which case a turn will be used up in addition to the energy loss */
     /* psionics use spell power but aren't spells, so the Amulet doesn't
-       interfere with them (EvilHack) */
+       interfere with them; and once Moloch has imbued the Idol of Moloch
+       with the Amulet's power, his influence suppresses the draining and
+       lets an Infidel realize their full potential (EvilHack) */
     if (u.uhave.amulet && u.uen >= *energy
-        && spellid(spell) != SPE_PSIONIC_WAVE) {
+        && spellid(spell) != SPE_PSIONIC_WAVE
+        && !(Role_if(PM_INFIDEL) && u.uidol_imbued)) {
         You_feel("the amulet draining your energy away.");
         /* this used to be 'energy += rnd(2 * energy)' (without 'res'),
            so if amulet-induced cost was more than u.uen, nothing
@@ -2496,6 +2499,25 @@ percent_success(int spell)
             splcaster += uarmgbon;
         if (uarmf && is_metallic(uarmf))
             splcaster += uarmfbon;
+    }
+
+    /* Infidels have a special penalty for wearing blessed armor, and a
+       small bonus for cursed armor (EvilHack) */
+    if (Role_if(PM_INFIDEL)) {
+        struct obj *const armor[] = { uarm, uarmc, uarmh, uarms,
+                                      uarmg, uarmf, uarmu };
+        int penalty = 0, i;
+
+        for (i = 0; i < SIZE(armor); i++) {
+            if (!armor[i])
+                continue;
+            if (armor[i]->blessed)
+                penalty += 2;
+            else if (armor[i]->cursed)
+                penalty--;
+        }
+        if (penalty > 0)
+            splcaster += penalty;
     }
 
     if (spellid(spell) == gu.urole.spelspec)

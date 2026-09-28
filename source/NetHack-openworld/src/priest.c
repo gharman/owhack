@@ -257,8 +257,10 @@ priestini(
         set_malign(priest); /* mpeaceful may have changed */
 
         /* now his/her goodies... */
+        /* an Infidel already has the Amulet, entrusted to them by the
+           Cult to be returned here */
         if (sanctum && EPRI(priest)->shralign == A_NONE
-            && on_level(&sanctum_level, &u.uz)) {
+            && on_level(&sanctum_level, &u.uz) && !Role_if(PM_INFIDEL)) {
             (void) mongets(priest, AMULET_OF_YENDOR);
         }
         /* 2 to 4 spellbooks */
@@ -415,6 +417,7 @@ intemple(int roomno)
     long *this_time, *other_time;
     const char *msg1, *msg2;
     char buf[BUFSZ];
+    boolean call_guards = FALSE;
 
     /* don't do anything if hero is already in the room */
     if (temple_occupied(u.urooms0))
@@ -459,11 +462,20 @@ intemple(int roomno)
             } else {
                 msg1 = "You desecrate this place by your presence!";
             }
-        } else if (sanctum && Is_sanctum(&u.uz)) {
+        } else if (((sanctum && Is_sanctum(&u.uz)) || u.ualign.type == A_NONE)
+                   && !p_coaligned(priest)) {
+            /* either a non-Infidel in the Sanctum, or an Infidel in any
+               temple that isn't Moloch's; the priest is not happy */
             if (priest->mpeaceful) {
                 /* first time inside */
-                msg1 = "Infidel, you have entered Moloch's Sanctum!";
-                msg2 = "Be gone!";
+                if (u.ualign.type == A_NONE) {
+                    msg1 = "Begone, Infidel!";
+                    msg2 = "This place is barred for your cult!";
+                    call_guards = in_town(priest->mx, priest->my);
+                } else {
+                    msg1 = "Infidel, you have entered Moloch's Sanctum!";
+                    msg2 = "Be gone!";
+                }
                 priest->mpeaceful = 0;
                 /* became angry voluntarily; no penalty for attacking him */
                 set_malign(priest);
@@ -483,6 +495,8 @@ intemple(int roomno)
                 verbalize1(msg2);
             epri_p->enter_time = svm.moves + (long) d(10, 100); /* ~505 */
         }
+        if (call_guards)
+            (void) angry_guards(FALSE);
         if (!sanctum) {
             if (!shrined || !p_coaligned(priest)
                 || u.ualign.record <= ALGN_SINNED) {
@@ -596,9 +610,11 @@ priest_talk(struct monst *priest)
         return;
     }
 
-    /* priests don't chat unless peaceful and in their own temple */
+    /* priests don't chat unless peaceful and in their own temple; only
+       Moloch's priests talk to his cultists, and no priest of a lawful or
+       neutral god will speak with a draugr */
     if (!inhistemple(priest) || !priest->mpeaceful || helpless(priest)
-        /* no priest of a lawful or neutral god will speak with a draugr */
+        || (u.ualign.type == A_NONE && !coaligned)
         || (Race_if(PM_DRAUGR) && !Upolyd
             && mon_aligntyp(priest) >= A_NEUTRAL)) {
         static const char *const cranky_msg[3] = {
@@ -629,7 +645,13 @@ priest_talk(struct monst *priest)
         return;
     }
     if (!money_cnt(gi.invent)) {
-        if (coaligned && !strayed) {
+        if (Role_if(PM_INFIDEL) && u.uidol_imbued
+            && priest->data == &mons[PM_HIGH_CLERIC] && Is_sanctum(&u.uz)) {
+            /* advice about which high altar to avoid */
+            qt_pager_as_god("moloch_priest_hint", inf_align(3));
+            if (svq.quest_status.killed_leader)
+                qt_pager_as_god("moloch_priest_hint2", inf_align(2));
+        } else if (coaligned && !strayed) {
             long pmoney = money_cnt(priest->minvent);
             if (pmoney > 0L) {
                 const char *bits;

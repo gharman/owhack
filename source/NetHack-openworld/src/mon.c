@@ -488,14 +488,23 @@ genus(int mndx, int mode)
     case PM_NEANDERTHAL:
         mndx = mode ? PM_CAVE_DWELLER : PM_HUMAN;
         break;
+    case PM_INMATE:
+        mndx = mode ? PM_CONVICT : PM_HUMAN;
+        break;
     case PM_ATTENDANT:
         mndx = mode ? PM_HEALER : PM_HUMAN;
+        break;
+    case PM_CULTIST:
+        mndx = mode ? PM_INFIDEL : PM_HUMAN;
         break;
     case PM_PAGE:
         mndx = mode ? PM_KNIGHT : PM_HUMAN;
         break;
     case PM_ABBOT:
         mndx = mode ? PM_MONK : PM_HUMAN;
+        break;
+    case PM_PIRATE_CREWMATE:
+        mndx = mode ? PM_PIRATE : PM_HUMAN;
         break;
     case PM_ACOLYTE:
         mndx = mode ? PM_CLERIC : PM_HUMAN;
@@ -966,6 +975,16 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_DARK_LORD: case PM_WATER_MAGE: case PM_RAGNAROS:
     case PM_LORD_SIDIOUS: case PM_MAUGNESHAAGAR: case PM_IGNITER:
     case PM_FROSTER: case PM_PADAWAN: case PM_JEDI_TRAINER: case PM_EMBALMER:
+    /* Convict, Infidel and Pirate monsters */
+    case PM_LESSER_HOMUNCULUS: case PM_GREATER_HOMUNCULUS: case PM_PARROT:
+    case PM_SKELETAL_PIRATE: case PM_MINER: case PM_TEMPLAR:
+    case PM_CHAMPION: case PM_AGENT: case PM_PRISON_GUARD:
+    case PM_LAVA_DEMON: case PM_DAMNED_PIRATE: case PM_CONVICT:
+    case PM_INFIDEL: case PM_PIRATE: case PM_ROBERT_THE_LIFER:
+    case PM_ARCHBISHOP_OF_MOLOCH: case PM_MAYOR_CUMMERBUND:
+    case PM_WARDEN_ARIANNA: case PM_PALADIN: case PM_BLACKBEARD_S_GHOST:
+    case PM_INMATE: case PM_CULTIST: case PM_PIRATE_CREWMATE:
+    case PM_DEMON:
 #else
     default:
 #endif
@@ -2569,6 +2588,12 @@ mm_aggression(
     if ((mndx == PM_LORD_SIDIOUS && mdef->data == &mons[PM_JEDI])
         || (mndx == PM_JEDI && mdef->data == &mons[PM_LORD_SIDIOUS]))
         return ALLOW_M | ALLOW_TM;
+    /* pirates vs mercenaries, and hostile pirates vs the crew of a Pirate
+       who has carried off their treasure (Hack'EM) */
+    if (is_pirate(magr->data)
+        && (is_mercenary(mdef->data)
+            || (!magr->mpeaceful && mdef->mtame && Pirate_kinghill)))
+        return ALLOW_M | ALLOW_TM;
     /* Various other combinations such as dog vs cat, cat vs rat, and
        elf vs orc have been suggested.  For the time being we don't
        support those. */
@@ -3787,8 +3812,9 @@ xkilled(
            it is rare and most likely to occur as the result of resurrecting
            a corpse or animating a statue and usually will be hostile */
         && mndx != PM_HUMAN
-        /* only applicable if hero is lawful or neutral */
-        && u.ualign.type != A_CHAOTIC) {
+        /* only applicable if hero is lawful or neutral (not chaotic, and
+           not a worshipper of Moloch) */
+        && u.ualign.type > A_CHAOTIC) {
         HTelepat &= ~INTRINSIC;
         change_luck(-2);
         You("murderer!");
@@ -3809,8 +3835,10 @@ xkilled(
 
     /* adjust alignment points */
     if (mtmp->m_id == svq.quest_status.leader_m_id) { /* REAL BAD! */
-        adjalign(-(u.ualign.record + (int) ALIGNLIM / 2));
-        u.ugangr += 7; /* instantly become "extremely" angry */
+        if (u.ualign.type != A_NONE) { /* Moloch is indifferent */
+            adjalign(-(u.ualign.record + (int) ALIGNLIM / 2));
+            u.ugangr += 7; /* instantly become "extremely" angry */
+        }
         change_luck(-20);
         pline("That was %sa bad idea...",
               u.uevent.qcompleted ? "probably " : "");
@@ -3820,8 +3848,10 @@ xkilled(
         if (!svq.quest_status.killed_leader)
             adjalign((int) (ALIGNLIM / 4));
     } else if (mdat->msound == MS_GUARDIAN) { /* Bad */
-        adjalign(-(int) (ALIGNLIM / 8));
-        u.ugangr++;
+        if (u.ualign.type != A_NONE) { /* Moloch is indifferent */
+            adjalign(-(int) (ALIGNLIM / 8));
+            u.ugangr++;
+        }
         change_luck(-4);
         if (!Hallucination)
             pline("That was probably a bad idea...");
@@ -3834,10 +3864,16 @@ xkilled(
             u.ublessed = 0;
         if (mdat->maligntyp == A_NONE)
             adjalign((int) (ALIGNLIM / 4)); /* BIG bonus */
+        else if (u.ualign.type == A_NONE && EPRI(mtmp)
+                 && EPRI(mtmp)->shralign == A_LAWFUL)
+            adjalign((int) (ALIGNLIM / 4)); /* Infidel-only BIG bonus */
     } else if (mtmp->mtame) {
-        adjalign(-15); /* bad!! */
+        /* kinda bad for a worshipper of Moloch, but it's how they roll */
+        adjalign((u.ualign.type == A_NONE) ? -3 : -15); /* bad!! */
         /* your god is mighty displeased... */
-        if (!Hallucination) {
+        if (!Hallucination && u.ualign.type == A_NONE) {
+            You_hear("sinister laughter off in the distance...");
+        } else if (!Hallucination) {
             Soundeffect(se_distant_thunder, 40);
             You_hear("the rumble of distant thunder...");
         } else {
@@ -3852,11 +3888,15 @@ xkilled(
                            mname ? ", " : "",
                            uhis(), pmname(mdat, Mgender(mtmp)));
         }
-    } else if (mtmp->mpeaceful)
+    } else if (mtmp->mpeaceful && u.ualign.type != A_NONE)
         adjalign(-5);
 
-    /* malign was already adjusted for u.ualign.type and randomization */
-    adjalign(mtmp->malign);
+    /* malign was already adjusted for u.ualign.type and randomization;
+       convicts and Infidels feel no guilt over the guards, shopkeepers
+       and watchmen who stand in their way */
+    if (!((u.ualign.type == A_NONE || Role_if(PM_CONVICT))
+          && (mtmp->isgd || mtmp->isshk || is_watch(mdat))))
+        adjalign(mtmp->malign);
 
 #if 0  /* HARDFOUGHT-only at present */
 #ifdef LIVELOG

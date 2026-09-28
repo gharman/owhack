@@ -48,6 +48,10 @@ staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
 staticfn int invoke_death_gaze(struct obj *) NONNULLARG1;
 staticfn int invoke_summon_undead(struct obj *) NONNULLARG1;
 staticfn int invoke_pathfinding(struct obj *) NONNULLARG1;
+staticfn int invoke_object_det(struct obj *) NONNULLARG1;
+staticfn int invoke_phasing(struct obj *) NONNULLARG1;
+staticfn int invoke_channel(struct obj *) NONNULLARG1;
+staticfn void reaver_steal(struct monst *, struct monst *, boolean, boolean);
 staticfn int arti_invoke_cost_pw(struct obj *) NONNULLARG1;
 staticfn boolean arti_invoke_cost(struct obj *) NONNULLARG1;
 staticfn int arti_invoke(struct obj *);
@@ -186,7 +190,8 @@ mk_artifact(
 {
     const struct artifact *a;
     int m, n, altn;
-    boolean by_align = (alignment != A_NONE);
+    /* a divine gift (no object) from Moloch is still chosen by alignment */
+    boolean by_align = (alignment != A_NONE || !otmp);
     short o_typ = (by_align || !otmp) ? 0 : otmp->otyp;
     boolean unique = !by_align && otmp && objects[o_typ].oc_unique;
     short eligible[NROFARTIFACTS];
@@ -227,6 +232,9 @@ mk_artifact(
                 n = 1;
                 break; /* skip all other candidates */
             }
+            /* pirates are never gifted other roles' artifacts */
+            if (Role_if(PM_PIRATE))
+                continue;
 
             /* check if this is skill-compatible */
             skill_compatibility = P_SKILLED;
@@ -397,6 +405,13 @@ artifact_exists(
                 otmp->age = 0;
                 if (otmp->otyp == RIN_INCREASE_DAMAGE)
                     otmp->spe = 0;
+                /* the Idol of Moloch depicts a horned devil; it never
+                   comes to life on its own */
+                if (mod && m == ART_IDOL_OF_MOLOCH) {
+                    if (otmp->timed)
+                        obj_stop_timers(otmp);
+                    otmp->corpsenm = PM_HORNED_DEVIL;
+                }
                 if (mod) { /* means being created rather than un-created */
                     /* one--and only one--of these should always be set */
                     if ((flgs & (ONAME_VIA_NAMING | ONAME_WISH | ONAME_GIFT
@@ -541,7 +556,9 @@ confers_luck(struct obj *obj)
     if (obj->otyp == LUCKSTONE)
         return TRUE;
 
-    return (boolean) (obj->oartifact && spec_ability(obj, SPFX_LUCK));
+    return (boolean) (obj->oartifact
+                      && (spec_ability(obj, SPFX_LUCK)
+                          || (get_artifact(obj)->cspfx & SPFX_LUCK) != 0L));
 }
 
 /* used to check whether a monster is getting reflection from an artifact */
@@ -1002,6 +1019,14 @@ touch_artifact(struct obj *obj, struct monst *mon)
         return 0;
     }
 
+    /* the Iron Spoon of Liberation frees its bearer from a mundane ball
+       and chain (Hack'EM) */
+    if (yours && oart == &artilist[ART_IRON_SPOON_OF_LIBERATION]
+        && Punished && obj != uball) {
+        You("pick the lock of the shackle with %s.", the(xname(obj)));
+        unpunish();
+    }
+
     return 1;
 }
 
@@ -1041,6 +1066,14 @@ m_carrying_arti(struct monst *mon, int artinum)
         if (otmp->oartifact == artinum)
             return TRUE;
     return FALSE;
+}
+
+/* can this artifact be used to dig like a pick-axe? */
+boolean
+arti_digs(struct obj *obj)
+{
+    return (boolean) (obj && obj->oartifact
+                      && (get_artifact(obj)->spfx & SPFX_DIG) != 0);
 }
 
 /* decide whether an artifact itself is vulnerable to a particular type
@@ -1120,6 +1153,8 @@ spec_applies(const struct artifact *weap, struct monst *mtmp)
             return !(yours ? Poison_resistance : resists_poison(mtmp));
         case AD_DRLI:
             return !(yours ? Drain_resistance : resists_drli(mtmp));
+        case AD_DREN:
+            return !nonliving(ptr);
         case AD_STON:
             return !(yours ? Stone_resistance : resists_ston(mtmp));
         default:
@@ -1543,6 +1578,10 @@ artifact_hit(
         impossible("attacking yourself with weapon?");
         return FALSE;
     }
+
+    /* Reaver steals from whoever it hits */
+    if (is_art(otmp, ART_REAVER) && magr)
+        reaver_steal(magr, mdef, youattack, youdefend);
 
     realizes_damage = (youdefend || vis
                        /* feel the effect even if not seen */
@@ -2372,6 +2411,197 @@ invoke_summon_undead(struct obj *obj UNUSED)
     return ECMD_TIME;
 }
 
+/* the Marauder's Map: object detection */
+staticfn int
+invoke_object_det(struct obj *obj)
+{
+    (void) object_detect(obj, 0);
+    return ECMD_TIME;
+}
+
+/* walk through walls and stone like a xorn for a while; the Iron Spoon of
+   Liberation also frees a convict from a ball and chain */
+staticfn int
+invoke_phasing(struct obj *obj)
+{
+    if (Passes_walls) {
+        nothing_special(obj);
+        return ECMD_TIME;
+    }
+    if (is_art(obj, ART_IRON_SPOON_OF_LIBERATION) && Punished
+        && obj != uball) {
+        You("pick the lock of the shackle with %s.", yname(obj));
+        unpunish();
+    }
+    if (!Hallucination)
+        Your("body begins to feel less solid.");
+    else
+        You_feel("one with the spirit world.");
+    incr_itimeout(&HPasses_walls, 50 + rnd(100));
+    obj->age += (HPasses_walls & TIMEOUT); /* time begins after phasing */
+    return ECMD_TIME;
+}
+
+/* the Idol of Moloch channels Moloch's power into the altar below, or
+   calls forth a demon of Moloch when not on an altar (EvilHack) */
+staticfn int
+invoke_channel(struct obj *obj)
+{
+    aligntyp altar_align;
+    boolean high_altar;
+
+    /* Should this break atheist conduct?  Currently it doesn't, under the
+       excuse of being necessary to win.  But still, we're channeling a
+       god's power here... */
+    if (!IS_ALTAR(levl[u.ux][u.uy].typ) || u.uswallow
+        || (Levitation && !Is_airlevel(&u.uz))) {
+        obj->age = 0; /* use_figurine() sets the recharge time */
+        return use_figurine(&obj);
+    }
+    altar_align = Amask2align(levl[u.ux][u.uy].altarmask & AM_MASK);
+    /* the high altars at the center of the world, and Moloch's */
+    high_altar = ((levl[u.ux][u.uy].altarmask & AM_SANCTUM) != 0);
+    if (!Blind)
+        pline("Tendrils of %s mist seep out of %s and into the altar "
+              "below...", hcolor("crimson"), the(xname(obj)));
+    else
+        You_feel("something flow from %s.", the(xname(obj)));
+
+    if (altar_align == A_NONE) {
+        if (high_altar && Role_if(PM_INFIDEL)) {
+            struct obj *amu = carrying(AMULET_OF_YENDOR);
+
+            if (u.uidol_imbued || amu) {
+                godvoice(A_NONE, (char *) 0);
+                if (!u.uidol_imbued) {
+                    /* the Amulet is returned to its rightful owner */
+                    if (uamul == amu)
+                        Amulet_off();
+                    useup(amu);
+                }
+                qt_pager("moloch_imbue");
+                imbue_idol(obj);
+                return ECMD_TIME;
+            }
+        }
+        if (!Blind)
+            pline_The("altar glows for a moment.");
+        /* nothing happens */
+        return ECMD_TIME;
+    }
+    if (high_altar) {
+        You("sense a conflict between %s and %s.", align_gname(A_NONE),
+            a_gname());
+        if (Role_if(PM_INFIDEL) && u.uidol_imbued
+            && altar_align == inf_align(1)) {
+            You_feel("the power of %s increase.", align_gname(A_NONE));
+        } else {
+            pline("%s feel the power of %s decrease.",
+                  (u.ualign.type == A_NONE) ? "Unluckily, you" : "You",
+                  align_gname(A_NONE));
+            godvoice(altar_align, "So, mortal!  You dare desecrate my "
+                                  "High Temple!");
+            god_zaps_you(altar_align);
+            return ECMD_TIME;
+        }
+    }
+    levl[u.ux][u.uy].altarmask &= (AM_SHRINE | AM_SANCTUM);
+    levl[u.ux][u.uy].altarmask |= AM_NONE;
+    newsym(u.ux, u.uy);
+    if (!Blind)
+        pline_The("altar glows %s.", hcolor(NH_RED));
+    if (!high_altar) {
+        /* the Idol does all the work for you, so you don't get a luck
+           increase; but you don't get a hostile minion, either */
+        struct monst *pri = findpriest(temple_occupied(u.urooms));
+
+        if (pri && mon_aligntyp(pri) != A_NONE)
+            angry_priest();
+    } else {
+        /* only an Infidel carrying the imbued Idol gets here: Moloch
+           takes the place of the weakest of the gods of heaven */
+        adjalign(10);
+        u.uevent.ascended = 1;
+        pline1("A sinister laughter echoes through the temple, "
+               "and you're bathed in darkness...");
+        godvoice(A_NONE, "My pawn, thou hast done well!");
+        display_nhwindow(WIN_MESSAGE, FALSE);
+        SetVoice((struct monst *) 0, 0, 80, voice_deity);
+        verbalize("In return for thy service, "
+                  "I grant thee a part of My domain!");
+        You("ascend, becoming the Archfiend of Moloch...");
+        done(ASCENDED);
+    }
+    return ECMD_TIME;
+}
+
+/* Reaver steals from those it hits (SLASH'EM Extended, Hack'EM) */
+staticfn void
+reaver_steal(
+    struct monst *magr, struct monst *mdef,
+    boolean youattack, boolean youdefend)
+{
+    struct obj *otmp;
+    char buf[BUFSZ];
+
+    if (youattack) {
+        /* pirates are the born thieves; others only now and then */
+        if (!mdef->minvent || !(Role_if(PM_PIRATE) || !rn2(10)))
+            return;
+        otmp = mdef->minvent;
+        /* don't steal items if it pushes us over burdened */
+        if ((int) otmp->owt + inv_weight() >= 0)
+            return;
+        if (otmp->otyp == CORPSE && touch_petrifies(&mons[otmp->corpsenm])
+            && !uarmg && !Stone_resistance) {
+            Sprintf(buf, "stolen %s corpse", mons[otmp->corpsenm].pmnames[NEUTRAL]);
+            extract_from_minvent(mdef, otmp, TRUE, FALSE);
+            instapetrify(buf);
+            /* life-saved */
+            (void) hold_another_object(otmp, "You drop %s.", doname(otmp),
+                                       (const char *) 0);
+            return;
+        }
+        extract_from_minvent(mdef, otmp, TRUE, FALSE);
+        (void) hold_another_object(otmp,
+                                   Role_if(PM_PIRATE)
+                                       ? "Ye snatched but dropped %s."
+                                       : "You snatched but dropped %s.",
+                                   doname(otmp),
+                                   Role_if(PM_PIRATE) ? "Ye steal: "
+                                                      : "You steal: ");
+        possibly_unwield(mdef, FALSE);
+        mselftouch(mdef, (const char *) 0, TRUE);
+    } else if (youdefend) {
+        buf[0] = '\0';
+        (void) steal(magr, buf);
+    } else {
+        /* find an object to steal, non-cursed if magr is tame */
+        for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
+            if (!magr->mtame || !otmp->cursed)
+                break;
+        if (otmp) {
+            char onambuf[BUFSZ], mdefnambuf[BUFSZ];
+            boolean vis = canseemon(magr) || canseemon(mdef);
+
+            Strcpy(mdefnambuf,
+                   x_monnam(mdef, ARTICLE_THE, (char *) 0, 0, FALSE));
+            if (u.usteed == mdef && otmp == which_armor(mdef, W_SADDLE))
+                dismount_steed(DISMOUNT_POLY);
+            if (vis)
+                Strcpy(onambuf, doname(otmp));
+            extract_from_minvent(mdef, otmp, TRUE, FALSE);
+            (void) add_to_minv(magr, otmp); /* might free otmp */
+            if (vis)
+                pline("%s steals %s from %s!", Monnam(magr), onambuf,
+                      mdefnambuf);
+            possibly_unwield(mdef, FALSE);
+            mdef->mstrategy &= ~STRAT_WAITFORU;
+            mselftouch(mdef, (const char *) 0, FALSE);
+        }
+    }
+}
+
 /* return the amount of Pw invoking an object costs.
    return a negative value, if obj invoking cannot be paid with Pw */
 staticfn int
@@ -2473,6 +2703,9 @@ arti_invoke(struct obj *obj)
             res = invoke_summon_elemental(obj);
             break;
         case CONJURE_SPHERE: res = invoke_conjure_sphere(obj); break;
+        case OBJECT_DET: res = invoke_object_det(obj); break;
+        case PHASING: res = invoke_phasing(obj); break;
+        case CHANNEL: res = invoke_channel(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

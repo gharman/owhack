@@ -238,7 +238,11 @@ finish_quest(struct obj *obj) /* quest artifact or thrown unique item or faux
         /* update_inventory() is not necessary or helpful here because item
            was thrown, so isn't currently in inventory anyway */
         if (obj->otyp == AMULET_OF_YENDOR) {
-            qt_pager("hasamulet");
+            /* (an Infidel's leader warns against one of the gods) */
+            if (Role_if(PM_INFIDEL))
+                qt_pager_as_god("hasamulet", inf_align(2));
+            else
+                qt_pager("hasamulet");
         } else if (obj->otyp == FAKE_AMULET_OF_YENDOR) {
             verbalize(
       "Sorry to say, this is a mere imitation of the true Amulet of Yendor.");
@@ -248,12 +252,17 @@ finish_quest(struct obj *obj) /* quest artifact or thrown unique item or faux
         return;
     }
 
-    if (u.uhave.amulet) {
+    if (u.uhave.amulet && !(Role_if(PM_INFIDEL) && !u.uidol_imbued)) {
         /* has the amulet in inventory -- most likely the player has already
            completed the quest and stopped in on her way back up, but it's not
            impossible to have gotten the amulet before formally presenting the
-           quest artifact to the leader. */
-        qt_pager("hasamulet");
+           quest artifact to the leader.  (An Infidel carries the Amulet all
+           along; for them, what matters is the imbued Idol of Moloch, and
+           the leader advises them which god to avoid challenging.) */
+        if (Role_if(PM_INFIDEL))
+            qt_pager_as_god("hasamulet", inf_align(2));
+        else
+            qt_pager("hasamulet");
         /* leader IDs the real amulet but ignores any fakes */
         if ((otmp = carrying(AMULET_OF_YENDOR)) != (struct obj *) 0) {
             fully_identify_obj(otmp);
@@ -293,7 +302,7 @@ chat_with_leader(struct monst *mtmp)
      */
     if (Qstat(got_thanks)) {
         /* Rule 1: You've gone back with/without the amulet. */
-        if (u.uhave.amulet)
+        if (u.uhave.amulet && !(Role_if(PM_INFIDEL) && !u.uidol_imbued))
             finish_quest((struct obj *) 0);
 
         /* Rule 2: You've gone back before going for the amulet. */

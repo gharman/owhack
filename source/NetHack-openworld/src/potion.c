@@ -741,7 +741,8 @@ peffect_water(struct obj *otmp)
     }
     gp.potion_unkn++;
     if (mon_hates_blessings(&gy.youmonst) /* undead or demon */
-        || u.ualign.type == A_CHAOTIC) {
+        || (!Upolyd && Race_if(PM_DEMON)) /* crowned Infidel */
+        || u.ualign.type == A_CHAOTIC || u.ualign.type == A_NONE) {
         if (otmp->blessed) {
             pline("This burns like %s!", hliquid("acid"));
             exercise(A_CON, FALSE);
@@ -753,8 +754,10 @@ peffect_water(struct obj *otmp)
                     you_unwere(FALSE);
                 set_ulycn(NON_PM); /* cure lycanthropy */
             }
-            /* the undead races burn more (EvilHack) */
-            losehp(Maybe_Half_Phys(d((u_destroyed_not_killed() && !Upolyd)
+            /* the undead races burn more, and worshippers of Moloch
+               suffer twice as much (EvilHack) */
+            losehp(Maybe_Half_Phys(d(((u_destroyed_not_killed() && !Upolyd)
+                                      || u.ualign.type == A_NONE)
                                      ? 4 : 2, 6)),
                    "potion of holy water", KILLED_BY_AN);
         } else if (otmp->cursed) {
@@ -2799,6 +2802,11 @@ potion_dip(struct obj *obj, struct obj *potion)
              */
         } else if ((!is_rustprone(obj) && !is_corrodeable(obj))
                    || is_ammo(obj) || (!obj->oeroded && !obj->oeroded2)) {
+            if (is_firearm(obj) && obj->obroken) {
+                You("unjam %s.", ysimple_name(obj));
+                obj->obroken = 0;
+                exercise(A_INT, TRUE);
+            }
             /* uses up potion, doesn't set obj->greased */
             if (!Blind)
                 pline("%s %s with an oily sheen.", Yname2(obj),

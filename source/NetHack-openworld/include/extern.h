@@ -115,6 +115,7 @@ extern int doapply(void);
 extern int dorub(void);
 extern int dojump(void);
 extern int jump(int);
+extern int use_figurine(struct obj **) NONNULLARG1;
 extern int number_leashed(void);
 extern void o_unleash(struct obj *) NONNULLPTRS;
 extern void m_unleash(struct monst *, boolean) NONNULLPTRS;
@@ -155,6 +156,7 @@ extern void found_artifact(int);
 extern void find_artifact(struct obj *) NONNULLPTRS;
 extern int nartifact_exist(void);
 extern void artifact_origin(struct obj *, unsigned) NONNULLPTRS;
+extern boolean arti_digs(struct obj *);
 extern boolean arti_immune(struct obj *, int);
 extern boolean spec_ability(struct obj *, unsigned long);
 extern boolean confers_luck(struct obj *) NONNULLPTRS;
@@ -871,6 +873,8 @@ extern void impact_drop(struct obj *, coordxy, coordxy, xint16);
 /* ### dothrow.c ### */
 
 extern int multishot_class_bonus(int, struct obj *, struct obj *) NONNULLARG2;
+extern int firearm_range(int);
+extern int firearm_rof(int);
 extern int dothrow(void);
 extern int dofire(void);
 extern void endmultishot(boolean);
@@ -1372,6 +1376,7 @@ extern void delobj_core(struct obj *, boolean) NONNULLARG1;
 extern struct obj *sobj_at(int, coordxy, coordxy);
 extern struct obj *nxtobj(struct obj *, int, boolean) NONNULLARG1;
 extern struct obj *carrying(int);
+extern struct obj *carrying_arti(int);
 extern struct obj *u_carried_gloves(void);
 extern struct obj *u_have_novel(void);
 extern struct obj *o_on(unsigned int, struct obj *);
@@ -1812,6 +1817,20 @@ extern void rest_rooms(NHFILE *) NONNULLARG1;
 extern struct mkroom *search_special(schar);
 extern struct mkroom *search_special_near(schar, coordxy, coordxy);
 extern int cmap_to_type(int);
+
+/* ### moloch.c ### */
+
+extern void set_demon_race(void);
+extern aligntyp inf_align(int);
+extern boolean moloch_hears_prayer(void);
+extern void moloch_demands(void);
+extern void moloch_offering(int);
+extern boolean infidel_no_amulet(void);
+extern void infidel_demonize(void);
+extern void check_wings(boolean);
+extern boolean demon_tail_sting(struct monst *) NONNULLARG1;
+extern boolean idol_is_imbued(struct obj *);
+extern void imbue_idol(struct obj *) NONNULLARG1;
 
 /* ### mon.c ### */
 
@@ -2597,6 +2616,13 @@ extern struct autopickup_exception *check_autopickup_exceptions(struct obj *) NO
 extern boolean autopick_testobj(struct obj *, boolean) NONNULLARG1;
 extern boolean u_safe_from_fatal_corpse(struct obj *obj, int) NONNULLARG1;
 
+/* ### pirate.c ### */
+
+extern const char *pirate_item_name(int, const char *);
+extern int pirate_item_otyp(const char *) NONNULLARG1;
+extern const char *piratesay(const char *) NONNULLARG1;
+extern void treasury_of_proteus(void);
+
 /* ### pline.c ### */
 
 #ifdef DUMPLOG_CORE
@@ -2700,6 +2726,8 @@ extern boolean stuck_in_wall(void);
 extern void desecrate_altar(boolean, aligntyp);
 extern int dosacrifice(void);
 extern boolean can_pray(boolean);
+extern void god_zaps_you(aligntyp);
+extern void godvoice(aligntyp, const char *);
 extern int dopray(void);
 extern const char *u_gname(void);
 extern int doturn(void);
@@ -2763,6 +2791,7 @@ extern struct obj *find_quest_artifact(unsigned);
 extern int stinky_nemesis(struct monst *);
 extern void com_pager(const char *);
 extern void qt_pager(const char *);
+extern void qt_pager_as_god(const char *, aligntyp);
 extern struct permonst *qt_montype(void);
 extern void deliver_splev_message(void);
 
@@ -2837,6 +2866,7 @@ extern void learnscroll(struct obj *) NONNULLARG1;
 extern char *tshirt_text(struct obj *, char *) NONNULLARG12;
 extern char *hawaiian_motif(struct obj *, char *) NONNULLARG12;
 extern char *apron_text(struct obj *, char *) NONNULLARG12;
+extern char *striped_text(struct obj *, char *) NONNULLARG12;
 extern const char *candy_wrapper_text(struct obj *) NONNULLARG1;
 extern void assign_candy_wrapper(struct obj *) NONNULLARG1;
 extern int doread(void);
@@ -2973,6 +3003,7 @@ extern boolean validrole(int);
 extern boolean validrace(int, int);
 extern boolean validgend(int, int, int);
 extern boolean validalign(int, int, int);
+extern int special_alignment(int, int);
 extern int randrole(boolean);
 extern int randrace(int);
 extern int randgend(int, int);

@@ -57,6 +57,8 @@ enum ms_sounds {
     MS_SPELL    = 42,   /* spellcaster not matching any of the above */
     MS_BOAST    = 43,   /* giants */
     MS_GROAN    = 44,   /* zombies groan */
+    MS_PARROT   = 45,   /* parrots repeat what they have heard */
+    MS_PIRATE   = 46,   /* pirates: "Arr, matey!" */
 };
 
 #define MR_FIRE         0x01 /* resists fire */
@@ -204,6 +206,9 @@ enum ms_sounds {
 #define MH_DOPPEL       0x10000000UL
 #define MH_GHOST        0x20000000UL
 #define MH_RACEMASK     0x3fff0000UL
+/* demons; the race of an Infidel crowned Emissary of Moloch, never
+   available at character creation so not part of MH_RACEMASK */
+#define MH_DEMON        0x40000000UL
 
 /* for mons[].geno (constant during game) */
 #define G_UNIQ          0x1000 /* generated only once */

@@ -908,8 +908,13 @@ mksobj_init(struct obj **obj, boolean artif)
             otmp->age = (long) rn1(500, 1000);
             blessorcurse(otmp, 2);
         }
+        /* a cursed firearm is often found jammed */
+        if (is_firearm(otmp) && otmp->cursed && rn2(2))
+            otmp->obroken = 1;
 
-        if (artif && !rn2(20 + (10 * nartifact_exist()))) {
+        /* Pirates have a nose for plunder (Hack'EM) */
+        if (artif && !rn2((Role_if(PM_PIRATE) ? 5 : 20)
+                          + (10 * nartifact_exist()))) {
             /* mk_artifact() with otmp and A_NONE will never return NULL */
             otmp = mk_artifact(otmp, (aligntyp) A_NONE, 99, TRUE);
             *obj = otmp;
@@ -1126,7 +1131,8 @@ mksobj_init(struct obj **obj, boolean artif)
             otmp->spe = rne(3);
         } else
             blessorcurse(otmp, 10);
-        if (artif && !rn2(40 + (10 * nartifact_exist()))) {
+        if (artif && !rn2((Role_if(PM_PIRATE) ? 10 : 40)
+                          + (10 * nartifact_exist()))) {
             /* mk_artifact() with otmp and A_NONE will never return NULL */
             otmp = mk_artifact(otmp, (aligntyp) A_NONE, 99, TRUE);
             *obj = otmp;
@@ -1982,6 +1988,10 @@ weight(struct obj *obj)
             /* this has no effect because statues don't stack */
             wt *= (int) obj->quan;
         }
+
+        /* the Treasury of Proteus is a small sea chest (SpliceHack) */
+        if (obj->oartifact == ART_TREASURY_OF_PROTEUS)
+            wt = 50;
 
         cwt = 0; /* contents weight */
         for (contents = obj->cobj; contents; contents = contents->nobj)

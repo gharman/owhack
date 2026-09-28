@@ -832,6 +832,13 @@ doengrave_sfx_item(struct _doengrave_ctx *de)
                 de->type = BURN;
             else
                 Your("%s is deactivated!", simpleonames(de->otmp));
+        } else if (is_firearm(de->otmp)) {
+            /* poking the ground with a gun fouls its barrel (Hack'EM) */
+            Your("%s gets jammed!", xname(de->otmp));
+            de->otmp->obroken = 1;
+            update_inventory();
+            de->ret = ECMD_TIME;
+            return FALSE;
         } else if (is_blade(de->otmp)) {
             /* if non-blade or welded or too dull, engraving type stays set
                to DUST; feedback for that is only given for bladed weapons */
@@ -883,6 +890,12 @@ doengrave_sfx_item(struct _doengrave_ctx *de)
                 pline("%s %s.", Yobjnam2(de->otmp, "get"),
                       de->frosted ? "frosty" : "dusty");
             }
+            break;
+        case SPOON:
+            /* the Iron Spoon of Liberation engraves as well and as quickly
+               as an athame, without dulling */
+            if (de->otmp->oartifact)
+                de->type = ENGRAVE;
             break;
         default:
             break;

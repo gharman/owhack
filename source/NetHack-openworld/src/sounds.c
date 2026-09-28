@@ -431,6 +431,12 @@ growl_sound(struct monst *mtmp)
     case MS_SQAWK:
         ret = "screech";
         break;
+    case MS_PARROT:
+        ret = "squaark";
+        break;
+    case MS_PIRATE:
+        ret = "curse";
+        break;
     case MS_NEIGH:
         ret = "neigh";
         break;
@@ -511,6 +517,10 @@ yelp(struct monst *mtmp)
         case MS_SQAWK:
             se = se_avian_screak;
             yelp_verb = (!Deaf) ? "screak" : "thrash";
+            break;
+        case MS_PARROT:
+            se = se_avian_screak;
+            yelp_verb = (!Deaf) ? "squaark" : "thrash";
             break;
         case MS_WAIL:
             se = se_wail;
@@ -948,6 +958,36 @@ domonnoise(struct monst *mtmp)
             Soundeffect(se_squawk, 80);
             pline_msg = "squawks.";
         }
+        break;
+    case MS_PARROT: { /* parrots repeat what they have heard (SLASH'EM) */
+        static const char *const parrot_says[] = {
+            "Polly want a lembas wafer!",
+            "Nobody expects the Spanish Inquisition!",
+            "Who's a good boy, then?",
+            "Show us yer knickers!",
+            "You'll never make it!",
+            "What sort of a sword do you call that!",
+            "Pieces of eight!  Pieces of eight!",
+        };
+        int which = rn2(SIZE(parrot_says) + 2);
+
+        if (which == SIZE(parrot_says)) {
+            Soundeffect(se_squawk, 80);
+            pline_msg = "squaarks loudly!";
+        } else if (which > SIZE(parrot_says)) {
+            pline_msg = "whistles suggestively!";
+        } else {
+            verbl_msg = parrot_says[which];
+        }
+        break;
+    }
+    case MS_PIRATE:
+        if (!mtmp->mpeaceful)
+            verbl_msg = "Ye be off the edge of the map, matey!";
+        else if (is_undead(ptr))
+            pline_msg = "tells you to be careful of cursed gold.";
+        else
+            pline_msg = "talks to you about the pirate code.";
         break;
     case MS_HISS:
         if (!mtmp->mpeaceful) {
@@ -1484,6 +1524,26 @@ dochat(void)
             map_invisible(mtmp->mx, mtmp->my);
         pline("%s is eating noisily.", Monnam(mtmp));
         return ECMD_OK;
+    }
+    /* a convict can soothe rats with chittering sounds (EvilHack) */
+    if (Role_if(PM_CONVICT) && is_rat(mtmp->data) && !mtmp->mpeaceful
+        && !mtmp->mtame) {
+        if (!canspotmon(mtmp))
+            map_invisible(mtmp->mx, mtmp->my);
+        You("attempt to soothe %s with chittering sounds...",
+            mon_nam(mtmp));
+        if (rnl(10) < 2) {
+            (void) tamedog(mtmp, (struct obj *) 0, TRUE);
+        } else {
+            pline("%s unfortunately ignores your overtures.",
+                  Monnam(mtmp));
+            if (rnl(10) < 3) {
+                mtmp->mpeaceful = 1;
+                set_malign(mtmp);
+                newsym(mtmp->mx, mtmp->my);
+            }
+        }
+        return ECMD_TIME;
     }
     if (Deaf) {
         const char *xresponse = humanoid(gy.youmonst.data)

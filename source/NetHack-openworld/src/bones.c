@@ -614,7 +614,7 @@ savebones(int how, time_t when, struct obj *corpse)
     Sprintf(newbones->who, "%s-%.3s-%.3s-%.3s-%.3s",
             svp.plname, gu.urole.filecode,
             gu.urace.filecode, genders[flags.female].filecode,
-            aligns[1 - u.ualign.type].filecode);
+            aligns[alignidx(u.ualign.type)].filecode);
     formatkiller(newbones->how, sizeof newbones->how, how, TRUE);
     Strcpy(newbones->when, yyyymmddhhmmss(when));
     /* final resting place, used to decide when bones are discovered */

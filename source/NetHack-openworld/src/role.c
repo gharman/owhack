@@ -195,6 +195,50 @@ const struct Role roles[NUM_ROLES+1] = {
       A_INT,
       SPE_DIG,
       -4 },
+    /* Convict (Convict patch by Karl Garrison; EvilHack, Hack'EM) */
+    { { "Convict", 0 },
+      { { "Detainee", 0 },
+        { "Inmate", 0 },
+        { "Jail-bird", 0 },
+        { "Prisoner", 0 },
+        { "Outlaw", 0 },
+        { "Crook", 0 },
+        { "Desperado", 0 },
+        { "Felon", 0 },
+        { "Fugitive", 0 } },
+      "Ilmater", "Grumbar", "_Tymora", /* Faerunian */
+      "Con",
+      "Castle Waterdeep Dungeon",
+      "the Warden's Level",
+      PM_CONVICT,
+      PM_SEWER_RAT,
+      PM_ROBERT_THE_LIFER,
+      PM_INMATE,
+      PM_WARDEN_ARIANNA,
+      PM_GIANT_BEETLE,
+      PM_SOLDIER_ANT,
+      S_RODENT,
+      S_SPIDER,
+      ART_IRON_SPOON_OF_LIBERATION,
+      MH_HUMAN | MH_DWARF | MH_GNOME | MH_ORC | MH_GIANT | MH_CENTAUR
+          | MH_ILLITHID | MH_DRAUGR | MH_VAMPIRE | MH_WERE | MH_DOPPEL
+          | MH_GHOST | ROLE_MALE | ROLE_FEMALE | ROLE_CHAOTIC
+          | ROLE_NORACEALIGN,
+      /* Str Int Wis Dex Con Cha */
+      { 10, 7, 7, 7, 13, 6 },
+      { 20, 20, 10, 20, 20, 10 },
+      /* Init   Lower  Higher */
+      { 8, 0, 0, 8, 0, 0 }, /* Hit points */
+      { 1, 0, 0, 1, 0, 1 },
+      10, /* Energy */
+      -10,
+      5,
+      0,
+      2,
+      10,
+      A_INT,
+      SPE_TELEPORT_AWAY,
+      -4 },
     { { "Flame Mage", 0 },
       { { "Spark", 0 },
         { "Igniter", 0 },
@@ -318,6 +362,50 @@ const struct Role roles[NUM_ROLES+1] = {
       10,
       A_INT,
       SPE_REFLECTION,
+      -4 },
+    /* Infidel (by Tomsod; EvilHack): a cultist of Moloch, so unaligned,
+       although listed as chaotic for character selection */
+    { { "Infidel", 0 },
+      { { "Apostate", 0 },
+        { "Heathen", 0 },
+        { "Heretic", 0 },
+        { "Idolater", "Idolatress" },
+        { "Cultist", 0 },
+        { "Splanchomancer", 0 },
+        { "Maleficus", "Malefica" },
+        { "Demonologist", 0 },
+        { "Heresiarch", 0 } },
+      0, 0, 0, /* uses a random role's pantheon */
+      "Inf",
+      "the Hidden Temple",
+      "the Howling Forest",
+      PM_INFIDEL,
+      PM_LESSER_HOMUNCULUS,
+      PM_ARCHBISHOP_OF_MOLOCH,
+      PM_CULTIST,
+      PM_PALADIN,
+      PM_AGENT,
+      PM_CHAMPION,
+      S_DOG,
+      S_UNICORN,
+      ART_IDOL_OF_MOLOCH,
+      MH_HUMAN | MH_ELF | MH_ORC | MH_GIANT | MH_CENTAUR | MH_ILLITHID
+          | MH_DRAUGR | MH_VAMPIRE | ROLE_MALE | ROLE_FEMALE | ROLE_CHAOTIC
+          | ROLE_NORACEALIGN,
+      /* Str Int Wis Dex Con Cha */
+      { 7, 7, 10, 7, 7, 7 },
+      { 20, 10, 25, 15, 20, 10 },
+      /* Init   Lower  Higher */
+      { 10, 0, 0, 8, 1, 0 }, /* Hit points */
+      { 4, 3, 0, 1, 0, 2 },
+      10, /* Energy */
+      10,
+      3,
+      1,
+      2,
+      10,
+      A_WIS,
+      SPE_FIREBALL,
       -4 },
     { { "Jedi", 0 },
       { { "Youngling", 0 },
@@ -480,6 +568,52 @@ const struct Role roles[NUM_ROLES+1] = {
       10,
       A_INT,
       SPE_SUMMON_UNDEAD,
+      -4 },
+    /* Pirate (SLASH'EM Extended, SlashTHEM, SpliceHack, Hack'EM) */
+    { { "Pirate", 0 },
+      { { "Landlubber", 0 },
+        { "Swabbie", 0 },
+        { "Cutthroat", 0 },
+        { "Bosun", 0 },
+        { "Second Mate", 0 },
+        { "First Mate", 0 },
+        { "Captain", 0 },
+        { "Pirate Lord", "Pirate Lady" },
+        { "Dread Pirate", 0 } },
+      /* Davy Jones would be chaotic, but we want something all pirates
+         are opposed to */
+      "Davy Jones", "_the deep blue sea", "_the storm",
+      "Pir",
+      "Tortuga",
+      "Shipwreck Island",
+      PM_PIRATE,
+      NON_PM, /* parrot or monkey, see pet_type() */
+      PM_MAYOR_CUMMERBUND,
+      PM_PIRATE_CREWMATE,
+      PM_BLACKBEARD_S_GHOST,
+      PM_SKELETAL_PIRATE,
+      PM_SOLDIER,
+      S_RODENT,
+      S_ELEMENTAL, /* ghost pirates, soldiers, rats in the food stores,
+                    * and the occasional storm */
+      ART_TREASURY_OF_PROTEUS,
+      MH_HUMAN | MH_GNOME | MH_ORC | MH_ILLITHID | MH_TORTLE | MH_VAMPIRE
+          | MH_WERE | MH_GHOST | ROLE_MALE | ROLE_FEMALE | ROLE_NEUTRAL
+          | ROLE_CHAOTIC,
+      /* Str Int Wis Dex Con Cha */
+      { 8, 7, 7, 8, 8, 7 },
+      { 20, 15, 10, 20, 25, 10 },
+      /* Init   Lower  Higher */
+      { 10, 0, 0, 8, 1, 0 }, /* Hit points */
+      { 1, 0, 0, 1, 0, 1 },
+      12, /* Energy */
+      10,
+      8,
+      0,
+      2,
+      9,
+      A_INT,
+      SPE_HASTE_SELF,
       -4 },
     { { "Priest", "Priestess" },
       { { "Aspirant", 0 },
@@ -1115,6 +1249,7 @@ staticfn boolean role_race_compat(int, int);
 staticfn char *promptsep(char *, int);
 staticfn int role_gendercount(int);
 staticfn int race_alignmentcount(int);
+staticfn unsigned long race_align_allow(int, int);
 
 /* used by str2XXX() */
 static char NEARDATA randomstr[] = "random";
@@ -1191,7 +1326,9 @@ str2role(const char *str)
 staticfn boolean
 role_race_compat(int rolenum, int racenum)
 {
-    unsigned long both = roles[rolenum].allow & races[racenum].allow;
+    /* (roles flagged ROLE_NORACEALIGN replace the race's alignments) */
+    unsigned long both = roles[rolenum].allow
+                         & race_align_allow(rolenum, racenum);
 
     return (boolean) ((both & ROLE_RACEMASK) != 0
                       && (both & ROLE_GENDMASK) != 0
@@ -1326,12 +1463,39 @@ str2gend(const char *str)
     return ROLE_NONE;
 }
 
+/* a race's allow mask as far as alignment goes when playing rolenum:
+   roles flagged ROLE_NORACEALIGN (the Convict and the Infidel) replace
+   the race's permitted alignments with the role's own */
+staticfn unsigned long
+race_align_allow(int rolenum, int racenum)
+{
+    unsigned long allow = races[racenum].allow;
+
+    if (IndexOkT(rolenum, roles)
+        && (roles[rolenum].allow & ROLE_NORACEALIGN) != 0) {
+        allow &= ~(unsigned long) ROLE_ALIGNMASK;
+        allow |= (roles[rolenum].allow & ROLE_ALIGNMASK);
+    }
+    return allow;
+}
+
+/* Infidels are listed as chaotic in roles[], but are actually unaligned;
+   map an alignment index to aligns[unaligned] for them */
+int
+special_alignment(int rolenum, int alignnum)
+{
+    if (IndexOkT(rolenum, roles) && roles[rolenum].mnum == PM_INFIDEL)
+        return 3; /* aligns[unaligned] */
+    return alignnum;
+}
+
 boolean
 validalign(int rolenum, int racenum, int alignnum)
 {
     /* Assumes validrole and validrace */
     return (boolean) (alignnum >= 0 && alignnum < ROLE_ALIGNS
-                      && (roles[rolenum].allow & races[racenum].allow
+                      && (roles[rolenum].allow
+                          & race_align_allow(rolenum, racenum)
                           & aligns[alignnum].allow & ROLE_ALIGNMASK));
 }
 
@@ -1342,16 +1506,16 @@ randalign(int rolenum, int racenum)
 
     /* Count the number of valid alignments */
     for (i = 0; i < ROLE_ALIGNS; i++)
-        if (roles[rolenum].allow & races[racenum].allow & aligns[i].allow
-            & ROLE_ALIGNMASK)
+        if (roles[rolenum].allow & race_align_allow(rolenum, racenum)
+            & aligns[i].allow & ROLE_ALIGNMASK)
             n++;
 
     /* Pick a random alignment */
     if (n)
         n = rn2(n);
     for (i = 0; i < ROLE_ALIGNS; i++)
-        if (roles[rolenum].allow & races[racenum].allow & aligns[i].allow
-            & ROLE_ALIGNMASK) {
+        if (roles[rolenum].allow & race_align_allow(rolenum, racenum)
+            & aligns[i].allow & ROLE_ALIGNMASK) {
             if (n)
                 n--;
             else
@@ -1463,7 +1627,7 @@ ok_race(int rolenum, int racenum, int gendnum, int alignnum)
     if (IndexOkT(racenum, races)) {
         if (gr.rfilter.mask & races[racenum].selfmask)
             return FALSE;
-        allow = races[racenum].allow;
+        allow = race_align_allow(rolenum, racenum);
         if (IndexOkT(rolenum, roles) && !role_race_compat(rolenum, racenum))
             return FALSE;
         if (gendnum >= 0 && gendnum < ROLE_GENDERS
@@ -1478,7 +1642,7 @@ ok_race(int rolenum, int racenum, int gendnum, int alignnum)
         for (i = 0; i < SIZE(races) - 1; i++) {
             if (gr.rfilter.mask & races[i].selfmask)
                 continue;
-            allow = races[i].allow;
+            allow = race_align_allow(rolenum, i);
             if (IndexOkT(rolenum, roles) && !role_race_compat(rolenum, i))
                 continue;
             if (gendnum >= 0 && gendnum < ROLE_GENDERS
@@ -1601,7 +1765,8 @@ ok_align(int rolenum, int racenum, int gendnum UNUSED, int alignnum)
             && !(allow & roles[rolenum].allow & ROLE_ALIGNMASK))
             return FALSE;
         if (IndexOkT(racenum, races)
-            && !(allow & races[racenum].allow & ROLE_ALIGNMASK))
+            && !(allow & race_align_allow(rolenum, racenum)
+                 & ROLE_ALIGNMASK))
             return FALSE;
         return TRUE;
     } else {
@@ -1614,7 +1779,8 @@ ok_align(int rolenum, int racenum, int gendnum UNUSED, int alignnum)
                 && !(allow & roles[rolenum].allow & ROLE_ALIGNMASK))
                 continue;
             if (IndexOkT(racenum, races)
-                && !(allow & races[racenum].allow & ROLE_ALIGNMASK))
+                && !(allow & race_align_allow(rolenum, racenum)
+                     & ROLE_ALIGNMASK))
                 continue;
             return TRUE;
         }
@@ -2175,7 +2341,7 @@ role_selection_prolog(int which, winid where)
     }
     if (c >= 0) {
         assert(IndexOkT(c, races));
-        allowmask = races[c].allow;
+        allowmask = race_align_allow(r, c);
         if ((allowmask & ROLE_ALIGNMASK) == AM_LAWFUL)
             a = 0; /* aligns[lawful] */
         else if ((allowmask & ROLE_ALIGNMASK) == AM_NEUTRAL)
@@ -2184,6 +2350,7 @@ role_selection_prolog(int which, winid where)
             a = 2; /* aligns[chaotic] */
         /* [c never forces gender] */
     }
+    a = special_alignment(r, a); /* special case (Infidel) */
     /* [g and a don't constrain anything sufficiently
        to narrow something done to a single choice] */
 
@@ -2319,11 +2486,12 @@ role_menu_extra(int which, winid where, boolean preselect)
                 a = 1; /* aligns[neutral] */
             else if (allowmask == AM_CHAOTIC)
                 a = 2; /* aligns[chaotic] */
+            a = special_alignment(r, a); /* special case (Infidel) */
             if (a >= 0)
                 constrainer = "role";
         }
         if (c >= 0 && !constrainer) {
-            allowmask = races[c].allow & ROLE_ALIGNMASK;
+            allowmask = race_align_allow(r, c) & ROLE_ALIGNMASK;
             if (allowmask == AM_LAWFUL)
                 a = 0; /* aligns[lawful] */
             else if (allowmask == AM_NEUTRAL)
@@ -2399,7 +2567,7 @@ role_menu_extra(int which, winid where, boolean preselect)
 void
 role_init(void)
 {
-    int alignmnt;
+    int alignmnt, malignmnt;
     struct permonst *pm;
 
     /* Strip the role letter out of the player name.
@@ -2438,7 +2606,11 @@ role_init(void)
     if (!validalign(flags.initrole, flags.initrace, flags.initalign))
         /* Pick a random alignment */
         flags.initalign = randalign(flags.initrole, flags.initrace);
+    /* Infidels are actually unaligned */
+    flags.initalign = special_alignment(flags.initrole, flags.initalign);
     alignmnt = aligns[flags.initalign].value;
+    /* quest monsters of an unaligned role stay unaligned */
+    malignmnt = (alignmnt == A_NONE) ? A_NONE : alignmnt * 3;
 
     /* Initialize gu.urole and gu.urace */
     gu.urole = roles[flags.initrole];
@@ -2450,7 +2622,7 @@ role_init(void)
         pm->msound = MS_LEADER;
         pm->mflags2 |= (M2_PEACEFUL);
         pm->mflags3 |= M3_CLOSE;
-        pm->maligntyp = alignmnt * 3;
+        pm->maligntyp = malignmnt;
         /* if gender is random, we choose it now instead of waiting
            until the leader monster is created */
         svq.quest_status.ldrgend =
@@ -2463,7 +2635,7 @@ role_init(void)
     if (gu.urole.guardnum != NON_PM) {
         pm = &mons[gu.urole.guardnum];
         pm->mflags2 |= (M2_PEACEFUL);
-        pm->maligntyp = alignmnt * 3;
+        pm->maligntyp = malignmnt;
     }
 
     /* Fix up the quest nemesis */
@@ -2478,6 +2650,15 @@ role_init(void)
            until the nemesis monster is created */
         svq.quest_status.nemgend = is_neuter(pm) ? 2 : is_female(pm) ? 1
                                    : is_male(pm) ? 0 : (rn2(100) < 50);
+    }
+
+    /* Infidels are hunted by the champions and agents of the gods, who
+       are otherwise never generated at random (see uncommon()) */
+    if (Role_if(PM_INFIDEL)) {
+        if (gu.urole.enemy1num != NON_PM)
+            mons[gu.urole.enemy1num].geno &= ~G_NOGEN;
+        if (gu.urole.enemy2num != NON_PM)
+            mons[gu.urole.enemy2num].geno &= ~G_NOGEN;
     }
 
     /* Fix up the god names */

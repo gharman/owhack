@@ -25,7 +25,6 @@ staticfn void light_cocktail(struct obj **);
 staticfn int rub_ok(struct obj *);
 staticfn void display_jump_positions(boolean);
 staticfn void use_tinning_kit(struct obj *);
-staticfn int use_figurine(struct obj **);
 staticfn int grease_ok(struct obj *);
 staticfn int use_grease(struct obj *);
 staticfn void use_trap(struct obj *);
@@ -123,6 +122,11 @@ use_towel(struct obj *obj)
     } else if (obj->cursed) {
         long old;
 
+        if (uwep && is_firearm(uwep) && !uwep->obroken) {
+            You("cover %s in grime!", ysimple_name(uwep));
+            uwep->obroken = 1;
+            update_inventory();
+        }
         switch (rn2(3)) {
         case 2:
             old = (Glib & TIMEOUT);
@@ -186,6 +190,31 @@ use_towel(struct obj *obj)
         if (is_wet_towel(obj))
             dry_a_towel(obj, -1, drying_feedback);
         return ECMD_TIME;
+    }
+
+    /* a greased towel can clean a jammed or rusty firearm (Hack'EM) */
+    if (obj->greased) {
+        struct obj *otmp;
+
+        for (otmp = gi.invent; otmp; otmp = otmp->nobj) {
+            if (!is_firearm(otmp))
+                continue;
+            if (otmp->obroken) {
+                You("unjam %s.", ysimple_name(otmp));
+                otmp->obroken = 0;
+            } else if (otmp->oeroded > 0) {
+                You("remove some rust from %s.", ysimple_name(otmp));
+                otmp->oeroded--;
+            } else {
+                continue;
+            }
+            if (!rn2(2)) {
+                pline_The("grease wears off.");
+                obj->greased = 0;
+            }
+            update_inventory();
+            return ECMD_TIME;
+        }
     }
 
     Your("%s and %s are already clean.", body_part(FACE),
@@ -866,7 +895,7 @@ use_leash_core(struct obj *obj, struct monst *mtmp, coord *cc, int spotmon)
         /* applying a leash which is currently in use */
         if (obj->leashmon != (int) mtmp->m_id) {
             pline("This leash is not attached to that creature.");
-        } else if (obj->cursed) {
+        } else if (obj->cursed && !Role_if(PM_INFIDEL)) {
             pline_The("leash would not come off!");
             set_bknown(obj, 1);
         } else {
@@ -2622,12 +2651,22 @@ figurine_location_checks(struct obj *obj, coord *cc, boolean quietly)
     return TRUE;
 }
 
-staticfn int
+int
 use_figurine(struct obj **optr)
 {
     struct obj *obj = *optr;
     coordxy x, y;
     coord cc;
+    boolean idol = (obj->oartifact == ART_IDOL_OF_MOLOCH);
+    const char *release_figurine;
+
+    /* the Idol of Moloch can only call forth a demon now and then */
+    if (idol && obj->age > svm.moves) {
+        You_feel("that %s %s ignoring you.", the(xname(obj)),
+                 otense(obj, "are"));
+        obj->age += (long) d(3, 10);
+        return ECMD_TIME;
+    }
 
     if (u.uswallow) {
         /* can't activate a figurine while swallowed */
@@ -2645,13 +2684,31 @@ use_figurine(struct obj **optr)
     /* Passing FALSE arg here will result in messages displayed */
     if (!figurine_location_checks(obj, &cc, FALSE))
         return ECMD_TIME;
-    You("%s and it %stransforms.",
-        (u.dx || u.dy) ? "set the figurine beside you"
+    release_figurine = (u.dx || u.dy) ? "set the figurine beside you"
                        : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
                           || is_pool(cc.x, cc.y))
                              ? "release the figurine"
                              : (u.dz < 0 ? "toss the figurine into the air"
-                                         : "set the figurine on the ground"),
+                                         : "set the figurine on the ground");
+    if (idol) {
+        /* the Idol isn't consumed; a demon arises from the mist */
+        if (Blind)
+            You("%s and feel an unholy aura emanate from it.",
+                release_figurine);
+        else
+            You("%s and a cloud of %s mist arises from it.",
+                release_figurine, hcolor("crimson"));
+        (void) make_familiar(obj, cc.x, cc.y, FALSE);
+        obj->age = svm.moves + rnz(100);
+        freeinv(obj);
+        place_object(obj, cc.x, cc.y);
+        newsym(cc.x, cc.y);
+        if (Blind)
+            map_invisible(cc.x, cc.y);
+        *optr = 0;
+        return ECMD_TIME;
+    }
+    You("%s and it %stransforms.", release_figurine,
         Blind ? "supposedly " : "");
     (void) make_familiar(obj, cc.x, cc.y, FALSE);
     (void) stop_timer(FIG_TRANSFORM, obj_to_any(obj));
@@ -2713,7 +2770,11 @@ use_grease(struct obj *obj)
         consume_obj_charge(obj, TRUE);
 
         oldglib = (int) (Glib & TIMEOUT);
-        if (otmp != &hands_obj) {
+        if (otmp != &hands_obj && is_firearm(otmp) && otmp->obroken) {
+            /* grease frees a jammed firearm (Hack'EM) */
+            You("unjam %s.", ysimple_name(otmp));
+            otmp->obroken = 0;
+        } else if (otmp != &hands_obj) {
             You("cover %s with a thick layer of grease.", yname(otmp));
             otmp->greased = 1;
             if (obj->cursed && !nohands(gy.youmonst.data)) {
@@ -4385,6 +4446,18 @@ doapply(void)
     case PICK_AXE:
     case DWARVISH_MATTOCK:
         res = use_pick_axe(obj);
+        break;
+    case SPOON:
+        if (obj->oartifact) {
+            /* the Iron Spoon of Liberation digs like a pick-axe */
+            res = use_pick_axe(obj);
+        } else if (Role_if(PM_CONVICT)) {
+            pline_The("guards used to hand these out with our food rations.  "
+                      "No one was ever able to figure out why.");
+        } else {
+            You("have never in your life seen such an odd item.  "
+                "You have no idea how to use it.");
+        }
         break;
     case TINNING_KIT:
         use_tinning_kit(obj);

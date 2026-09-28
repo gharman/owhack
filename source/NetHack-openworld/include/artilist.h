@@ -44,6 +44,7 @@ static const char *const artifact_names[] = {
 #define     ELEC(a,b)   {0,AD_ELEC,a,b}         /* electrical shock */
 #define     STUN(a,b)   {0,AD_STUN,a,b}         /* magical attack */
 #define     POIS(a,b)   {0,AD_DRST,a,b}         /* poison */
+#define     DREN(a,b)   {0,AD_DREN,a,b}         /* drains energy */
 /* clang-format on */
 
 static NEARDATA struct artifact artilist[] = {
@@ -271,6 +272,35 @@ static NEARDATA struct artifact artilist[] = {
       0, 6, 5000L, NO_COLOR, DELUDER),
 
     /*
+     *      Role gifts of the Convict, Infidel and Pirate (EvilHack,
+     *      Hack'EM, SLASH'EM).
+     */
+
+    /* the Convict's first sacrifice gift; acts like a luckstone */
+    A("Luck Blade", BROADSWORD, (SPFX_RESTR | SPFX_LUCK), 0, 0,
+      PHYS(5, 6), NO_DFNS, NO_CARY, 0, A_CHAOTIC, PM_CONVICT, NON_PM,
+      0, 5, 3000L, NO_COLOR, LUCK_BLADE),
+
+    /* the Infidel's sacrificial knife; its energy drain only works if it
+       kills its victim, and sacrifices made while wielding it are worth
+       half again as much */
+    A("Secespita", KNIFE, (SPFX_RESTR | SPFX_ATTK | SPFX_DEFN), 0, 0,
+      DREN(8, 8), DFNS(AD_DRST), NO_CARY, 0, A_CHAOTIC, PM_INFIDEL, NON_PM,
+      0, 5, 3000L, NO_COLOR, SECESPITA),
+
+    /* the Pirate's only sacrifice gift; reading it maps the vicinity
+       without using it up, invoking it detects objects */
+    A("The Marauder's Map", SCR_MAGIC_MAPPING, SPFX_RESTR, 0, 0,
+      NO_ATTK, NO_DFNS, NO_CARY, OBJECT_DET, A_CHAOTIC, PM_PIRATE, NON_PM,
+      0, 1, 2000L, NO_COLOR, MARAUDERS_MAP),
+
+    /* the Pirate King's cutlass, the Pirate's crowning gift; it steals
+       from those it hits */
+    A("Reaver", SCIMITAR, (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), 0, 0,
+      PHYS(5, 8), NO_DFNS, NO_CARY, 0, A_CHAOTIC, PM_PIRATE, NON_PM,
+      0, 12, 6000L, NO_COLOR, REAVER),
+
+    /*
      *      The artifacts for the quest dungeon, all self-willed.
      *      gen_spe should be 0; gift_value irrelevant and set to 12.
      */
@@ -398,6 +428,34 @@ static NEARDATA struct artifact artilist[] = {
       0, 0, DRLI(8, 4), NO_DFNS, CARY(AD_MAGM), ENERGY_BOOST, A_CHAOTIC,
       PM_NECROMANCER, NON_PM,
       0, 12, 5000L, NO_COLOR, GREAT_DAGGER_OF_GLAURGNAA),
+    /* The Pirate quest artifact: a light chest that polymorphs whatever
+       is kept in it from time to time and absorbs curses */
+    A("The Treasury of Proteus", CHEST,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), SPFX_LUCK, 0,
+      NO_ATTK, NO_DFNS, CARY(AD_MAGM), 0, A_CHAOTIC, PM_PIRATE, NON_PM,
+      0, 12, 2500L, NO_COLOR, TREASURY_OF_PROTEUS),
+
+    /* The Convict quest artifact (dNetHack, Hack'EM): a spoon that digs
+       like a pick-axe and engraves like an athame; wielded it confers
+       stealth, searching and free action (and Convicts can make sneak
+       attacks with it), carried it confers luck; invoke it to walk
+       through walls, which also frees you from a ball and chain */
+    A("The Iron Spoon of Liberation", SPOON,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL | SPFX_STLTH | SPFX_SEARCH
+       | SPFX_DIG | SPFX_DEFN), SPFX_LUCK, 0,
+      PHYS(5, 0), DFNS(AD_PLYS), NO_CARY, PHASING, A_CHAOTIC, PM_CONVICT,
+      NON_PM,
+      0, 12, 5000L, NO_COLOR, IRON_SPOON_OF_LIBERATION),
+
+    /* The Infidel quest artifact (EvilHack): a figurine of a horned devil
+       which, applied, calls forth a demon of Moloch; it confers energy
+       regeneration on those in good standing with Moloch; its #invoke
+       channels Moloch's power into an altar */
+    A("The Idol of Moloch", FIGURINE,
+      (SPFX_NOGEN | SPFX_RESTR | SPFX_INTEL), SPFX_HSPDAM, 0,
+      NO_ATTK, NO_DFNS, CARY(AD_MAGM), CHANNEL, A_CHAOTIC, PM_INFIDEL,
+      NON_PM,
+      0, 12, 4000L, NO_COLOR, IDOL_OF_MOLOCH),
 
 #if !defined(ARTI_ENUM) && !defined(DUMP_ARTI_ENUM)
     /*
@@ -421,6 +479,7 @@ static NEARDATA struct artifact artilist[] = {
 #undef FIRE
 #undef ELEC
 #undef STUN
+#undef DREN
 #endif
 
 #ifdef ARTI_MATERIALS

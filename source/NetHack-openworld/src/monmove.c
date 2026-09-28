@@ -179,9 +179,12 @@ watch_on_duty(struct monst *mtmp)
 
     if (mtmp->mpeaceful && in_town(u.ux + u.dx, u.uy + u.dy)
         && mtmp->mcansee && m_canseeu(mtmp) && !rn2(3)) {
-        /* the watch won't have the walking dead in town (EvilHack) */
-        if (Race_if(PM_DRAUGR) && !Upolyd) {
-            mon_yells(mtmp, "Another zombie!  Attack!");
+        /* the watch won't have the walking dead in town, and knows the
+           faces of escaped convicts (EvilHack) */
+        if ((Race_if(PM_DRAUGR) && !Upolyd) || Convict_recognizable) {
+            mon_yells(mtmp, (Race_if(PM_DRAUGR) && !Upolyd)
+                                ? "Another zombie!  Attack!"
+                                : "Hey, you're the one from the wanted poster!");
             (void) angry_guards(!!Deaf);
             stop_occupation();
             return;

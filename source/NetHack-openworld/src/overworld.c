@@ -1098,7 +1098,10 @@ ow_maintain(void)
             newexplevel();
         }
     }
+    /* (Infidels, being unaligned, are spared the mysterious force, as in
+       EvilHack) */
     if (ring < svow.last_ring_seen && u.uhave.amulet && u_in_gehennom()
+        && u.ualign.type != A_NONE
         && ring + 3 < ow_branch_ring(sanctum_level.dnum) + 1
         && ow_mysterious_force(ring))
         return;
@@ -1204,7 +1207,10 @@ ow_mysterious_force(int ring)
 }
 
 /* the sacred plaza at the center of the world, with the three high
-   altars; the middle one belongs to the hero's own god */
+   altars; the middle one belongs to the hero's own god.  An Infidel's god
+   is Moloch, who has no altar here: the three altars are those of the gods
+   of heaven, one of whom the Infidel must overthrow by invoking the imbued
+   Idol of Moloch on that god's altar (see invoke_channel()) */
 staticfn void
 ow_paint_plaza(void)
 {
@@ -1212,9 +1218,14 @@ ow_paint_plaza(void)
     aligntyp own = u.ualignbase[A_ORIGINAL], others[2], a;
     struct rm *lev;
 
-    for (i = 0, a = A_CHAOTIC; a <= A_LAWFUL; a++)
-        if (a != own)
-            others[i++] = a;
+    if (own == A_NONE) {
+        own = A_NEUTRAL;
+        others[0] = A_CHAOTIC, others[1] = A_LAWFUL;
+    } else {
+        for (i = 0, a = A_CHAOTIC; a <= A_LAWFUL; a++)
+            if (a != own)
+                others[i++] = a;
+    }
 
     for (x = OW_CX - 9; x <= OW_CX + 9; x++)
         for (y = OW_CY - 9; y <= OW_CY + 9; y++) {
@@ -1265,12 +1276,15 @@ ow_is_high_altar(coordxy x, coordxy y)
     return FALSE;
 }
 
-/* location of the high altar of the hero's original god */
+/* location of the high altar of the hero's original god; for an Infidel,
+   whose god has no altar here, the plaza floor in front of the middle one */
 void
 ow_home_altar(coordxy *x, coordxy *y)
 {
     *x = svow.altar_x[1] ? svow.altar_x[1] : OW_CX;
     *y = svow.altar_y[1] ? svow.altar_y[1] : OW_CY;
+    if (u.ualignbase[A_ORIGINAL] == A_NONE)
+        *y += 2;
 }
 
 /* build the little plazas around any portals within this chunk */
@@ -3026,6 +3040,18 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
                     if (!DEADMONSTER(mtmp) && otmp->oartifact
                         && otmp->oartifact == gu.urole.questarti)
                         fprintf(fp, "questarti %d,%d\n", mtmp->mx, mtmp->my);
+            {
+                coordxy ax, ay;
+
+                for (otmp = fobj; otmp; otmp = otmp->nobj)
+                    if (is_quest_artifact(otmp))
+                        fprintf(fp, "questart %d,%d\n", otmp->ox, otmp->oy);
+                for (ax = 1; ax < COLNO; ax++)
+                    for (ay = 0; ay < ROWNO; ay++)
+                        if (IS_ALTAR(levl[ax][ay].typ))
+                            fprintf(fp, "altar %d,%d %d\n", ax, ay,
+                                    levl[ax][ay].altarmask);
+            }
         }
         fclose(fp);
         return;

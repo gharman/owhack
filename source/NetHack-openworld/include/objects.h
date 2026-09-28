@@ -155,6 +155,11 @@ PROJECTILE("ya", "bamboo arrow",
 PROJECTILE("crossbow bolt", NoDes,
            1, 55, 1, 2, 4, 6, 0,        IRON, -P_CROSSBOW, HI_METAL,
                                                         CROSSBOW_BOLT),
+/* firearm ammunition: fired from a flintlock (dNetHack, Slash'EM);
+   a lead ball, heavy enough to do grievous damage, and spent when fired */
+PROJECTILE("bullet", NoDes,
+           1,  1, 1, 5, 20, 30, 0,      IRON, -P_FIREARM, HI_METAL,
+                                                        BULLET),
 
 /* missiles that don't use a launcher */
 WEAPON("dart", NoDes,
@@ -439,6 +444,10 @@ BOW("sling", NoDes,             1, 40,  3, 20, 0, LEATHER, P_SLING, HI_LEATHER,
                                                         SLING),
 BOW("crossbow", NoDes,          1, 45, 50, 40, 0, WOOD, P_CROSSBOW, HI_WOOD,
                                                         CROSSBOW),
+/* a single-shot muzzle-loader; loud, slow and prone to jamming, but
+   hard-hitting (see dothrow.c) */
+BOW("flintlock", NoDes,         1,  1, 10, 50, 0, IRON, P_FIREARM, HI_METAL,
+                                                        FLINTLOCK),
 
 #undef P
 #undef S
@@ -655,6 +664,11 @@ ARMOR("Hawaiian shirt", NoDes,
 ARMOR("T-shirt", NoDes,
       1, 0, 0,  0,  2, 0,   5,   2, 10, 0,  ARM_SHIRT, CLOTH, CLR_WHITE,
                                                         T_SHIRT),
+/* prison garb (Convict patch); never generated at random, and marks its
+   wearer as a convict to shopkeepers unless covered by a suit or cloak */
+ARMOR("striped shirt", NoDes,
+      1, 0, 0,  0,  0, 0,   5,   2, 10, 0,  ARM_SHIRT, CLOTH, CLR_GRAY,
+                                                        STRIPED_SHIRT),
 
 /* cloaks */
 CLOAK("mummy wrapping", NoDes,
@@ -1074,6 +1088,10 @@ WEPTOOL("pick-axe", NoDes,
 WEPTOOL("grappling hook", NoDes,
         1, 0, 0,  5,  30,  50,  2,  6, WHACK,  P_FLAIL,    IRON, HI_METAL,
                                                              GRAPPLING_HOOK),
+/* a prison-issue spoon; hardly a weapon, but convicts know tricks with it */
+WEPTOOL("spoon", NoDes,
+        1, 0, 0,  0,   1,   1,  2,  2, PIERCE, P_KNIFE,    IRON, HI_METAL,
+                                                                SPOON),
 WEPTOOL("unicorn horn", NoDes,
         1, 1, 1,  0,  20, 100, 12, 12, PIERCE, P_UNICORN_HORN,
                                                            BONE, CLR_WHITE,

@@ -585,6 +585,17 @@ rndcurse(void)
         You(mal_aura, "the magic-absorbing blade");
         return;
     }
+    /* the Treasury of Proteus soaks up curses (Hack'EM) */
+    if ((otmp = carrying_arti(ART_TREASURY_OF_PROTEUS)) != 0 && rn2(20)) {
+        You(mal_aura, "the cursed treasure chest");
+        /* for its Pirate keeper it only loses its blessing */
+        if (otmp->blessed && is_quest_artifact(otmp))
+            unbless(otmp);
+        else
+            curse(otmp);
+        update_inventory();
+        return;
+    }
 
     if (Antimagic) {
         shieldeff(u.ux, u.uy);

@@ -2303,9 +2303,10 @@ fprefx(struct obj *otmp)
             pline("Ugh.  Rotten egg."); /* perhaps others like it */
             /* increasing existing nausea means that it will take longer
                before eventual vomit, but also means that constitution
-               will be abused more times before illness completes */
-            if (u_rotfood())
-                You_feel("a slight stomach ache."); /* draugr don't mind */
+               will be abused more times before illness completes;
+               prisoners are used to bad food, and draugr don't mind */
+            if (u_rotfood() || (Role_if(PM_CONVICT) && rn2(8) > u.ulevel))
+                You_feel("a slight stomach ache.");
             else
                 make_vomiting((Vomiting & TIMEOUT) + (long) d(10, 4), TRUE);
         } else
@@ -2331,11 +2332,13 @@ fprefx(struct obj *otmp)
                                 : "Mmm, tripe... not bad!");
         } else {
             pline("Yak - dog food!");
+            if (Role_if(PM_CONVICT))
+                pline("At least it's not prison food.");
             more_experienced(1, 0);
             newexplevel();
             /* not cannibalism, but we use similar criteria
                for deciding whether to be sickened by this meal */
-            if (rn2(2) && !CANNIBAL_ALLOWED())
+            if (rn2(2) && !CANNIBAL_ALLOWED() && !Role_if(PM_CONVICT))
                 make_vomiting((long) rn1(svc.context.victual.reqtime, 14),
                               FALSE);
         }
@@ -3437,8 +3440,10 @@ gethungry(void)
         && (carnivorous(gy.youmonst.data)
             || herbivorous(gy.youmonst.data)
             || metallivorous(gy.youmonst.data))
-        /* draugr can last twice as long at hungry and below (EvilHack) */
-        && (!u_rotfood() || (svm.moves % 2) || u.uhs < HUNGRY)
+        /* draugr (EvilHack) and convicts can last twice as long at hungry
+           and below */
+        && (!(u_rotfood() || Role_if(PM_CONVICT)) || (svm.moves % 2)
+            || u.uhs < HUNGRY)
         && !Slow_digestion)
         u.uhunger--; /* ordinary food consumption */
 

@@ -633,6 +633,22 @@ qt_pager(const char *msgid)
         (void) com_pager_core("common", msgid, TRUE, (char **) 0);
 }
 
+/* show a quest message whose %d, %a and %G refer to god 'god' rather than
+   to the hero's own (used for the advice given to Infidels about which of
+   the gods of heaven to avoid challenging) */
+void
+qt_pager_as_god(const char *msgid, aligntyp god)
+{
+    aligntyp saved_align = u.ualignbase[A_ORIGINAL];
+    uchar saved_godgend = svq.quest_status.godgend;
+
+    u.ualignbase[A_ORIGINAL] = god;
+    svq.quest_status.godgend = !strcmpi(align_gtitle(god), "goddess");
+    qt_pager(msgid);
+    u.ualignbase[A_ORIGINAL] = saved_align;
+    svq.quest_status.godgend = saved_godgend;
+}
+
 struct permonst *
 qt_montype(void)
 {

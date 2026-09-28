@@ -191,6 +191,10 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
+        case PM_CONVICT: /* (Hack'EM) */
+            if (rn2(2))
+                weapon = FLAIL;
+            break;
         case PM_FLAME_MAGE:
             if (!rn2(2))
                 weapon = rn2(2) ? QUARTERSTAFF : AXE;
@@ -214,6 +218,16 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
             if (rn2(2))
                 armor = WHITE_DRAGON_SCALE_MAIL;
             cloak = ROBE;
+            break;
+        case PM_INFIDEL: /* (Hack'EM) */
+            if (!rn2(4))
+                weapon = CRYSKNIFE;
+            if (rn2(3))
+                cloak = CLOAK_OF_PROTECTION;
+            if (rn2(4))
+                helm = rn2(2) ? HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
+            if (rn2(2))
+                shield = STRANGE_OBJECT;
             break;
         case PM_JEDI:
             weapon = !rn2(3) ? RED_LIGHTSABER
@@ -246,6 +260,13 @@ mk_mplayer(struct permonst *ptr, coordxy x, coordxy y, boolean special)
                 cloak = CLOAK_OF_PROTECTION;
             if (!rn2(4))
                 (void) mongets(mtmp, PICK_AXE); /* for digging up graves */
+            break;
+        case PM_PIRATE: /* (Hack'EM) */
+            if (rn2(4))
+                weapon = SCIMITAR;
+            if (rn2(3))
+                armor = LEATHER_JACKET;
+            (void) mongets(mtmp, POT_BOOZE);
             break;
         case PM_CLERIC:
             if (rn2(2))

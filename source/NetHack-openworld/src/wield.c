@@ -67,6 +67,8 @@ staticfn void finish_splitting(struct obj *);
 /* used by welded(), and also while wielding */
 #define will_weld(optr) \
     ((optr)->cursed && (erodeable_wep(optr) || (optr)->otyp == TIN_OPENER))
+/* Infidels are immune to curses (EvilHack) */
+#define will_weld_to_you(optr) (will_weld(optr) && !Role_if(PM_INFIDEL))
 
 /* to dual-wield, 'obj' must be a weapon or a weapon-tool, and not a bow
    or arrow or missile (dart, shuriken, boomerang), so not matching the
@@ -198,7 +200,7 @@ ready_weapon(struct obj *wep)
     } else {
         /* Weapon WILL be wielded after this point */
         res = ECMD_TIME;
-        if (will_weld(wep)) {
+        if (will_weld_to_you(wep)) {
             const char *tmp = xname(wep), *thestr = "The ";
 
             if (strncmp(tmp, thestr, 4) && !strncmp(The(tmp), thestr, 4))
@@ -747,7 +749,7 @@ wield_tool(struct obj *obj,
     } else {
         struct obj *oldwep = uwep;
 
-        if (will_weld(obj)) {
+        if (will_weld_to_you(obj)) {
             /* hope none of ready_weapon()'s early returns apply here... */
             (void) ready_weapon(obj);
         } else {
@@ -1064,7 +1066,7 @@ chwepon(struct obj *otmp, int amount)
 int
 welded(struct obj *obj)
 {
-    if (obj && obj == uwep && will_weld(obj)) {
+    if (obj && obj == uwep && will_weld_to_you(obj)) {
         set_bknown(obj, 1);
         return 1;
     }

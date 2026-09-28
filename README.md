@@ -438,6 +438,70 @@ replaced by the nearest thing 5.0 has.
   Monster) and Slash'EM's lairs for **Yeenoghu, Demogorgon, Geryon and
   Dispater**, the demon lords that vanilla NetHack gives no lair.
 
+## New roles
+
+**Pirate** (from SLASH'EM Extended / SlashTHEM, as in SpliceHack and
+Hack'EM; human, gnome, orc, illithid, tortle, vampire, werewolf or ghost;
+neutral or chaotic).  Starts with a cutlass (scimitar), a flintlock and
+bullets, knives, a leather jacket, high boots, rum, sea biscuits, bananas,
+an oilskin sack and a ring, a parrot (or a monkey) for a pet, and can swim.
+Firearms are a new skill: a flintlock fires one bullet per turn at up to
+eight squares, bullets are used up, a flintlock misfires now and then and
+can jam (from curses, rust, clumsiness, bad luck or lack of skill; grease
+wears off first, blessed guns resist); a jammed gun is unjammed with
+grease, a greased towel, a dip in oil or enchant weapon, and a cursed gun
+loaded with cursed bullets blows up.  Monsters use flintlocks the same way.
+Pirates hear every message in pirate speech, know many things by pirate
+names (rum, cutlass, sea biscuit, ditty bag, coffer, eye-patch, ...;
+potions are bottles), find more artifacts, and rise as skeletal pirates
+when they die.  Their only sacrifice gift is the Marauder's Map (read it
+to map your surroundings, again and again; invoke it to detect objects);
+crowning makes you the Pirate King (or Queen) with Reaver, the cutlass that
+steals.  The quest (Tortuga, Shipwreck Island, Blackbeard's Ghost) is won
+for the Treasury of Proteus, a sea chest that absorbs curses and
+polymorphs what you keep in it, and brings undead pirates after you.
+
+**Convict** (the Convict patch, as in EvilHack and Hack'EM; any race of
+the role x race table, always chaotic).  Starts hungry, punished with a
+heavy iron ball and chain, in a cursed striped shirt, with a spoon, some
+rocks and a sewer rat for a pet.  Shopkeepers won't let anyone wearing a
+visible striped prison shirt into their shops, and the town watch and vault
+guards know a convict's face from the wanted posters (unless the convict is
+polymorphed or has covered their face with a towel or blindfold).  Domestic
+animals are wary of convicts, but rats can be soothed with chittering
+(#chat); convicts stomach rotten and nasty food better and last twice as
+long once hungry, are sickness and (later) poison resistant, feel no guilt over robbing shops or killing
+guards, and make sneak attacks with a spoon on fleeing or helpless foes.
+Their gods are Faerûnian (Ilmater, Grumbar, Tymora).  Sacrifice gifts
+include the Luck Blade.  The quest (Castle Waterdeep Dungeon, the
+Warden's Level, Warden Arianna) is for the Iron Spoon of Liberation
+(chosen over SLASH'EM's Iron Ball and EvilHack's Striped Shirt, following
+Hack'EM): it digs like a pick-axe and engraves like an athame, frees you
+from a ball and chain, and can be invoked to walk through walls.
+
+**Infidel** (by Tomsod, from EvilHack; human, elf, orc, giant, centaur,
+illithid, draugr or vampire).  A cultist of Moloch: unaligned, with a
+random role's pantheon as the three gods of heaven.  The Cult entrusts
+the Infidel with the Amulet of Yendor from the start; Moloch demands
+regular sacrifices and hears prayer outside Gehennom only now and then
+(always while you carry the Idol of Moloch); Infidels shrug off curses,
+are hated by lawful angels and liked by demons, and a crowned Infidel
+becomes a demon with wings (folded under hard body armour) and a barbed
+tail.  The quest (the Hidden Temple, the Howling Forest, the Paladin) is
+for the Idol of Moloch.  *Winning, open-world style:* take the Amulet to
+Moloch's Sanctum and offer it on Moloch's high altar while carrying the
+Idol: Moloch takes the Amulet and imbues the Idol with its power (an
+Infidel without the Idol is refused).  Then carry the imbued Idol back to
+the centre of the world and `#invoke` it on the high altar of the one god
+of heaven Moloch means to overthrow: the altar becomes Moloch's and you
+ascend as the Archfiend of Moloch.  Invoking it on either of the other two
+high altars brings that god's wrath; the quest leader and the Sanctum's
+high priest hint which altars to avoid.  This is EvilHack's rule (there,
+the three high altars are on the Astral Plane) moved to the three high
+altars of the sacred plaza; an Infidel starts in the plaza, just south of
+the middle altar, since no altar there is theirs.  Everyone else still
+wins by offering the Amulet at their own god's high altar.
+
 ## Files
 
     play.sh                 launcher

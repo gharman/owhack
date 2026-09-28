@@ -689,7 +689,7 @@ canletgo(struct obj *obj, const char *word)
         }
         return FALSE;
     }
-    if (obj->otyp == LOADSTONE && obj->cursed) {
+    if (obj->otyp == LOADSTONE && obj->cursed && !Role_if(PM_INFIDEL)) {
         /* getobj() kludge sets corpsenm to user's specified count
            when refusing to split a stack of cursed loadstones */
         if (*word) {
@@ -1075,7 +1075,9 @@ menu_drop(int retry)
                            & ECMD_TIME) != 0) ? 1 : 0;
     } else {
         /* should coordinate with perm invent, maybe not show worn items */
-        n = query_objlist("What would you like to drop?", &gi.invent,
+        n = query_objlist(Role_if(PM_PIRATE) ? "What would ye like to drop?"
+                                             : "What would you like to drop?",
+                          &gi.invent,
                           (USE_INVLET | INVORDER_SORT | INCLUDE_VENOM),
                           &pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);
@@ -1868,7 +1870,12 @@ goto_level(
                     You("fly down %s.",
                         ga.at_ladder ? "along the ladder" : "the stairs");
             } else if (near_capacity() > UNENCUMBERED
-                       || Punished || Fumbling) {
+                       || (Punished
+                           /* a convict who wields the iron ball like a
+                              flail carries it down safely (EvilHack) */
+                           && !(Role_if(PM_CONVICT) && uwep == uball
+                                && P_SKILL(P_FLAIL) >= P_BASIC))
+                       || Fumbling) {
                 You("fall down the %s.", ga.at_ladder ? "ladder" : "stairs");
                 if (Punished) {
                     drag_down();

@@ -421,7 +421,7 @@
 #define Unaware (gm.multi < 0 && (unconscious() || is_fainted()))
 
 #define Hate_silver (u.ulycn >= LOW_PM || hates_silver(gy.youmonst.data) \
-                     || (!Upolyd && Race_if(PM_VAMPIRE)))
+                     || (!Upolyd && (Race_if(PM_VAMPIRE) || Race_if(PM_DEMON))))
 /* hero is hurt by objects made of material (silver, cold iron, copper...) */
 #define Hate_material(material) mon_hates_material(&gy.youmonst, material)
 

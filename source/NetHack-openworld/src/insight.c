@@ -1209,6 +1209,26 @@ status_enlightenment(int mode, int final)
             enl_msg("You ", "fall", "fell", " asleep uncontrollably", buf);
         }
     }
+    /* in case the player missed the "urge to perform a sacrifice",
+       put a reminder here (EvilHack) */
+    if (u.ualign.type == A_NONE) {
+        long due = svm.moves - u.umoloch_due;
+
+        if (due < 0) {
+            if (wizard) {
+                Sprintf(buf, "%ld turns until your next mandatory "
+                             "sacrifice to ", -due);
+                you_have(buf, u_gname());
+            }
+        } else {
+            if (wizard && due > 0)
+                Sprintf(buf, "%ld turns late for your next sacrifice to ",
+                        due);
+            else
+                Strcpy(buf, "due for a sacrifice to ");
+            you_are(buf, u_gname());
+        }
+    }
     /* hunger/nutrition */
     if (Hunger) {
         if (magic || cause_known(HUNGER))
@@ -1593,10 +1613,16 @@ attributes_enlightenment(
     enlght_out(final ? "Final Attributes:" : "Attributes:");
 
     if (u.uevent.uhand_of_elbereth) {
-        static const char *const hofe_titles[3] = { "the Hand of Elbereth",
+        static const char *const hofe_titles[4] = { "the Hand of Elbereth",
                                                     "the Envoy of Balance",
-                                                    "the Glory of Arioch" };
-        you_are(hofe_titles[u.uevent.uhand_of_elbereth - 1], "");
+                                                    "the Glory of Arioch",
+                                                    "the Emissary of Moloch" };
+
+        if (Role_if(PM_PIRATE))
+            you_are(flags.female ? "the Pirate Queen" : "the Pirate King",
+                    "");
+        else
+            you_are(hofe_titles[u.uevent.uhand_of_elbereth - 1], "");
     }
 
     Sprintf(buf, "%s", piousness(TRUE, "aligned"));
@@ -2489,6 +2515,11 @@ show_achievements(
             you_have_X("gained access to Moloch's Sanctum");
             break;
         case ACH_AMUL:
+            /* for an Infidel, this is the imbuing of the Idol of Moloch */
+            if (Role_if(PM_INFIDEL)) {
+                you_have_X("imbued the Idol of Moloch");
+                break;
+            }
             /* alternate wording for ascended (always past tense) since
                hero had it until #offer forced it to be relinquished */
             enl_msg(You_,
