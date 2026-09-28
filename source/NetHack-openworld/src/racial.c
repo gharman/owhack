@@ -69,7 +69,8 @@ u_race_speed(void)
         case PM_DRAUGR:
             return 10;
         case PM_VAMPIRE:
-            return 15;
+            /* a starving vampire drags itself along */
+            return (u.uhs == STARVED) ? 7 : 15;
         case PM_CENTAUR:
             return 18;
         default:
@@ -157,6 +158,33 @@ u_ghost(void)
     return (!Upolyd && Race_if(PM_GHOST));
 }
 
+/* does a physical blow or missile pass partly through a ghost hero's
+   insubstantial body (halving its damage)?  silver and blessed weapons,
+   and attackers who are themselves incorporeal (ghosts, shades), hurt a
+   ghost as much as anyone else */
+boolean
+u_ghost_passthru(struct monst *magr, struct obj *weapon)
+{
+    if (!u_ghost())
+        return FALSE;
+    if (magr && magr != &gy.youmonst && noncorporeal(magr->data))
+        return FALSE;
+    if (weapon && (weapon->blessed
+                   || objects[weapon->otyp].oc_material == SILVER))
+        return FALSE;
+    return TRUE;
+}
+
+/* halve (rounding up) the damage of a physical blow against a ghost hero
+   when it passes partly through; see u_ghost_passthru() */
+int
+u_ghost_dmg(int dmg, struct monst *magr, struct obj *weapon)
+{
+    if (dmg > 0 && u_ghost_passthru(magr, weapon))
+        dmg = (dmg + 1) / 2;
+    return dmg;
+}
+
 /* set while a draugr's bite is being resolved, so that the victim can rise
    as a zombie if it dies of it */
 static boolean racial_bite;
@@ -171,6 +199,33 @@ boolean
 racial_bite_active(void)
 {
     return racial_bite;
+}
+
+/* does the hero go hungry the way vampires do (thirst for blood, and
+   starvation that debilitates without killing)?  in the natural form or
+   polymorphed into a vampire; other forms get hungry normally */
+boolean
+u_vamp_hunger(void)
+{
+    return (Race_if(PM_VAMPIRE)
+            && (!Upolyd || is_vampire(gy.youmonst.data)));
+}
+
+/* once per turn: a starving vampire can hardly hear or see (EvilHack) */
+void
+vampire_starvation(void)
+{
+    if (!u_vamp_hunger())
+        return;
+    if (u.uhs >= FAINTING && (HDeaf & TIMEOUT) < 2L)
+        incr_itimeout(&HDeaf, 2L);
+    if (u.uhs == STARVED && BlindedTimeout < 2L) {
+        boolean was_blind = !!Blind;
+
+        make_blinded(BlindedTimeout + 2L, FALSE);
+        if (!was_blind && Blind)
+            pline("Your vision fades as your hunger overwhelms you.");
+    }
 }
 
 /*

@@ -1215,6 +1215,12 @@ hitmu(struct monst *mtmp, struct attack *mattk)
             mhm.damage = 1;
     }
 
+    /* physical blows pass partly through a ghost hero's body */
+    if (mhm.damage > 0 && mattk->adtyp == AD_PHYS)
+        mhm.damage = u_ghost_dmg(mhm.damage, mtmp,
+                                 (mattk->aatyp == AT_WEAP) ? MON_WEP(mtmp)
+                                                           : (struct obj *) 0);
+
     if (mhm.damage > 0) {
         /* [Half_physical_damage isn't applied to mhm.permdmg] */
         if (Half_physical_damage
@@ -1574,7 +1580,7 @@ gulpmu(struct monst *mtmp, struct attack *mattk)
               : enfolds(mtmp->data) ? "releases"
                 : "expels");
         expels(mtmp, mtmp->data, FALSE);
-    } else if (!u.uswldtim || gy.youmonst.data->msize >= MZ_HUGE) {
+    } else if (!u.uswldtim || u_size() >= MZ_HUGE) {
         /* As of 3.6.2: u.uswldtim used to be set to 0 by life-saving but it
            expels now so the !u.uswldtim case is no longer possible;
            however, polymorphing into a huge form while already

@@ -118,7 +118,7 @@ u_calc_moveamt(int wtcap)
         /* your speed doesn't augment steed's speed */
         moveamt = mcalcmove(u.usteed, TRUE);
     } else {
-        moveamt = gy.youmonst.data->mmove;
+        moveamt = u_race_speed(); /* form, else race (EvilHack) */
 
         if (Very_fast) { /* speed boots, potion, or spell */
             /* gain a free action on 2/3 of turns */

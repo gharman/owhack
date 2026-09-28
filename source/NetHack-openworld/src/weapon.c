@@ -1664,6 +1664,9 @@ weapon_hit_bonus(struct obj *weapon)
         bonus = P_SKILL(type);
         bonus = max(bonus, P_UNSKILLED) - 1; /* unskilled => 0 */
         bonus = ((bonus + 2) * (martial_bonus() ? 2 : 1)) / 2;
+        /* giants' huge fists land more easily (EvilHack) */
+        if (Race_if(PM_GIANT) && !Upolyd)
+            bonus += martial_bonus() ? 1 : 2;
     }
 
     /* KMH -- It's harder to hit while you are riding */
@@ -1840,6 +1843,24 @@ skill_init(const struct def_skill *class_skill)
     /* Roles that start with a horse know how to ride it */
     if (gu.urole.petnum == PM_PONY)
         P_SKILL(P_RIDING) = P_BASIC;
+
+    /* centaurs and tortles can never ride anything (EvilHack), nor can
+       giants (too big for any steed) or insubstantial ghosts */
+    if (Race_if(PM_CENTAUR) || Race_if(PM_TORTLE) || Race_if(PM_GIANT)
+        || Race_if(PM_GHOST))
+        P_SKILL(P_RIDING) = P_MAX_SKILL(P_RIDING) = P_ISRESTRICTED;
+
+    /* tortles have an affinity for tridents: one level more if their role
+       can train the skill, else (non-priests) up to basic (EvilHack) */
+    if (Race_if(PM_TORTLE)) {
+        if (P_MAX_SKILL(P_TRIDENT) > P_ISRESTRICTED) {
+            if (P_MAX_SKILL(P_TRIDENT) < P_EXPERT)
+                P_MAX_SKILL(P_TRIDENT)++;
+        } else if (!Role_if(PM_CLERIC)) {
+            P_SKILL(P_TRIDENT) = P_UNSKILLED;
+            P_MAX_SKILL(P_TRIDENT) = P_BASIC;
+        }
+    }
 
     /*
      * Make sure we haven't missed setting the max on a skill

@@ -1074,6 +1074,16 @@ hmon_hitmon_weapon_melee(
     /* "normal" weapon usage */
     hmd->use_weapon_skill = TRUE;
     hmd->dmg = dmgval(obj, mon);
+    /* giants are more effective with club-like weapons (EvilHack):
+       best of two damage rolls, plus one */
+    if (u_giant() && objects[obj->otyp].oc_skill == P_CLUB
+        && !noncorporeal(hmd->mdat)) {
+        int dmg2 = dmgval(obj, mon);
+
+        if (hmd->dmg < dmg2)
+            hmd->dmg = dmg2;
+        hmd->dmg++;
+    }
     /* a minimal hit doesn't exercise proficiency */
     hmd->train_weapon_skill = (hmd->dmg > 1);
 
@@ -1095,13 +1105,21 @@ hmon_hitmon_weapon_melee(
         You("strike %s from behind!", mon_nam(mon));
         hmd->dmg += rnd(u.ulevel);
         hmd->hittxt = TRUE;
-    } else if (hmd->dieroll == 2 && obj == uwep
-               && obj->oclass == WEAPON_CLASS
-               && (bimanual(obj)
-                   || (Role_if(PM_SAMURAI) && obj->otyp == KATANA
-                       && !uarms))
-               && ((wtype = uwep_skill_type()) != P_NONE
-                   && P_SKILL(wtype) >= P_SKILLED)
+    } else if (obj == uwep && obj->oclass == WEAPON_CLASS
+               && ((hmd->dieroll == 2
+                    && (bimanual(obj) || (Race_if(PM_GIANT) && !Upolyd)
+                        || (Role_if(PM_SAMURAI) && obj->otyp == KATANA
+                            && !uarms))
+                    && ((wtype = uwep_skill_type()) != P_NONE
+                        && P_SKILL(wtype) >= P_SKILLED))
+                   /* giants' blows shatter weapons more often (EvilHack) */
+                   || (hmd->dieroll == 3 && Race_if(PM_GIANT) && !Upolyd
+                       && ((wtype = uwep_skill_type()) != P_NONE
+                           && P_SKILL(wtype) >= P_BASIC))
+                   || (hmd->dieroll == 4 && !rn2(2) && Race_if(PM_GIANT)
+                       && !Upolyd
+                       && ((wtype = uwep_skill_type()) != P_NONE
+                           && P_SKILL(wtype) >= P_EXPERT)))
                && ((monwep = MON_WEP(mon)) != 0
                    && !is_flimsy(monwep)
                    && !obj_resists(monwep,
@@ -1170,7 +1188,7 @@ hmon_hitmon_weapon_melee(
     if (artifact_light(obj) && obj->lamplit
         && mon_hates_light(mon))
         hmd->lightobj = TRUE;
-    if (u.usteed && !hmd->thrown && hmd->dmg > 0
+    if ((u.usteed || u_centaur()) && !hmd->thrown && hmd->dmg > 0
         && weapon_type(obj) == P_LANCE && mon != u.ustuck) {
         hmd->jousting = joust(mon, obj);
         /* exercise skill even for minimal damage hits */
@@ -1209,8 +1227,9 @@ hmon_hitmon_weapon(
         is_launcher(obj)
         /* or strike with a missile in your hand... */
         || (!hmd->thrown && (is_missile(obj) || is_ammo(obj)))
-        /* or use a pole at short range and not mounted... */
-        || (!hmd->thrown && !u.usteed && is_pole(obj)
+        /* or use a pole at short range and not mounted (nor a centaur,
+           who is its own mount)... */
+        || (!hmd->thrown && !u.usteed && !u_centaur() && is_pole(obj)
             && !is_art(obj,ART_SNICKERSNEE))
         /* or throw a missile without the proper bow... */
         || (is_ammo(obj) && (hmd->thrown != HMON_THROWN
@@ -1705,7 +1724,9 @@ hmon_hitmon_stagger(
     struct obj *obj UNUSED)
 {
     /* VERY small chance of stunning opponent if unarmed. */
-    if (rnd(100) < P_SKILL(P_BARE_HANDED_COMBAT) && !bigmonst(hmd->mdat)
+    if (rnd((Race_if(PM_GIANT) && !Upolyd) ? 40 : 100)
+            < P_SKILL(P_BARE_HANDED_COMBAT)
+        && !bigmonst(hmd->mdat)
         && !thick_skinned(hmd->mdat)) {
         if (canspotmon(mon))
             pline("%s %s from your powerful strike!", Monnam(mon),

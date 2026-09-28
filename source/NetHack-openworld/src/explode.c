@@ -875,7 +875,7 @@ scatter(
                             nomul(0);
                         dam = dmgval(stmp->obj, &gy.youmonst);
                         hitvalu = 8 + stmp->obj->spe;
-                        if (bigmonst(gy.youmonst.data))
+                        if (u_size() >= MZ_LARGE)
                             hitvalu++;
                         hitu = thitu(hitvalu, Maybe_Half_Phys(dam),
                                      &stmp->obj, (char *) 0);

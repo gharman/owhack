@@ -1575,7 +1575,7 @@ artifact_hit(
                 observe_object(otmp);
                 return TRUE;
             } else {
-                if (bigmonst(gy.youmonst.data)) {
+                if (u_size() >= MZ_LARGE) {
                     pline("%s cuts deeply into you!",
                           magr ? Monnam(magr) : wepdesc);
                     *dmgptr *= 2;

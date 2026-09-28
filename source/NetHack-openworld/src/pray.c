@@ -173,7 +173,7 @@ stuck_in_wall(void)
             if (!isok(x, y)
                 || (IS_OBSTRUCTED(levl[x][y].typ)
                     && (levl[x][y].typ != SDOOR && levl[x][y].typ != SCORR))
-                || (blocked_boulder(i, j) && !throws_rocks(gy.youmonst.data)))
+                || (blocked_boulder(i, j) && !u_throws_rocks()))
                 ++count;
         }
     }

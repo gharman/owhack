@@ -7,7 +7,8 @@
 #define is_bigfoot(x) ((x) == &mons[PM_SASQUATCH])
 #define martial()                                 \
     (martial_bonus() || is_bigfoot(gy.youmonst.data) \
-     || (uarmf && uarmf->otyp == KICKING_BOOTS))
+     || (uarmf && uarmf->otyp == KICKING_BOOTS)     \
+     || u_giant() || u_centaur())
 
 /* gk.kickedobj (decl.c) tracks a kicked object until placed or destroyed */
 
@@ -39,6 +40,11 @@ kickdmg(struct monst *mon, boolean clumsy)
     boolean trapkilled = FALSE;
 
     if (uarmf && uarmf->otyp == KICKING_BOOTS)
+        dmg += 5;
+
+    /* centaurs have a powerful kick, equivalent to wearing kicking
+       boots (EvilHack) */
+    if (u_centaur())
         dmg += 5;
 
     /* excessive wt affects dex, so it affects dmg */
@@ -924,7 +930,7 @@ kick_door(coordxy x, coordxy y, int avrg_attrib)
     }
 
     exercise(A_DEX, TRUE);
-    doorbuster = Upolyd && is_giant(gy.youmonst.data);
+    doorbuster = u_giant();
     /* door is known to be CLOSED or LOCKED */
     if (doorbuster
         || (rnl(35) < avrg_attrib + (!martial() ? 0 : ACURR(A_DEX)))) {
@@ -1098,7 +1104,7 @@ kick_nondoor(coordxy x, coordxy y, int avrg_attrib)
     if (IS_GRAVE(gm.maploc->typ)) {
         if (Levitation) {
             kick_dumb(x, y);
-        } else if (rn2(4)) {
+        } else if (rn2(4) && !u_giant() && !u_centaur()) {
             /* minor injury */
             kick_ouch(x, y, "");
         } else if (!gm.maploc->disturbed && !rn2(2)) {
@@ -1135,8 +1141,9 @@ kick_nondoor(coordxy x, coordxy y, int avrg_attrib)
     if (IS_TREE(gm.maploc->typ)) {
         struct obj *treefruit;
 
-        /* nothing, fruit or trouble? 75:23.5:1.5% */
-        if (rn2(3)) {
+        /* nothing, fruit or trouble? 75:23.5:1.5%; giants and centaurs
+           shake a tree much harder (EvilHack) */
+        if ((u_giant() || u_centaur()) ? !rn2(3) : rn2(3)) {
             if (!rn2(6)
                 && !(svm.mvitals[PM_KILLER_BEE].mvflags & G_GONE)
                 && !(gm.maploc->looted & TREE_SWARM))
@@ -1330,8 +1337,9 @@ dokick(void)
     y = u.uy + u.dy;
     gk.kickedloc.x = x, gk.kickedloc.y = y;
 
-    /* KMH -- Kicking boots always succeed */
-    if (uarmf && uarmf->otyp == KICKING_BOOTS)
+    /* KMH -- Kicking boots always succeed; so do the kicks of giants
+       and centaurs (EvilHack) */
+    if ((uarmf && uarmf->otyp == KICKING_BOOTS) || u_giant() || u_centaur())
         avrg_attrib = 99;
     else
         avrg_attrib = (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3;

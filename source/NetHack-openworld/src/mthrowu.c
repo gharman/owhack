@@ -732,13 +732,21 @@ m_throw(
                         if (singleobj->otyp == ELVEN_ARROW)
                             dam++;
                     }
-                    if (bigmonst(gy.youmonst.data))
+                    if (u_size() >= MZ_LARGE)
                         hitv++;
                     hitv += 8 + singleobj->spe;
                     if (dam < 1)
                         dam = 1;
-                    if (singleobj->otyp != ACID_VENOM)
+                    /* slings hit giants harder, as Goliath (EvilHack) */
+                    if (u_giant() && MON_WEP(mon)
+                        && MON_WEP(mon)->otyp == SLING
+                        && ammo_and_launcher(singleobj, MON_WEP(mon)))
+                        dam *= 2;
+                    if (singleobj->otyp != ACID_VENOM) {
                         dam = Maybe_Half_Phys(dam);
+                        /* passes partly through a ghost hero */
+                        dam = u_ghost_dmg(dam, mon, singleobj);
+                    }
                     hitu = thitu(hitv, dam, &singleobj, (char *) 0);
                 }
             }
@@ -1229,13 +1237,14 @@ thrwmu(struct monst *mtmp)
         hitv = 3 - distmin(u.ux, u.uy, mtmp->mx, mtmp->my);
         if (hitv < -4)
             hitv = -4;
-        if (bigmonst(gy.youmonst.data))
+        if (u_size() >= MZ_LARGE)
             hitv++;
         hitv += 8 + otmp->spe;
         if (dam < 1)
             dam = 1;
 
-        (void) thitu(hitv, Maybe_Half_Phys(dam), &otmp, (char *) 0);
+        (void) thitu(hitv, u_ghost_dmg(Maybe_Half_Phys(dam), mtmp, otmp),
+                     &otmp, (char *) 0);
         stop_occupation();
         return;
     } else if ((arw = autoreturn_weapon(otmp)) != 0 && !mwelded(otmp)) {

@@ -128,7 +128,8 @@ setuwep(struct obj *obj)
     if (obj) {
         gu.unweapon = (obj->oclass == WEAPON_CLASS)
                        ? is_launcher(obj) || is_ammo(obj) || is_missile(obj)
-            || (is_pole(obj) && !u.usteed && !is_art(obj, ART_SNICKERSNEE))
+            || (is_pole(obj) && !u.usteed && !u_centaur()
+                && !is_art(obj, ART_SNICKERSNEE))
                        : !is_weptool(obj) && !is_wet_towel(obj);
     } else
         gu.unweapon = TRUE; /* for "bare hands" message */

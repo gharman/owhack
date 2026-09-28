@@ -147,14 +147,15 @@ struct obj {
     Bitfield(how_lost, 3);  /* stolen by mon or thrown, dropped by hero, etc */
 
     Bitfield(named_how, 1);  /* source of name per TODO in resetobjs() */
+    Bitfield(odrained, 1);   /* corpse drained of its blood by a vampire */
 #if 0
     /* not implemented */
     Bitfield(eknown, 1); /* effect known for wands zapped or rings worn when
                           * not seen yet after being picked up while blind
                           * [maybe for remaining stack of used potion too] */
-    /* 5 free bits */
+    /* 4 free bits */
 #else
-    /* 6 free bits */
+    /* 5 free bits */
 #endif
 
     int corpsenm;         /* type of corpse is mons[corpsenm] */
@@ -316,6 +317,11 @@ struct obj {
 #define stale_egg(egg) \
     ((svm.moves - (egg)->age) > (2 * MAX_EGG_HATCH_TIME))
 #define ofood(o) ((o)->otyp == CORPSE || (o)->otyp == EGG || (o)->otyp == TIN)
+/* how much of a corpse's nutrition is its blood, all that a vampire can
+   drain from it (Slash'EM) */
+#define drain_level(corpse) (mons[(corpse)->corpsenm].cnutrit / 2)
+/* how long after death a corpse's blood stays fresh enough to drink */
+#define blood_freshness(corpse) (8L + (long) ((corpse)->o_id % 8))
     /* note: sometimes eggs and tins have special corpsenm values that
        shouldn't be used as an index into mons[]                       */
 #define polyfood(obj) \

@@ -204,7 +204,7 @@ can_reach_floor(boolean check_pit)
     if (u.uundetected && ceiling_hider(gy.youmonst.data))
         return FALSE;
 
-    if (Flying || gy.youmonst.data->msize >= MZ_HUGE)
+    if (Flying || u_size() >= MZ_HUGE)
         return TRUE;
 
     if (check_pit && (t = t_at(u.ux, u.uy)) != 0

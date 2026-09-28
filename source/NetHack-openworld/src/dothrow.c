@@ -125,7 +125,7 @@ throw_obj(struct obj *obj, int shotlimit)
         goto unsplit_stack;
     }
     if ((is_art(obj, ART_MJOLLNIR) && ACURR(A_STR) < STR19(25))
-        || (obj->otyp == BOULDER && !throws_rocks(gy.youmonst.data))) {
+        || (obj->otyp == BOULDER && !u_throws_rocks())) {
         pline("It's too heavy.");
         res = ECMD_TIME;
         goto unsplit_stack;
@@ -207,6 +207,12 @@ throw_obj(struct obj *obj, int shotlimit)
                 if (skill == -P_CROSSBOW)
                     multishot++;
                 break;
+            case PM_CENTAUR:
+                /* centaurs are experts with the bow and crossbow
+                   (EvilHack) */
+                if (skill == -P_CROSSBOW || skill == -P_BOW)
+                    multishot++;
+                break;
             case PM_HUMAN:
             case PM_DWARF:
             default:
@@ -227,7 +233,8 @@ throw_obj(struct obj *obj, int shotlimit)
            instead, high strength is necessary to load and shoot quickly */
         if (multishot > 1 && skill == -P_CROSSBOW
             && ammo_and_launcher(obj, uwep)
-            && (int) ACURRSTR < (Race_if(PM_GNOME) ? 16 : 18))
+            && (int) ACURRSTR < ((Race_if(PM_GNOME) || Race_if(PM_CENTAUR))
+                                 ? 16 : 18))
             multishot = rnd(multishot);
 
         multishot = rnd(multishot);
@@ -341,7 +348,7 @@ throw_ok(struct obj *obj)
     if (uslinging() && obj->oclass == GEM_CLASS)
         return GETOBJ_SUGGEST;
 
-    if (throws_rocks(gy.youmonst.data) && obj->otyp == BOULDER)
+    if (u_throws_rocks() && obj->otyp == BOULDER)
         return GETOBJ_SUGGEST;
 
     return GETOBJ_DOWNPLAY;
@@ -825,7 +832,7 @@ hurtle_step(genericptr_t arg, coordxy x, coordxy y)
             boolean too_much = (gi.invent
                        && (inv_weight() + weight_cap() > WT_TOOMUCH_DIAGONAL));
 
-            if (bigmonst(gy.youmonst.data) || too_much) {
+            if (u_size() >= MZ_LARGE || too_much) {
                 why = "wedging into a narrow crevice";
                 You("%sget forcefully wedged into a crevice.",
                     too_much ? "and all your belongings " : "");
