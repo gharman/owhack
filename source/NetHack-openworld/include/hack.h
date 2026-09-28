@@ -770,7 +770,7 @@ struct rogueroom {
 #define NUM_ROLES (13)
 struct role_filter {
     boolean roles[NUM_ROLES + 1];
-    short mask;
+    unsigned long mask;
 };
 #define NUM_RACES (5)
 

@@ -971,7 +971,7 @@ boolean
 ok_role(int rolenum, int racenum, int gendnum, int alignnum)
 {
     int i;
-    short allow;
+    unsigned long allow;
 
     if (IndexOkT(rolenum, roles)) {
         if (gr.rfilter.roles[rolenum])
@@ -1037,7 +1037,7 @@ boolean
 ok_race(int rolenum, int racenum, int gendnum, int alignnum)
 {
     int i;
-    short allow;
+    unsigned long allow;
 
     if (IndexOkT(racenum, races)) {
         if (gr.rfilter.mask & races[racenum].selfmask)
@@ -1107,7 +1107,7 @@ boolean
 ok_gend(int rolenum, int racenum, int gendnum, int alignnum UNUSED)
 {
     int i;
-    short allow;
+    unsigned long allow;
 
     if (gendnum >= 0 && gendnum < ROLE_GENDERS) {
         if (gr.rfilter.mask & genders[gendnum].allow)
@@ -1172,7 +1172,7 @@ boolean
 ok_align(int rolenum, int racenum, int gendnum UNUSED, int alignnum)
 {
     int i;
-    short allow;
+    unsigned long allow;
 
     if (alignnum >= 0 && alignnum < ROLE_ALIGNS) {
         if (gr.rfilter.mask & aligns[alignnum].allow)
@@ -1729,7 +1729,8 @@ role_selection_prolog(int which, winid where)
                                not_yet[] = " not yet specified",
                                rand_choice[] = " random";
     char buf[BUFSZ];
-    int r, c, gend, a, allowmask;
+    int r, c, gend, a;
+    unsigned long allowmask;
 
     r = flags.initrole;
     c = flags.initrace;
@@ -1825,7 +1826,8 @@ role_menu_extra(int which, winid where, boolean preselect)
     anything any;
     char buf[BUFSZ];
     const char *what = 0, *constrainer = 0, *forcedvalue = 0;
-    int f = 0, r, c, gend, a, i, allowmask;
+    int f = 0, r, c, gend, a, i;
+    unsigned long allowmask;
     int clr = NO_COLOR;
 
     r = flags.initrole;

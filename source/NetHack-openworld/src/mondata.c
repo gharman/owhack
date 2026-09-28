@@ -1668,4 +1668,46 @@ get_atkdam_type(int adtyp)
     return adtyp;
 }
 
+/* Compute mons[].mhflags, the monster race flags that races[] selfmask,
+   lovemask and hatemask are matched against.  The classic five races come
+   from the M2_ flags; the others from monster class or identity.  Called
+   once at startup, after monst_globals_init().  When adding a monster that
+   belongs to one of the player races, extend this. */
+void
+init_mhflags(void)
+{
+    int i;
+
+    for (i = LOW_PM; i < NUMMONS; i++) {
+        struct permonst *ptr = &mons[i];
+        unsigned long f = 0UL;
+
+        if (ptr->mflags2 & M2_HUMAN)
+            f |= MH_HUMAN;
+        if (ptr->mflags2 & M2_ELF)
+            f |= MH_ELF;
+        if (ptr->mflags2 & M2_DWARF)
+            f |= MH_DWARF;
+        if (ptr->mflags2 & M2_GNOME)
+            f |= MH_GNOME;
+        if (ptr->mflags2 & M2_ORC)
+            f |= MH_ORC;
+        if (ptr->mflags2 & M2_GIANT)
+            f |= MH_GIANT;
+        if (ptr->mlet == S_CENTAUR)
+            f |= MH_CENTAUR;
+        if (i == PM_MIND_FLAYER || i == PM_MASTER_MIND_FLAYER)
+            f |= MH_ILLITHID;
+        if (ptr->mlet == S_VAMPIRE)
+            f |= MH_VAMPIRE;
+        if (ptr->mflags2 & M2_WERE)
+            f |= MH_WERE;
+        if (i == PM_DOPPELGANGER)
+            f |= MH_DOPPEL;
+        if (i == PM_GHOST)
+            f |= MH_GHOST;
+        ptr->mhflags = f;
+    }
+}
+
 /*mondata.c*/

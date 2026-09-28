@@ -13,6 +13,8 @@
 staticfn void give_may_advance_msg(int);
 staticfn void finish_towel_change(struct obj *obj, int) NONNULLARG1;
 staticfn boolean could_advance(int);
+staticfn const char *skill_lvl_name(int);
+staticfn int skill_training_percent(int);
 staticfn boolean peaked_skill(int);
 staticfn int slots_required(int);
 staticfn void skill_advance(int);
@@ -1091,9 +1093,17 @@ dry_a_towel(
 char *
 skill_level_name(int skill, char *buf)
 {
+    Strcpy(buf, skill_lvl_name(P_SKILL(skill)));
+    return buf;
+}
+
+/* name of a skill level (P_UNSKILLED .. P_GRAND_MASTER) */
+staticfn const char *
+skill_lvl_name(int lvl)
+{
     const char *ptr;
 
-    switch (P_SKILL(skill)) {
+    switch (lvl) {
     case P_UNSKILLED:
         ptr = "Unskilled";
         break;
@@ -1117,8 +1127,35 @@ skill_level_name(int skill, char *buf)
         ptr = "Unknown";
         break;
     }
-    Strcpy(buf, ptr);
-    return buf;
+    return ptr;
+}
+
+/* Progress of a skill's training as a percentage, where every 100% is one
+   full level of possible advancement: a Basic skill showing 150% could be
+   advanced to Skilled now and is halfway to Expert.  Advancement is still
+   limited by the skill's maximum and by available skill slots. */
+staticfn int
+skill_training_percent(int skill)
+{
+    int percent = 0, lvl;
+
+    if (P_RESTRICTED(skill))
+        return 0;
+    for (lvl = P_SKILL(skill); lvl < P_MAX_SKILL(skill); lvl++) {
+        int need = practice_needed_to_advance(lvl);
+
+        if ((int) P_ADVANCE(skill) >= need) {
+            percent += 100;
+        } else {
+            int prev = (lvl <= P_UNSKILLED) ? 0
+                                            : practice_needed_to_advance(lvl - 1);
+            int partial = ((int) P_ADVANCE(skill) - prev) * 100 / (need - prev);
+
+            percent += max(0, min(partial, 99));
+            break;
+        }
+    }
+    return percent;
 }
 
 const char *
@@ -1228,18 +1265,21 @@ static const struct skill_range {
 void
 add_skills_to_menu(winid win, boolean selectable, boolean speedy)
 {
-    int pass, i, len, longest;
+    int pass, i, len, longest, lvlwidth;
     anything any;
-    char buf[BUFSZ], sklnambuf[BUFSZ];
+    char buf[BUFSZ], sklnambuf[BUFSZ], pctbuf[QBUFSZ];
     const char *prefix;
     int clr = NO_COLOR;
 
-    /* Find the longest skill name. */
-    for (longest = 0, i = 0; i < P_NUM_SKILLS; i++) {
+    /* Find the longest skill name, and the longest level name that will
+       be shown (only martial arts and bare hands go past Expert). */
+    for (longest = 0, lvlwidth = 9, i = 0; i < P_NUM_SKILLS; i++) {
         if (P_RESTRICTED(i))
             continue;
         if ((len = Strlen(P_NAME(i))) > longest)
             longest = len;
+        if ((len = Strlen(skill_lvl_name(P_MAX_SKILL(i)))) > lvlwidth)
+            lvlwidth = len;
     }
 
     /* List the skills, making ones that could be advanced selectable if
@@ -1274,26 +1314,36 @@ add_skills_to_menu(winid win, boolean selectable, boolean speedy)
             else
                 prefix = "    ";
             (void) skill_level_name(i, sklnambuf);
+            /* training progress toward the next level(s); "MAX" once
+               there is nothing left to train for */
+            if (P_SKILL(i) >= P_MAX_SKILL(i)
+                || P_SKILL(i) + skill_training_percent(i) / 100
+                       >= P_MAX_SKILL(i))
+                Strcpy(pctbuf, "MAX");
+            else
+                Sprintf(pctbuf, "%d%%", skill_training_percent(i));
             if (wizard) {
                 if (!iflags.menu_tab_sep)
                     Snprintf(buf, sizeof buf,
-                             " %s%-*s %-12s %5d(%4d)", prefix,
+                             " %s%-*s %-12s %5d(%4d) %4s", prefix,
                              longest, P_NAME(i), sklnambuf, P_ADVANCE(i),
-                             practice_needed_to_advance(P_SKILL(i)));
+                             practice_needed_to_advance(P_SKILL(i)), pctbuf);
                 else
                     Snprintf(buf, sizeof buf,
-                             " %s%s\t%s\t%5d(%4d)", prefix, P_NAME(i),
+                             " %s%s\t%s\t%5d(%4d)\t%s", prefix, P_NAME(i),
                              sklnambuf, P_ADVANCE(i),
-                             practice_needed_to_advance(P_SKILL(i)));
+                             practice_needed_to_advance(P_SKILL(i)), pctbuf);
             } else {
                 if (!iflags.menu_tab_sep)
                     Snprintf(buf, sizeof buf,
-                             " %s %-*s [%s]", prefix, longest,
-                             P_NAME(i), sklnambuf);
+                             " %s %-*s [%-*s / %-*s] %4s", prefix, longest,
+                             P_NAME(i), lvlwidth, sklnambuf, lvlwidth,
+                             skill_lvl_name(P_MAX_SKILL(i)), pctbuf);
                 else
                     Snprintf(buf, sizeof buf,
-                             " %s%s\t[%s]", prefix, P_NAME(i),
-                             sklnambuf);
+                             " %s%s\t[%s / %s]\t%s", prefix, P_NAME(i),
+                             sklnambuf, skill_lvl_name(P_MAX_SKILL(i)),
+                             pctbuf);
             }
             any.a_int = selectable && can_advance(i, speedy) ? i + 1 : 0;
             add_menu(win, &nul_glyphinfo, &any, 0, 0,
@@ -1357,7 +1407,10 @@ enhance_weapon_skill(void)
         win = create_nhwindow(NHW_MENU);
         start_menu(win, MENU_BEHAVE_STANDARD);
 
-        /* start with a legend if any entries will be annotated
+        add_menu_str(win,
+                     "([current / maximum level]; training toward the next"
+                     " level, 100% per level)");
+        /* continue the legend if any entries will be annotated
            with "*" or "#" below */
         if (eventually_advance > 0 || maxxed_cnt > 0) {
             if (eventually_advance > 0) {
@@ -1374,8 +1427,8 @@ enhance_weapon_skill(void)
                         plur(maxxed_cnt));
                 add_menu_str(win, buf);
             }
-            add_menu_str(win, "");
         }
+        add_menu_str(win, "");
 
         add_skills_to_menu(
             win, to_advance + eventually_advance + maxxed_cnt > 0, speedy);

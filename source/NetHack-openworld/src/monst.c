@@ -21,7 +21,8 @@ extern const struct attack c_sa_no[NATTK];
             flg1, flg2, flg3, d, col, bn)           \
     {                                                                   \
         nam, PM_##bn,                                                   \
-        sym, lvl, gen, atk, siz, mr1, mr2, flg1, flg2, flg3, d, col     \
+        sym, lvl, gen, atk, siz, mr1, mr2, flg1, flg2, flg3, d, col,    \
+        0UL /* mhflags: set by init_mhflags() */                        \
     }
 
 /* LVL() and SIZ() collect several fields to cut down on number of args
@@ -50,7 +51,8 @@ static struct permonst mons_init[NUMMONS + 1] = {
             flg1, flg2, flg3, d, col, bn)           \
     {                                                                   \
         nam, NON_PM,                                                    \
-        sym, lvl, gen, atk, siz, mr1, mr2, flg1, flg2, flg3, d, col     \
+        sym, lvl, gen, atk, siz, mr1, mr2, flg1, flg2, flg3, d, col,    \
+        0UL                                                             \
     }
     MON(NAM(""), 0,
         LVL(0, 0, 0, 0, 0), G_NOGEN | G_NOCORPSE,

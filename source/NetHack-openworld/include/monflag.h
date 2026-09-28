@@ -182,13 +182,25 @@ enum ms_sounds {
 #define MZ_HUGE         4 /* 12-25' */
 #define MZ_GIGANTIC     7 /* off the scale */
 
-/* Monster races -- must stay within ROLE_RACEMASK */
-/* Eventually this may become its own field */
-#define MH_HUMAN        M2_HUMAN
-#define MH_ELF          M2_ELF
-#define MH_DWARF        M2_DWARF
-#define MH_GNOME        M2_GNOME
-#define MH_ORC          M2_ORC
+/* Monster races, for mons[].mhflags (computed at startup by init_mhflags()
+   from the M2_ race flags and from monster identity) and for the race bits
+   of the role/race/gender/alignment 'allow' masks.  They occupy the high
+   16 bits so that they never overlap the ROLE_ gender and alignment bits. */
+#define MH_HUMAN        0x00010000UL
+#define MH_ELF          0x00020000UL
+#define MH_DWARF        0x00040000UL
+#define MH_GNOME        0x00080000UL
+#define MH_ORC          0x00100000UL
+#define MH_GIANT        0x00200000UL
+#define MH_CENTAUR      0x00400000UL
+#define MH_ILLITHID     0x00800000UL
+#define MH_TORTLE       0x01000000UL
+#define MH_DRAUGR       0x02000000UL
+#define MH_VAMPIRE      0x04000000UL
+#define MH_WERE         0x08000000UL
+#define MH_DOPPEL       0x10000000UL
+#define MH_GHOST        0x20000000UL
+#define MH_RACEMASK     0x3fff0000UL
 
 /* for mons[].geno (constant during game) */
 #define G_UNIQ          0x1000 /* generated only once */

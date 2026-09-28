@@ -75,6 +75,7 @@ struct permonst {
     unsigned short mflags3;     /* yet more boolean bitflags */
     uchar difficulty;           /* toughness (formerly from  makedefs -m) */
     uchar mcolor;               /* color to use */
+    unsigned long mhflags;      /* race flags (MH_*), set by init_mhflags() */
 };
 
 #define NORMAL_SPEED 12

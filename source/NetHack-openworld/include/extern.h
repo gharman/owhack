@@ -1947,6 +1947,7 @@ extern boolean mon_knows_traps(struct monst *, int) NONNULLARG1;
 extern void mon_learns_traps(struct monst *, int) NONNULLARG1;
 extern void mons_see_trap(struct trap *) NONNULLARG1;
 extern int get_atkdam_type(int);
+extern void init_mhflags(void);
 #if (NH_DEVEL_STATUS != NH_STATUS_RELEASED) || defined(DEBUG)
 extern int mstrength(struct permonst *) NONNULLARG1;
 #endif
