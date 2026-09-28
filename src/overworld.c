@@ -2024,9 +2024,9 @@ ow_structures(int cx, int cy, int x0, int y0, int x1, int y1)
         return;
     }
     /* towns and villages */
-    if (roll < 55 && biome != OWB_MOUNTAIN && biome != OWB_LAKE
+    if (roll < 110 && biome != OWB_MOUNTAIN && biome != OWB_LAKE
         && biome != OWB_SWAMP && biome != OWB_BARRENS) {
-        boolean big = (roll < 25);
+        boolean big = (roll < 40);
 
         tx = x0 + (big ? 2 : 6), ty = y0 + (big ? 7 : 9);
         if (ow_rect_clear(tx, ty, tx + (big ? 26 : 18), ty + (big ? 16 : 12),
@@ -2036,11 +2036,11 @@ ow_structures(int cx, int cy, int x0, int y0, int x1, int y1)
             return;
         }
     }
-    if (roll < 110 && biome == OWB_MOUNTAIN) {
+    if (roll < 160 && biome == OWB_MOUNTAIN) {
         ow_vault(x0, y0, x1, y1, ring);
         return;
     }
-    if (roll < 150) {
+    if (roll < 200) {
         /* special rooms, chosen by depth the way makelevel() does it */
         if (ring > 4 && !rn2(6))
             kind = COURT;
@@ -2072,25 +2072,25 @@ ow_structures(int cx, int cy, int x0, int y0, int x1, int y1)
             return;
         }
     }
-    if (roll < 190 || biome == OWB_RUINS) {
-        if (biome == OWB_RUINS || roll < 175) {
+    if (roll < 240 || biome == OWB_RUINS) {
+        if (biome == OWB_RUINS || roll < 225) {
             ow_ruins(x0, y0, x1, y1, ring);
             return;
         }
     }
-    if (roll < 215) {
+    if (roll < 265) {
         ow_shrine(x0, y0, x1, y1, ring);
         return;
     }
-    if (roll < 250 && ring > 2) {
+    if (roll < 300 && ring > 2) {
         ow_camp(x0, y0, x1, y1, ring);
         return;
     }
-    if (roll < 300 && biome == OWB_DESERT) {
+    if (roll < 350 && biome == OWB_DESERT) {
         ow_oasis(x0, y0, x1, y1, ring);
         return;
     }
-    if (roll < 320 && ring > 5) {
+    if (roll < 370 && ring > 5) {
         ow_graveyard(x0, y0, x1, y1, ring);
         return;
     }
@@ -2869,9 +2869,10 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
         fclose(fp);
         return;
     }
-    fprintf(fp, "hero %d,%d ring %d biome %s seed %lu\n", u.ux, u.uy,
-            ow_ring_at(u.ux, u.uy), ow_biome_name(ow_biome_at(u.ux, u.uy)),
-            svow.seed);
+    fprintf(fp, "hero %d,%d ring %d biome %s seed %lu nroom %d nsub %d\n",
+            u.ux, u.uy, ow_ring_at(u.ux, u.uy),
+            ow_biome_name(ow_biome_at(u.ux, u.uy)), svow.seed, svn.nroom,
+            gn.nsubroom);
     for (y = cy - ry; y <= cy + ry; y++) {
         for (x = cx - rx; x <= cx + rx; x++) {
             char c;

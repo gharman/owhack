@@ -125,7 +125,8 @@ new_were(struct monst *mon)
     }
     /* regenerate by 1/4 of the lost hit points */
     healmon(mon, (mon->mhpmax - mon->mhp) / 4, 0);
-    newsym(mon->mx, mon->my);
+    if (isok(mon->mx, mon->my)) /* might not be placed yet */
+        newsym(mon->mx, mon->my);
     mon_break_armor(mon, FALSE);
     possibly_unwield(mon, FALSE);
 

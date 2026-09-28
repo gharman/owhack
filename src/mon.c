@@ -4439,6 +4439,8 @@ seemimic(struct monst *mtmp)
     /*
      *  Discovered mimics don't block light.
      */
+    if (!isok(mtmp->mx, mtmp->my))
+        return; /* not placed on the map yet (arriving via mon_arrive) */
     if (is_blocker_appear
         && !does_block(mtmp->mx, mtmp->my, &levl[mtmp->mx][mtmp->my]))
         unblock_point(mtmp->mx, mtmp->my);
@@ -4460,7 +4462,10 @@ normal_shape(struct monst *mon)
         /* newcham() may uncancel a polymorphing monster; override that */
         if (mcan)
             mon->mcan = 1;
-        newsym(mon->mx, mon->my);
+        /* (not when called for a monster that is still arriving on the
+           level, before it has been placed) */
+        if (isok(mon->mx, mon->my))
+            newsym(mon->mx, mon->my);
     }
     if (is_were(mon->data) && mon->data->mlet != S_HUMAN) {
         new_were(mon);
