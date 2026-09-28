@@ -49,10 +49,13 @@ des.door("locked",51,16)
 des.door("locked",66,02)
 -- Stairs
 des.stair("up", 36,04)
+-- Open world (as in Slash'EM and Hack'EM): the Gnome King's level lies
+-- below Mines' End, and the otherwise empty place leads down to it
+des.stair("down", place[6])
 -- Non diggable walls
 des.non_diggable(selection.area(00,00,74,17))
 -- Niches
--- Note: place[6] empty
+-- Note: place[6] holds the stairs down
 des.object("diamond",place[7])
 des.object("emerald",place[7])
 des.object("worthless piece of violet glass",place[7])

@@ -135,6 +135,11 @@ typedef struct branch {
 #define Is_knox(x)          (Lcheck(x, &knox_level))
 #define Is_mineend_level(x) (Lcheck(x, &mineend_level))
 #define Is_sokoend_level(x) (Lcheck(x, &sokoend_level))
+/* open world: extra special levels from Slash'EM */
+#define Is_blackmarket(x)   (Lcheck(x, &blackmarket_level))
+#define Is_aligned_quest(x) (Lcheck(x, &lawful_quest_level)  \
+                             || Lcheck(x, &neutral_quest_level) \
+                             || Lcheck(x, &chaotic_quest_level))
 
 #define In_sokoban(x) ((x)->dnum == sokoban_dnum)
 /* open world: the outer rings of the overworld are part of Gehennom too */

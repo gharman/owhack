@@ -102,7 +102,7 @@
 #define your_race(ptr) (((ptr)->mhflags & gu.urace.selfmask) != 0L)
 #define is_bat(ptr)                                         \
     ((ptr) == &mons[PM_BAT] || (ptr) == &mons[PM_GIANT_BAT] \
-     || (ptr) == &mons[PM_VAMPIRE_BAT])
+     || (ptr) == &mons[PM_VAMPIRE_BAT] || (ptr) == &mons[PM_RHUMBAT])
 #define is_bird(ptr) ((ptr)->mlet == S_BAT && !is_bat(ptr))
 #define is_giant(ptr) (((ptr)->mflags2 & M2_GIANT) != 0L)
 #define is_golem(ptr) ((ptr)->mlet == S_GOLEM)
@@ -145,8 +145,14 @@
 #define likes_objs(ptr) (((ptr)->mflags2 & M2_COLLECT) != 0L || is_armed(ptr))
 #define likes_magic(ptr) (((ptr)->mflags2 & M2_MAGIC) != 0L)
 #define webmaker(ptr) \
-    ((ptr) == &mons[PM_CAVE_SPIDER] || (ptr) == &mons[PM_GIANT_SPIDER])
+    ((ptr) == &mons[PM_CAVE_SPIDER] || (ptr) == &mons[PM_GIANT_SPIDER] \
+     || (ptr) == &mons[PM_SHELOB])
 #define is_unicorn(ptr) ((ptr)->mlet == S_UNICORN && likes_gems(ptr))
+/* EvilHack: the only monsters that turn up at random in Goblin Town */
+#define likes_gtown(ptr) \
+    ((ptr)->mlet == S_ORC || (ptr)->mlet == S_KOBOLD            \
+     || ((ptr)->mlet == S_RODENT && (ptr) != &mons[PM_ROCK_MOLE] \
+         && (ptr) != &mons[PM_WOODCHUCK]))
 #define is_longworm(ptr)                                                   \
     (((ptr) == &mons[PM_BABY_LONG_WORM]) || ((ptr) == &mons[PM_LONG_WORM]) \
      || ((ptr) == &mons[PM_LONG_WORM_TAIL]))

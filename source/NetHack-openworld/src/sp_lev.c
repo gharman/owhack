@@ -232,19 +232,19 @@ mapfrag_fromstr(char *str)
 {
     struct mapfragment *mf = (struct mapfragment *) alloc(sizeof *mf);
 
-    char *tmps;
+    char *tmps, *raw, *out;
 
-    mf->data = dupstr(str);
+    raw = dupstr(str);
 
-    (void) stripdigits(mf->data);
-    mf->wid = str_lines_maxlen(mf->data);
+    (void) stripdigits(raw);
+    mf->wid = str_lines_maxlen(raw);
     mf->hei = 0;
-    tmps = mf->data;
+    tmps = raw;
     while (tmps && *tmps) {
         char *s1 = strchr(tmps, '\n');
 
         if (mf->hei > MAP_Y_LIM) {
-            free(mf->data);
+            free(raw);
             free(mf);
             return NULL;
         }
@@ -253,6 +253,22 @@ mapfrag_fromstr(char *str)
         tmps = s1;
         mf->hei++;
     }
+    /* mapfrag_get() indexes the data as a rectangle, so pad any short
+       lines (such as ones that lost their trailing spaces) with rock */
+    mf->data = out = (char *) alloc((mf->wid + 1) * mf->hei + 1);
+    tmps = raw;
+    while (tmps && *tmps) {
+        char *s1 = strchr(tmps, '\n');
+        int len = s1 ? (int) (s1 - tmps) : (int) strlen(tmps);
+
+        (void) memcpy(out, tmps, len);
+        (void) memset(out + len, ' ', mf->wid - len);
+        out += mf->wid;
+        *out++ = '\n';
+        tmps = s1 ? s1 + 1 : (char *) 0;
+    }
+    *out = '\0';
+    free(raw);
     return mf;
 }
 
@@ -4020,7 +4036,16 @@ lspo_engraving(lua_State *L)
         ecoord = SP_COORD_PACK(x, y);
 
     get_location_coord(&x, &y, DRY, gc.coder->croom, ecoord);
-    make_engr_at(x, y, txt, NULL, 0L, etyp);
+    /* a random "dry" spot can be air or cloud, which can't hold an
+       engraving; try for another one */
+    if (ecoord == SP_COORD_PACK_RANDOM(0)) {
+        int tries;
+
+        for (tries = 0; tries < 100 && IS_AIR(levl[x][y].typ); tries++)
+            get_location_coord(&x, &y, DRY, gc.coder->croom, ecoord);
+    }
+    if (!IS_AIR(levl[x][y].typ))
+        make_engr_at(x, y, txt, NULL, 0L, etyp);
     Free(txt);
     ep = engr_at(x, y);
     if (ep) {
@@ -4079,6 +4104,7 @@ static const struct {
     { "book shop", BOOKSHOP },
     { "health food shop", FODDERSHOP },
     { "candle shop", CANDLESHOP },
+    { "black market", BLACKSHOP },
     { 0, 0 }
 };
 

@@ -42,6 +42,8 @@ staticfn int invoke_banish(struct obj *) NONNULLARG1;
 staticfn int invoke_fling_poison(struct obj *) NONNULLARG1;
 staticfn int invoke_storm_spell(struct obj *) NONNULLARG1;
 staticfn int invoke_blinding_ray(struct obj *) NONNULLARG1;
+staticfn int invoke_death_gaze(struct obj *) NONNULLARG1;
+staticfn int invoke_summon_undead(struct obj *) NONNULLARG1;
 staticfn int arti_invoke_cost_pw(struct obj *) NONNULLARG1;
 staticfn boolean arti_invoke_cost(struct obj *) NONNULLARG1;
 staticfn int arti_invoke(struct obj *);
@@ -914,6 +916,9 @@ touch_artifact(struct obj *obj, struct monst *mon)
 
     touch_blasted = FALSE;
     if (oart == &artilist[ART_NONARTIFACT])
+        return 1;
+    /* Slash'EM: Thiefbane has a special affinity with shopkeepers */
+    if (mon != &gy.youmonst && mon->isshk && obj->oartifact == ART_THIEFBANE)
         return 1;
 
     yours = (mon == &gy.youmonst);
@@ -1922,7 +1927,9 @@ invoke_create_portal(struct obj *obj)
         newlev.dlevel = svd.dungeons[i].dunlev_ureached;
 
     if (u.uhave.amulet || In_endgame(&u.uz) || In_endgame(&newlev)
-        || newlev.dnum == u.uz.dnum || !next_to_u()) {
+        || newlev.dnum == u.uz.dnum || !next_to_u()
+        /* Slash'EM: One-eyed Sam doesn't let shoppers slip away */
+        || (Is_blackmarket(&u.uz) && *u.ushops)) {
         You_feel("very disoriented for a moment.");
     } else {
         if (!Blind)
@@ -2089,6 +2096,104 @@ invoke_blinding_ray(struct obj *obj)
     return ECMD_TIME;
 }
 
+/* Slash'EM: artifacts that have a set location in the extra special
+   levels (One-eyed Sam's sword and the key quest relics); these can't be
+   wished for and don't survive into bones */
+boolean
+placed_artifact(struct obj *obj)
+{
+    return (boolean) (obj->oartifact == ART_THIEFBANE
+                      || obj->oartifact == ART_NIGHTHORN
+                      || obj->oartifact == ART_EYE_OF_THE_BEHOLDER
+                      || obj->oartifact == ART_HAND_OF_VECNA);
+}
+
+/* Slash'EM: the Eye of the Beholder glares at everything in view */
+staticfn int
+invoke_death_gaze(struct obj *obj UNUSED)
+{
+    struct monst *mtmp;
+    int unseen = 0;
+
+    if (u.uluck < -9) {
+        pline_The("Eye turns on you!");
+        u.uhp = 0;
+        svk.killer.format = KILLED_BY;
+        Strcpy(svk.killer.name, "the Eye of the Beholder");
+        done(DIED);
+        /* lifesaved */
+        return ECMD_TIME;
+    }
+    pline_The("Eye looks around with its icy gaze!");
+    for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
+        if (DEADMONSTER(mtmp))
+            continue;
+        /* the Eye is never blind... */
+        if (couldsee(mtmp->mx, mtmp->my) && !is_undead(mtmp->data)) {
+            if (canspotmon(mtmp))
+                pline_mon(mtmp, "%s screams in agony!", Monnam(mtmp));
+            else
+                unseen++;
+            mtmp->mhp /= 3;
+            if (mtmp->mhp < 1)
+                mtmp->mhp = 1;
+            if (!mtmp->mpeaceful || !rn2(2))
+                wakeup(mtmp, TRUE);
+        }
+    }
+    if (unseen)
+        You_hear("%s of intense pain!", unseen > 1 ? "cries" : "a cry");
+    /* Tsk, tsk.. */
+    adjalign(-3);
+    change_luck(-3);
+    return ECMD_TIME;
+}
+
+/* Slash'EM: the Hand of Vecna calls up creatures from the grave */
+staticfn int
+invoke_summon_undead(struct obj *obj UNUSED)
+{
+    int summon_loop;
+
+    if (u.uluck < -9) {
+        pline_The("Hand claws you with its icy nails!");
+        losehp(rn2(20) + 5, "the Hand of Vecna", KILLED_BY);
+        if (u.uhp < 1)
+            return ECMD_TIME;
+    }
+    summon_loop = rn2(4) + 4;
+    pline("Creatures from the grave surround you!");
+    do {
+        struct permonst *pm;
+        struct monst *mtmp;
+
+        switch (rnd(6)) {
+        case 1:
+            pm = mkclass(S_VAMPIRE, 0);
+            break;
+        case 2:
+        case 3:
+            pm = mkclass(S_ZOMBIE, 0);
+            break;
+        case 4:
+            pm = mkclass(S_MUMMY, 0);
+            break;
+        case 5:
+            pm = mkclass(S_GHOST, 0);
+            break;
+        default:
+            pm = mkclass(S_WRAITH, 0);
+            break;
+        }
+        if (pm && (mtmp = makemon(pm, u.ux, u.uy, NO_MM_FLAGS)) != 0)
+            (void) tamedog(mtmp, (struct obj *) 0, FALSE);
+    } while (--summon_loop > 0);
+    /* Tsk, tsk.. */
+    adjalign(-3);
+    change_luck(-3);
+    return ECMD_TIME;
+}
+
 /* return the amount of Pw invoking an object costs.
    return a negative value, if obj invoking cannot be paid with Pw */
 staticfn int
@@ -2174,6 +2279,8 @@ arti_invoke(struct obj *obj)
             /*FALLTHRU*/
         case FIRESTORM: res = invoke_storm_spell(obj); break;
         case BLINDING_RAY: res = invoke_blinding_ray(obj); break;
+        case DEATH_GAZE: res = invoke_death_gaze(obj); break;
+        case SUMMON_UNDEAD: res = invoke_summon_undead(obj); break;
         default:
             impossible("Unknown invoke power %d.", oart->inv_prop);
             break;

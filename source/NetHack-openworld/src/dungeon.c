@@ -730,6 +730,10 @@ static struct level_map {
                   { "wizard3", &wiz3_level },
                   { "minend", &mineend_level },
                   { "soko1", &sokoend_level },
+                  { "blkmar", &blackmarket_level },
+                  { "nightmar", &lawful_quest_level },
+                  { "beholder", &neutral_quest_level },
+                  { "lich", &chaotic_quest_level },
                   { X_START, &qstart_level },
                   { X_LOCATE, &qlocate_level },
                   { X_GOAL, &nemesis_level },
@@ -1177,6 +1181,7 @@ fixup_level_locations(void)
     mines_dnum = dname_to_dnum("The Gnomish Mines");
     tower_dnum = dname_to_dnum("Vlad's Tower");
     tutorial_dnum = dname_to_dnum("The Tutorial");
+    goblintown_dnum = dname_to_dnum("Goblin Town");
 
     /* one special fixup for dummy surface level */
     if ((x = find_level("dummy")) != 0) {
@@ -1689,7 +1694,10 @@ Can_dig_down(d_level *lev)
 boolean
 Can_fall_thru(d_level *lev)
 {
-    return (boolean) (Can_dig_down(lev) || Is_stronghold(lev));
+    return (boolean) (Can_dig_down(lev) || Is_stronghold(lev)
+                      /* EvilHack: Goblin Town's floor is hard but its
+                         trap doors are the way down to Gollum's cave */
+                      || (In_goblintown(lev) && !Is_botlevel(lev)));
 }
 
 /*
@@ -1895,6 +1903,13 @@ In_mines(d_level *lev)
     return (boolean) (lev->dnum == mines_dnum);
 }
 
+/* are you in EvilHack's Goblin Town? */
+boolean
+In_goblintown(d_level *lev)
+{
+    return (boolean) (lev->dnum == goblintown_dnum);
+}
+
 /*
  * Return the branch for the given dungeon.
  *
@@ -2006,8 +2021,11 @@ single_level_branch(d_level *lev)
     /*
      * TODO:  this should be generalized instead of assuming that
      * Fort Ludios is the only single level branch in the dungeon.
+     * Slash'EM adds One-eyed Sam's market and the three alignment key
+     * quests, which also can't be level teleported out of.
      */
-    return Is_knox(lev);
+    return (boolean) (Is_knox(lev) || Is_blackmarket(lev)
+                      || Is_aligned_quest(lev));
 }
 
 /* equivalent to dest = source */

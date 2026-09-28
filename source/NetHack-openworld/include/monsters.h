@@ -364,6 +364,18 @@
             | M1_NOTAKE,
         M2_HOSTILE | M2_NEUTER, M3_INFRAVISIBLE,
         10, HI_ZAP, SHOCKING_SPHERE),
+    /* Slash'EM: the Beholder, master of the neutral key quest (a unique
+       monster; the generic "beholder" above remains unimplemented) */
+    MON(NAM("Beholder"), S_EYE,
+        LVL(15, 9, -4, 70, 0), (G_UNIQ | G_NOGEN | G_NOCORPSE),
+        A(ATTK(AT_GAZE, AD_DETH, 1, 4), ATTK(AT_GAZE, AD_PHYS, 3, 8),
+          ATTK(AT_GAZE, AD_STUN, 1, 3), ATTK(AT_GAZE, AD_CONF, 1, 3),
+          ATTK(AT_GAZE, AD_SLEE, 1, 4), NO_ATTK),
+        SIZ(500, 100, MS_SILENT, MZ_LARGE), 0, 0,
+        M1_FLY | M1_NOLIMBS | M1_NOHEAD | M1_REGEN,
+        M2_NOPOLY | M2_NEUTER | M2_HOSTILE | M2_NASTY | M2_STALK,
+        M3_INFRAVISIBLE | M3_WAITFORU | M3_WANTSALL,
+        21, CLR_GRAY, BEHOLDER),
 #if 0 /* not yet implemented */
     MON(NAM("beholder"), S_EYE,
         LVL(6, 3, 4, 0, -10), (G_GENO | 2),
@@ -471,6 +483,14 @@
         M1_FLY | M1_HUMANOID | M1_THICK_HIDE | M1_BREATHLESS | M1_OVIPAROUS,
         M2_LORD | M2_HOSTILE | M2_STRONG | M2_MAGIC, 0,
         11, HI_LORD, WINGED_GARGOYLE),
+    MON(NAM("statue gargoyle"), S_GREMLIN,
+        LVL(4, 9, 5, 0, 0), (G_NOHELL | G_GENO | G_NOCORPSE | 1),
+        A(ATTK(AT_CLAW, AD_PHYS, 1, 3), ATTK(AT_CLAW, AD_PHYS, 1, 3),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(900, 0, MS_SILENT, MZ_HUMAN), MR_SLEEP | MR_POISON | MR_STONE, 0,
+        M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_THICK_HIDE,
+        M2_HOSTILE, 0,
+        5, CLR_GRAY, STATUE_GARGOYLE),
     /*
      * humanoids
      */
@@ -518,6 +538,16 @@
             | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         8, HI_LORD, DWARF_RULER),
+    MON(NAM("dwarf thief"), S_HUMANOID,
+        LVL(2, 6, 10, 10, 4), (G_GENO | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 8), ATTK(AT_TUCH, AD_SITM, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(900, 300, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_TUNNEL | M1_NEEDPICK | M1_HUMANOID | M1_OMNIVORE,
+        M2_DWARF | M2_HOSTILE | M2_STRONG | M2_GREEDY | M2_JEWELS
+          | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        4, CLR_BLACK, DWARF_THIEF),
     MON(NAM("mind flayer"), S_HUMANOID,
         LVL(9, 12, 5, 90, -8), (G_GENO | 1),
         A(ATTK(AT_WEAP, AD_PHYS, 1, 4), ATTK(AT_TENT, AD_DRIN, 2, 1),
@@ -538,6 +568,17 @@
         M2_HOSTILE | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         19, CLR_BRIGHT_MAGENTA, MASTER_MIND_FLAYER),
+    /* EvilHack: Gollum, lurking in Goblin Town */
+    MON(NAM("Gollum"), S_HUMANOID,
+        LVL(5, 10, 6, 30, -10), (G_NOGEN | G_UNIQ),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 4), ATTK(AT_CLAW, AD_SITM, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(500, 200, MS_CUSS, MZ_SMALL), MR_POISON, 0,
+        M1_HUMANOID | M1_OMNIVORE | M1_SWIM,
+        M2_NOPOLY | M2_HOSTILE | M2_STALK | M2_PNAME | M2_MALE | M2_GREEDY
+          | M2_COLLECT | M2_JEWELS | M2_MAGIC,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        7, CLR_GRAY, GOLLUM),
     /*
      * imps & other minor demons/devils
      */
@@ -585,6 +626,13 @@
         SIZ(300, 200, MS_SQAWK, MZ_SMALL), MR_POISON, MR_POISON,
         M1_TPORT | M1_TPORT_CNTRL, M2_STALK, M3_INFRAVISIBLE | M3_INFRAVISION,
         7, CLR_CYAN, TENGU),
+    MON(NAM("nupperibo"), S_IMP,
+        LVL(7, 12, 0, 20, -7), (G_GENO | 1),
+        A(ATTK(AT_CLAW, AD_DRST, 3, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(20, 10, MS_CUSS, MZ_TINY), 0, 0,
+        M1_REGEN, M2_WANDER | M2_STALK, M3_INFRAVISIBLE | M3_INFRAVISION,
+        9, CLR_GREEN, NUPPERIBO),
     /*
      * jellies
      */
@@ -654,6 +702,33 @@
         M1_HUMANOID | M1_POIS | M1_OMNIVORE, M2_HOSTILE | M2_MAGIC,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         4, HI_ZAP, KOBOLD_SHAMAN),
+    /* Slash'EM kobolds */
+    MON(NAM("swamp kobold"), S_KOBOLD,
+        LVL(3, 9, 10, 0, -3), (G_NOHELL | G_GENO | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(450, 150, MS_ORC, MZ_SMALL), MR_POISON, 0,
+        M1_HUMANOID | M1_POIS | M1_OMNIVORE, M2_HOSTILE | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        4, CLR_GREEN, SWAMP_KOBOLD),
+    MON(NAM("rock kobold"), S_KOBOLD,
+        LVL(5, 9, 10, 0, -3), (G_NOHELL | G_GENO | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(450, 150, MS_ORC, MZ_SMALL), MR_POISON, 0,
+        M1_HUMANOID | M1_POIS | M1_OMNIVORE, M2_HOSTILE | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        6, CLR_BLACK, ROCK_KOBOLD),
+    MON(NAM("Kroo the Kobold King"), S_KOBOLD,
+        LVL(13, 9, 10, 0, -3), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(450, 150, MS_ORC, MZ_SMALL), MR_POISON | MR_STONE, 0,
+        M1_HUMANOID | M1_POIS | M1_OMNIVORE,
+        M2_NOPOLY | M2_PNAME | M2_PRINCE | M2_MALE | M2_GREEDY | M2_STALK
+          | M2_HOSTILE | M2_NASTY | M2_JEWELS | M2_COLLECT | M2_MAGIC,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        14, HI_LORD, KROO_THE_KOBOLD_KING),
     /*
      * leprechauns
      */
@@ -721,6 +796,41 @@
         SIZ(WT_NYMPH, 300, MS_SEDUCE, MZ_HUMAN), 0, 0, M1_HUMANOID | M1_TPORT,
         M2_HOSTILE | M2_FEMALE | M2_COLLECT, M3_INFRAVISIBLE,
         5, CLR_BROWN, MOUNTAIN_NYMPH),
+    /* Slash'EM fairies and Aphrodite */
+    MON(NAM("brownie"), S_NYMPH,
+        LVL(8, 15, 3, 20, 0), (G_NOHELL | G_GENO | 1),
+        A(ATTK(AT_CLAW, AD_SITM, 0, 0), ATTK(AT_MAGC, AD_SPEL, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(60, 30, MS_LAUGH, MZ_TINY), 0, 0,
+        M1_HUMANOID | M1_TPORT, M2_HOSTILE | M2_GREEDY | M2_MAGIC,
+        M3_INFRAVISIBLE,
+        11, CLR_BROWN, BROWNIE),
+    MON(NAM("pixie"), S_NYMPH,
+        LVL(3, 15, 3, 20, 0), (G_NOHELL | G_GENO | 1),
+        A(ATTK(AT_CLAW, AD_SITM, 1, 2),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(60, 30, MS_LAUGH, MZ_TINY), 0, 0,
+        M1_HUMANOID | M1_SEE_INVIS, M2_HOSTILE | M2_GREEDY,
+        M3_INFRAVISIBLE,
+        5, CLR_CYAN, PIXIE),
+    MON(NAM("quickling"), S_NYMPH,
+        LVL(3, 30, 10, 20, -10), (G_HELL | G_GENO | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 2), ATTK(AT_CLAW, AD_SITM, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(60, 30, MS_LAUGH, MZ_TINY), 0, 0,
+        M1_HUMANOID, M2_HOSTILE | M2_GREEDY | M2_NASTY,
+        M3_INFRAVISIBLE,
+        5, CLR_BRIGHT_BLUE, QUICKLING),
+    MON(NAM("Aphrodite"), S_NYMPH,
+        LVL(10, 15, -5, 20, 0), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_CLAW, AD_SITM, 0, 0), ATTK(AT_CLAW, AD_SEDU, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(600, 300, MS_SEDUCE, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_TPORT,
+        M2_NOPOLY | M2_PNAME | M2_PRINCE | M2_FEMALE | M2_GREEDY | M2_STALK
+          | M2_HOSTILE | M2_NASTY | M2_JEWELS | M2_COLLECT | M2_MAGIC,
+        M3_INFRAVISIBLE,
+        13, HI_LORD, APHRODITE),
     /*
      * orcs
      */
@@ -794,6 +904,66 @@
         M2_ORC | M2_STRONG | M2_GREEDY | M2_JEWELS | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         7, HI_LORD, ORC_CAPTAIN),
+    /* Slash'EM orcs and Grund */
+    MON(NAM("war orc"), S_ORC,
+        LVL(6, 7, 10, 0, -4), (G_HELL | G_GENO | G_LGROUP | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1300, 300, MS_ORC, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_ORC | M2_STRONG | M2_GREEDY | M2_JEWELS | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        8, CLR_GREEN, WAR_ORC),
+    MON(NAM("great orc"), S_ORC,
+        LVL(9, 7, 10, 10, -4), (G_HELL | G_GENO | G_LGROUP | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1300, 300, MS_ORC, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_ORC | M2_STRONG | M2_GREEDY | M2_JEWELS | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        11, CLR_BRIGHT_GREEN, GREAT_ORC),
+    MON(NAM("snow orc"), S_ORC,
+        LVL(9, 12, 10, 10, -9), (G_NOHELL | G_GENO | G_LGROUP | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1300, 300, MS_ORC, MZ_HUMAN), MR_COLD, MR_COLD,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_ORC | M2_STRONG | M2_GREEDY | M2_JEWELS | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        11, CLR_CYAN, SNOW_ORC),
+    MON(NAM("demon orc"), S_ORC,
+        LVL(12, 12, 10, 10, -9), (G_HELL | G_GENO | G_LGROUP | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 3, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1300, 300, MS_ORC, MZ_HUMAN), MR_FIRE, MR_FIRE,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_ORC | M2_HOSTILE | M2_STRONG | M2_GREEDY | M2_JEWELS
+          | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        14, CLR_ORANGE, DEMON_ORC),
+    MON(NAM("Grund the Orc King"), S_ORC,
+        LVL(20, 7, 10, 66, -4), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 4, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1300, 300, MS_ORC, MZ_HUMAN), MR_POISON, MR_POISON,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_ORC | M2_STRONG | M2_PNAME | M2_PRINCE | M2_MALE
+          | M2_GREEDY | M2_STALK | M2_HOSTILE | M2_NASTY | M2_JEWELS
+          | M2_COLLECT | M2_MAGIC,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        22, HI_LORD, GRUND_THE_ORC_KING),
+    /* EvilHack: the Goblin King, lord of Goblin Town */
+    MON(NAM("Goblin King"), S_ORC,
+        LVL(8, 12, 7, 10, -15), (G_NOGEN | G_UNIQ),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6), ATTK(AT_WEAP, AD_PHYS, 2, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1500, 500, MS_CUSS, MZ_LARGE), MR_POISON, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_ORC | M2_HOSTILE | M2_STRONG | M2_STALK | M2_NASTY
+          | M2_MALE | M2_GREEDY | M2_JEWELS | M2_COLLECT | M2_MAGIC,
+        M3_WAITFORU | M3_INFRAVISION | M3_INFRAVISIBLE,
+        10, CLR_BRIGHT_MAGENTA, GOBLIN_KING),
     /*
      * piercers
      */
@@ -908,6 +1078,21 @@
         M1_ANIMAL | M1_NOHANDS | M1_POIS | M1_CARNIVORE, M2_HOSTILE,
         M3_INFRAVISIBLE,
         4, CLR_BROWN, RABID_RAT),
+    /* Slash'EM rats */
+    MON(NAM("black rat"), S_RODENT,
+        LVL(0, 12, 7, 0, 0), (G_NOGEN | G_GENO),
+        A(ATTK(AT_BITE, AD_PHYS, 1, 3),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(20, 12, MS_SQEEK, MZ_TINY), 0, 0,
+        M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE, M2_HOSTILE, M3_INFRAVISIBLE,
+        1, CLR_BLACK, BLACK_RAT),
+    MON(NAM("pack rat"), S_RODENT,
+        LVL(0, 12, 7, 0, 0), (G_NOGEN | G_GENO),
+        A(ATTK(AT_BITE, AD_PHYS, 1, 3), ATTK(AT_TUCH, AD_SITM, 1, 1),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(20, 12, MS_SQEEK, MZ_TINY), 0, 0,
+        M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE, M2_HOSTILE, M3_INFRAVISIBLE,
+        2, CLR_BROWN, PACK_RAT),
     MON(NAM("wererat"), S_RODENT,
         LVL(2, 12, 6, 10, -7), (G_NOGEN | G_NOCORPSE),
         A(ATTK(AT_BITE, AD_WERE, 1, 4),
@@ -934,6 +1119,16 @@
         /* In reality, they tunnel instead of cutting lumber.  Oh, well. */
         M2_WANDER | M2_HOSTILE, M3_INFRAVISIBLE,
         4, CLR_BROWN, WOODCHUCK),
+    MON(NAM("Rat King"), S_RODENT,
+        LVL(12, 15, 7, 0, 0), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 4), ATTK(AT_BITE, AD_PHYS, 2, 3),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(200, 120, MS_SQEEK, MZ_MEDIUM), MR_STONE, MR_STONE,
+        M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE,
+        M2_NOPOLY | M2_STRONG | M2_PRINCE | M2_MALE | M2_GREEDY | M2_STALK
+          | M2_HOSTILE | M2_NASTY | M2_JEWELS | M2_COLLECT | M2_MAGIC,
+        M3_INFRAVISIBLE,
+        14, HI_LORD, RAT_KING),
     /*
      * spiders & scorpions (keep webmaker() in sync if new critters are added)
      */
@@ -970,6 +1165,27 @@
             | M1_CARNIVORE,
         M2_HOSTILE, 0,
         8, CLR_RED, SCORPION),
+    /* Slash'EM: the spider queens of the Spider Caves */
+    MON(NAM("Shelob"), S_SPIDER,
+        LVL(26, 15, 3, 0, 0), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_BITE, AD_PHYS, 8, 4), ATTK(AT_BITE, AD_DRST, 5, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(500, 150, MS_SILENT, MZ_LARGE), MR_POISON | MR_STONE, MR_POISON,
+        M1_ANIMAL | M1_NOHANDS | M1_OVIPAROUS | M1_POIS | M1_CARNIVORE,
+        M2_NOPOLY | M2_STRONG | M2_PNAME | M2_PRINCE | M2_FEMALE | M2_STALK
+          | M2_HOSTILE | M2_NASTY,
+        0,
+        29, CLR_BLACK, SHELOB),
+    MON(NAM("Girtab"), S_SPIDER,
+        LVL(22, 15, 3, 0, 0), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_CLAW, AD_PHYS, 5, 4), ATTK(AT_CLAW, AD_PHYS, 5, 4),
+          ATTK(AT_STNG, AD_DRST, 3, 8), NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(500, 150, MS_SILENT, MZ_LARGE), MR_POISON | MR_STONE, MR_POISON,
+        M1_ANIMAL | M1_NOHANDS | M1_OVIPAROUS | M1_POIS | M1_CARNIVORE,
+        M2_NOPOLY | M2_STRONG | M2_PNAME | M2_PRINCE | M2_FEMALE | M2_STALK
+          | M2_HOSTILE | M2_NASTY,
+        0,
+        25, CLR_RED, GIRTAB),
     /*
      * trappers, lurkers, &c
      * Note:  prior to 5.0, these were defined to do AD_DGST damage,
@@ -1047,6 +1263,19 @@
         M1_ANIMAL | M1_NOHANDS | M1_HERBIVORE,
         M2_WANDER | M2_STRONG | M2_DOMESTIC, M3_INFRAVISIBLE,
         9, CLR_BROWN, WARHORSE),
+    /* Slash'EM: the Nightmare, guardian of the lawful key quest */
+    MON(NAM("Nightmare"), S_UNICORN,
+        LVL(12, 24, -2, 70, 15), (G_UNIQ | G_NOGEN | G_NOCORPSE),
+        A(ATTK(AT_BUTT, AD_PHYS, 3, 12), ATTK(AT_KICK, AD_PHYS, 3, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1500, 300, MS_NEIGH, MZ_LARGE),
+        MR_POISON | MR_FIRE | MR_COLD | MR_ELEC,
+        MR_POISON | MR_FIRE | MR_COLD | MR_ELEC,
+        M1_ANIMAL | M1_NOHANDS | M1_HERBIVORE,
+        M2_NOPOLY | M2_PNAME | M2_FEMALE | M2_HOSTILE | M2_NASTY | M2_STALK
+          | M2_WANDER | M2_STRONG,
+        M3_WAITFORU | M3_WANTSALL,
+        15, CLR_RED, NIGHTMARE),
     /*
      * vortices
      */
@@ -1143,6 +1372,15 @@
         M1_ANIMAL | M1_SLITHY | M1_NOLIMBS | M1_OVIPAROUS | M1_CARNIVORE,
         M2_HOSTILE | M2_STRONG | M2_NASTY, 0,
         17, CLR_MAGENTA, PURPLE_WORM),
+    MON(NAM("maggot"), S_WORM,
+        LVL(2, 9, 5, 0, 0), (G_GENO | G_SGROUP | 2),
+        A(ATTK(AT_BITE, AD_PHYS, 1, 3),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(10, 10, MS_SILENT, MZ_SMALL), 0, 0,
+        M1_ANIMAL | M1_CONCEAL | M1_SLITHY | M1_NOLIMBS | M1_CARNIVORE
+          | M1_NOTAKE,
+        M2_HOSTILE, 0,
+        3, CLR_WHITE, MAGGOT),
     /*
      * xan, &c
      */
@@ -1295,6 +1533,14 @@
         M1_FLY | M1_ANIMAL | M1_NOHANDS | M1_POIS | M1_REGEN | M1_OMNIVORE,
         M2_HOSTILE, M3_INFRAVISIBLE,
         7, CLR_BLACK, VAMPIRE_BAT),
+    MON(NAM("rhumbat"), S_BAT,
+        LVL(3, 22, 7, 0, 0), (G_HELL | G_GENO | G_SGROUP | 1),
+        A(ATTK(AT_BITE, AD_PHYS, 1, 10),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(30, 30, MS_SQEEK, MZ_MEDIUM), 0, 0,
+        M1_FLY | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE,
+        M2_WANDER | M2_HOSTILE, M3_INFRAVISIBLE,
+        5, CLR_YELLOW, RHUMBAT),
     /*
      * Centaurs
      */
@@ -1560,6 +1806,28 @@
         M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
         0,
         20, CLR_YELLOW, YELLOW_DRAGON),
+    /* Slash'EM: dragon-kin of the Wyrm Caves (not true dragons: no scales) */
+    MON(NAM("wyvern"), S_DRAGON,
+        LVL(18, 9, -4, 20, 7), (G_GENO | 1),
+        A(ATTK(AT_STNG, AD_DRST, 4, 6), ATTK(AT_BITE, AD_PHYS, 3, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_DRAGON, 500, MS_ROAR, MZ_GIGANTIC), MR_POISON | MR_STONE,
+        MR_POISON,
+        M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_CARNIVORE,
+        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
+        0,
+        22, CLR_BROWN, WYVERN),
+    MON(NAM("hydra"), S_DRAGON,
+        LVL(26, 9, -4, 20, 7), (G_GENO | 1),
+        A(ATTK(AT_BITE, AD_PHYS, 2, 8), ATTK(AT_BITE, AD_PHYS, 2, 8),
+          ATTK(AT_BITE, AD_PHYS, 2, 8), ATTK(AT_BITE, AD_PHYS, 2, 8),
+          ATTK(AT_BITE, AD_PHYS, 2, 8), ATTK(AT_BITE, AD_PHYS, 2, 8)),
+        SIZ(WT_DRAGON, 500, MS_ROAR, MZ_GIGANTIC), MR_POISON | MR_STONE,
+        MR_POISON,
+        M1_FLY | M1_THICK_HIDE | M1_NOHANDS | M1_SEE_INVIS | M1_CARNIVORE,
+        M2_HOSTILE | M2_STRONG | M2_NASTY | M2_GREEDY | M2_JEWELS | M2_MAGIC,
+        0,
+        30, CLR_BRIGHT_GREEN, HYDRA),
     /*
      * Elementals
      */
@@ -1707,6 +1975,44 @@
         M2_GNOME | M2_PRINCE | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         6, HI_LORD, GNOME_RULER),
+    /* Slash'EM gnomes, the Gnome King of the Mines, and gnolls */
+    MON(NAM("gnome thief"), S_GNOME,
+        LVL(1, 6, 10, 4, 0), (G_GENO | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 6), ATTK(AT_TUCH, AD_SITM, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(650, 100, MS_ORC, MZ_SMALL), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE, M2_GNOME | M2_HOSTILE | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        3, CLR_BLACK, GNOME_THIEF),
+    MON(NAM("gnome warrior"), S_GNOME,
+        LVL(5, 10, 10, 20, 0), (G_HELL | G_GENO | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(750, 150, MS_ORC, MZ_SMALL), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE, M2_GNOME | M2_MALE | M2_COLLECT,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        6, CLR_RED, GNOME_WARRIOR),
+    MON(NAM("Ruggo the Gnome King"), S_GNOME,
+        LVL(16, 10, 10, 10, -3), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(750, 150, MS_ORC, MZ_SMALL), MR_POISON | MR_STONE, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_GNOME | M2_PNAME | M2_PRINCE | M2_MALE | M2_COLLECT
+          | M2_GREEDY | M2_STALK | M2_HOSTILE | M2_NASTY | M2_JEWELS
+          | M2_MAGIC,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        17, HI_LORD, RUGGO_THE_GNOME_KING),
+    MON(NAM("gnoll"), S_GNOME,
+        LVL(18, 12, 5, 10, -5), (G_GENO | G_HELL | 1),
+        A(ATTK(AT_WEAP, AD_PHYS, 3, 6), ATTK(AT_WEAP, AD_PHYS, 3, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1800, 100, MS_ORC, MZ_LARGE), 0, 0,
+        M1_HIDE | M1_HUMANOID | M1_POIS | M1_SEE_INVIS | M1_OMNIVORE,
+        M2_NOPOLY | M2_HOSTILE | M2_COLLECT | M2_MAGIC | M2_GREEDY
+          | M2_JEWELS,
+        M3_INFRAVISION,
+        20, CLR_GRAY, GNOLL),
     /*
      * giant Humanoids
      */
@@ -1791,6 +2097,18 @@
         M1_ANIMAL | M1_HUMANOID | M1_CARNIVORE,
         M2_HOSTILE | M2_STRONG | M2_NASTY, M3_INFRAVISIBLE | M3_INFRAVISION,
         17, CLR_BROWN, MINOTAUR),
+    MON(NAM("Largest Giant"), S_GIANT,
+        LVL(26, 12, 0, 15, -3), (G_UNIQ | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 3, 10),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(2250, 750, MS_BOAST, MZ_HUGE), MR_FIRE | MR_POISON | MR_STONE,
+        MR_FIRE,
+        M1_HUMANOID | M1_CARNIVORE,
+        M2_NOPOLY | M2_PRINCE | M2_MALE | M2_STALK | M2_HOSTILE | M2_GIANT
+          | M2_STRONG | M2_ROCKTHROW | M2_NASTY | M2_COLLECT | M2_MAGIC
+          | M2_JEWELS,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        28, HI_LORD, LARGEST_GIANT),
     /*
      * Invisible
      * S_invisible=='I' is a visual marker for all invisible monsters
@@ -1895,6 +2213,20 @@
         M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN,
         M2_UNDEAD | M2_HOSTILE | M2_MAGIC, M3_WANTSBOOK | M3_INFRAVISION,
         29, HI_LORD, ARCH_LICH),
+    /* Slash'EM: Vecna, master of the chaotic key quest */
+    MON(NAM("Vecna"), S_LICH,
+        LVL(49, 9, -8, 90, -15), (G_UNIQ | G_NOGEN | G_NOCORPSE),
+        A(ATTK(AT_TUCH, AD_COLD, 9, 6), ATTK(AT_MAGC, AD_SPEL, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1200, 100, MS_MUMBLE, MZ_HUMAN),
+        MR_FIRE | MR_COLD | MR_SLEEP | MR_POISON | MR_STONE,
+        MR_FIRE | MR_COLD,
+        M1_BREATHLESS | M1_HUMANOID | M1_POIS | M1_REGEN,
+        M2_NOPOLY | M2_PNAME | M2_PRINCE | M2_MALE | M2_HOSTILE | M2_NASTY
+          | M2_STALK | M2_GREEDY | M2_JEWELS | M2_COLLECT | M2_UNDEAD
+          | M2_STRONG | M2_MAGIC,
+        M3_WAITFORU | M3_WANTSALL | M3_INFRAVISION,
+        53, HI_LORD, VECNA),
     /*
      * Mummies
      */
@@ -2073,6 +2405,16 @@
         M2_STRONG | M2_PRINCE | M2_GREEDY | M2_JEWELS | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         11, HI_LORD, OGRE_TYRANT),
+    MON(NAM("ogre mage"), S_OGRE,
+        LVL(7, 12, 3, 30, -5), (G_NOHELL | G_GENO),
+        A(ATTK(AT_WEAP, AD_PHYS, 2, 6), ATTK(AT_MAGC, AD_SPEL, 0, 0),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1700, 700, MS_GRUNT, MZ_LARGE), 0, 0,
+        M1_HUMANOID | M1_CARNIVORE,
+        M2_STRONG | M2_LORD | M2_MALE | M2_GREEDY | M2_JEWELS | M2_COLLECT
+          | M2_MAGIC,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        10, HI_ZAP, OGRE_MAGE),
     /*
      * Puddings
      *
@@ -2141,6 +2483,16 @@
         M1_HUMANOID | M1_OMNIVORE | M1_POIS | M1_TPORT, M2_HOSTILE | M2_NASTY,
         M3_INFRAVISIBLE,
         14, CLR_GREEN, GENETIC_ENGINEER),
+    MON(NAM("Doctor Frankenstein"), S_QUANTMECH,
+        LVL(20, 12, -10, 75, 0), (G_NOGEN | G_UNIQ),
+        A(ATTK(AT_WEAP, AD_PHYS, 4, 4), ATTK(AT_CLAW, AD_TLPT, 1, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN),
+        MR_POISON | MR_ELEC | MR_SLEEP, 0,
+        M1_HUMANOID | M1_OMNIVORE | M1_POIS | M1_TPORT,
+        M2_NOPOLY | M2_HUMAN | M2_HOSTILE | M2_MALE | M2_PNAME | M2_MAGIC,
+        M3_INFRAVISIBLE,
+        23, HI_LORD, DOCTOR_FRANKENSTEIN),
     /*
      * Rust monster or disenchanter
      */
@@ -2483,6 +2835,14 @@
         M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_POIS | M1_OMNIVORE,
         M2_UNDEAD | M2_WANDER | M2_HOSTILE, M3_INFRAVISION,
         5, CLR_BLACK, GHOUL),
+    MON(NAM("ghast"), S_ZOMBIE,
+        LVL(4, 6, 10, 0, -2), (G_GENO | G_NOCORPSE | 1),
+        A(ATTK(AT_CLAW, AD_PLYS, 1, 2), ATTK(AT_CLAW, AD_PHYS, 1, 4),
+          ATTK(AT_BITE, AD_PHYS, 1, 6), NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(400, 50, MS_SILENT, MZ_SMALL), MR_COLD | MR_SLEEP | MR_POISON, 0,
+        M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_POIS | M1_CARNIVORE,
+        M2_UNDEAD | M2_STALK | M2_HOSTILE, M3_INFRAVISION,
+        6, CLR_MAGENTA, GHAST),
     MON(NAM("giant zombie"), S_ZOMBIE,
         LVL(8, 8, 6, 0, -4), (G_GENO | G_NOCORPSE | 1),
         A(ATTK(AT_CLAW, AD_PHYS, 2, 8), ATTK(AT_CLAW, AD_PHYS, 2, 8),
@@ -2592,6 +2952,17 @@
         M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID | M1_THICK_HIDE | M1_POIS,
         M2_HOSTILE | M2_STRONG | M2_COLLECT, 0,
         22, HI_METAL, IRON_GOLEM),
+    MON(NAM("Frankenstein's Monster"), S_GOLEM,
+        LVL(20, 8, -5, 50, 0), (G_NOGEN | G_UNIQ),
+        A(ATTK(AT_CLAW, AD_PHYS, 3, 8), ATTK(AT_CLAW, AD_PHYS, 3, 8),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(1400, 600, MS_GROAN, MZ_LARGE),
+        MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON,
+        MR_COLD | MR_ELEC | MR_SLEEP | MR_POISON,
+        M1_BREATHLESS | M1_MINDLESS | M1_HUMANOID,
+        M2_NOPOLY | M2_HOSTILE | M2_STRONG | M2_UNDEAD | M2_MALE | M2_PNAME,
+        0,
+        23, HI_LORD, FRANKENSTEIN_S_MONSTER),
     /*
      * humans, including elves and were-critters;
      *  the '@' class does not obey rule #2.
@@ -2714,6 +3085,19 @@
             | M2_STRONG | M2_COLLECT | M2_MAGIC,
         M3_INFRAVISIBLE,
         15, HI_DOMESTIC, SHOPKEEPER),
+    /* Slash'EM: One-eyed Sam, the black marketeer; his speed (24) matches
+       the speed boots he wears */
+    MON(NAM("black marketeer"), S_HUMAN,
+        LVL(25, 24, -8, 50, -2), G_NOGEN,
+        A(ATTK(AT_WEAP, AD_PHYS, 4, 10),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_SELL, MZ_HUMAN),
+        MR_FIRE | MR_COLD | MR_SLEEP | MR_ELEC | MR_STONE, MR_SLEEP,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_STRONG | M2_COLLECT
+          | M2_MAGIC | M2_MALE,
+        M3_INFRAVISIBLE,
+        28, CLR_BLACK, BLACK_MARKETEER),
     /* vault guard */
     MON(NAM("guard"), S_HUMAN,
         LVL(12, 12, 10, 40, 10), G_NOGEN,
@@ -2831,6 +3215,15 @@
                                        | M2_PEACEFUL | M2_STRONG | M2_COLLECT,
         M3_INFRAVISIBLE,
         12, CLR_GREEN, WATCH_CAPTAIN),
+    MON(NAM("mugger"), S_HUMAN,
+        LVL(2, 12, 10, 0, -8), (G_GENO | G_NOGEN),
+        A(ATTK(AT_WEAP, AD_PHYS, 1, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_HUMANOID, MZ_HUMAN), 0, 0,
+        M1_HUMANOID | M1_OMNIVORE,
+        M2_NOPOLY | M2_HUMAN | M2_STRONG | M2_HOSTILE | M2_COLLECT,
+        M3_INFRAVISIBLE,
+        4, CLR_BLACK, MUGGER),
     /* Unique humans not tied to quests.
      */
     MON(NAM("Medusa"), S_HUMAN,
@@ -2905,6 +3298,16 @@
         M2_NOPOLY | M2_UNDEAD | M2_WANDER | M2_STALK | M2_HOSTILE | M2_NASTY,
         M3_INFRAVISION,
         14, CLR_BLACK, SHADE),
+    MON(NAM("shadow"), S_GHOST,
+        LVL(4, 9, 4, 0, 0), (G_NOCORPSE | G_NOGEN),
+        A(ATTK(AT_TUCH, AD_DRST, 1, 4), ATTK(AT_TUCH, AD_COLD, 1, 4),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 0, MS_WAIL, MZ_HUMAN),
+        MR_COLD | MR_DISINT | MR_SLEEP | MR_POISON | MR_STONE, 0,
+        M1_FLY | M1_BREATHLESS | M1_WALLWALK | M1_HUMANOID | M1_SEE_INVIS,
+        M2_NOPOLY | M2_UNDEAD | M2_WANDER | M2_HOSTILE | M2_NASTY,
+        M3_INFRAVISION,
+        6, CLR_BLACK, SHADOW),
     /*
      * (major) demons
      */
@@ -3049,6 +3452,15 @@
         M2_DEMON | M2_STALK | M2_HOSTILE | M2_STRONG | M2_NASTY | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION,
         20, CLR_RED, BALROG),
+    MON(NAM("babau"), S_DEMON,
+        LVL(9, 15, -3, 50, -9), (G_HELL | G_NOCORPSE | G_SGROUP | 1),
+        A(ATTK(AT_CLAW, AD_PHYS, 1, 6), ATTK(AT_CLAW, AD_PHYS, 1, 6),
+          ATTK(AT_GAZE, AD_DRST, 1, 8), ATTK(AT_BITE, AD_PHYS, 1, 8),
+          NO_ATTK, NO_ATTK),
+        SIZ(WT_HUMAN, 400, MS_SILENT, MZ_LARGE), MR_FIRE | MR_POISON, 0,
+        M1_POIS, M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY,
+        M3_INFRAVISIBLE | M3_INFRAVISION,
+        14, CLR_BLACK, BABAU),
     /* Named demon lords & princes plus Arch-Devils.
      * (their order matters; see minion.c)
      */
@@ -3254,6 +3666,15 @@
         M1_SWIM | M1_AMPHIBIOUS | M1_ANIMAL | M1_NOHANDS | M1_CARNIVORE,
         M2_NOPOLY | M2_HOSTILE | M2_STRONG, M3_INFRAVISIBLE,
         22, CLR_RED, KRAKEN),
+    MON(NAM("giant crab"), S_EEL,
+        LVL(7, 12, 0, 0, 0), (G_GENO | G_NOGEN),
+        A(ATTK(AT_CLAW, AD_PHYS, 3, 6), ATTK(AT_CLAW, AD_PHYS, 3, 6),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(500, 350, MS_SILENT, MZ_HUGE), 0, 0,
+        M1_SWIM | M1_AMPHIBIOUS | M1_ANIMAL | M1_OVIPAROUS | M1_THICK_HIDE
+          | M1_NOHANDS | M1_CARNIVORE,
+        M2_HOSTILE, 0,
+        9, CLR_GREEN, GIANT_CRAB),
     /*
      * lizards, &c
      */
@@ -3322,6 +3743,15 @@
         M1_HUMANOID | M1_SLITHY | M1_THICK_HIDE | M1_POIS,
         M2_STALK | M2_HOSTILE | M2_COLLECT | M2_MAGIC, M3_INFRAVISIBLE,
         12, CLR_ORANGE, SALAMANDER),
+    MON(NAM("rhaumbusun"), S_LIZARD,
+        LVL(2, 9, 5, 0, 0), (G_HELL | G_GENO | 1),
+        A(ATTK(AT_GAZE, AD_PLYS, 1, 2),
+          NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
+        SIZ(20, 40, MS_SILENT, MZ_TINY), MR_POISON, MR_POISON,
+        M1_ANIMAL | M1_THICK_HIDE | M1_NOHANDS | M1_OVIPAROUS
+          | M1_CARNIVORE,
+        M2_NASTY | M2_HOSTILE, 0,
+        4, CLR_MAGENTA, RHAUMBUSUN),
 
     /*
      * dummy monster needed for visual interface

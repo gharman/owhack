@@ -66,7 +66,9 @@ resetobjs(struct obj *ochain, boolean restore)
                restore; other fixups are done while saving */
             if (otmp->oartifact) {
                 if (exist_artifact(otmp->otyp, safe_oname(otmp))
-                    || is_quest_artifact(otmp)) {
+                    || is_quest_artifact(otmp)
+                    /* Slash'EM: artifacts with a set location */
+                    || placed_artifact(otmp)) {
                     /* prevent duplicate--revert to ordinary obj */
                     otmp->oartifact = 0;
                     if (has_oname(otmp))
@@ -412,6 +414,9 @@ remove_mon_from_bones(struct monst *mtmp)
     if (mtmp->iswiz || mptr == &mons[PM_MEDUSA]
         || mptr->msound == MS_NEMESIS || mptr->msound == MS_LEADER
         || is_Vlad(mtmp) /* mptr == &mons[VLAD_THE_IMPALER] || cham == VLAD */
+        /* Slash'EM: the masters of the alignment key quests */
+        || mptr == &mons[PM_NIGHTMARE] || mptr == &mons[PM_BEHOLDER]
+        || mptr == &mons[PM_VECNA]
         || (mptr == &mons[PM_ORACLE] && !fixuporacle(mtmp)))
         mongone(mtmp);
 }

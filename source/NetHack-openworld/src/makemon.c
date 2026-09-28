@@ -167,6 +167,11 @@ m_initweap(struct monst *mtmp)
 
     if (Is_rogue_level(&u.uz))
         return;
+    /* EvilHack: the goblins' prisoners in Goblin Town have been disarmed */
+    if (In_goblintown(&u.uz)
+        && (is_gnome(ptr) || is_dwarf(ptr) || is_elf(ptr)
+            || ptr == &mons[PM_HOBBIT]))
+        return;
     /*
      *  First a few special cases:
      *          giants get a boulder to throw sometimes
@@ -415,10 +420,13 @@ m_initweap(struct monst *mtmp)
             (void) mongets(mtmp, (rn2(2)) ? CLUB : RUBBER_HOSE);
         break;
     case S_ORC:
-        if (rn2(2))
+        if (mm != PM_GOBLIN_KING && rn2(2))
             (void) mongets(mtmp, ORCISH_HELM);
         switch ((mm != PM_ORC_CAPTAIN) ? mm
                 : rn2(2) ? PM_MORDOR_ORC : PM_URUK_HAI) {
+        case PM_GOBLIN_KING: /* EvilHack: his bone staff */
+            (void) mongets(mtmp, QUARTERSTAFF);
+            break;
         case PM_MORDOR_ORC:
             if (!rn2(3))
                 (void) mongets(mtmp, SCIMITAR);
@@ -531,6 +539,22 @@ m_initweap(struct monst *mtmp)
         FALLTHROUGH;
         /*FALLTHRU*/
     default:
+        if (mm == PM_GNOLL) {
+            /* Slash'EM: gnolls come armored, with polearms or spears */
+            if (!rn2(3))
+                (void) mongets(mtmp, ORCISH_HELM);
+            if (!rn2(3))
+                (void) mongets(mtmp, rn2(2) ? STUDDED_LEATHER_ARMOR
+                                            : LEATHER_ARMOR);
+            if (!rn2(3))
+                (void) mongets(mtmp, ORCISH_SHIELD);
+            if (!rn2(2))
+                (void) mongets(mtmp, !rn2(3) ? BARDICHE
+                                     : rn2(2) ? VOULGE : HALBERD);
+            else if (!rn2(2))
+                (void) mongets(mtmp, SPEAR);
+            break;
+        }
         /*
          * Now the general case, some chance of getting some type
          * of weapon for "normal" monsters.  Certain special types
@@ -798,6 +822,12 @@ m_initinv(struct monst *mtmp)
                 otmp->owt = weight(otmp);
             }
             (void) mpickobj(mtmp, otmp);
+        }
+        if (ptr == &mons[PM_DOCTOR_FRANKENSTEIN]) {
+            /* Slash'EM: his lab coat (an apron here) and his research */
+            (void) mongets(mtmp, ALCHEMY_SMOCK);
+            (void) mongets(mtmp, WAN_POLYMORPH);
+            (void) mongets(mtmp, SPE_POLYMORPH);
         }
         break;
     case S_LEPRECHAUN:
@@ -1343,6 +1373,8 @@ makemon(
     case S_NYMPH:
         if (rn2(5) && !u.uhave.amulet)
             mtmp->msleeping = 1;
+        if (mndx == PM_PIXIE) /* Slash'EM: pixies are born invisible */
+            mon_set_minvis(mtmp, FALSE);
         break;
     case S_ORC:
         if (Race_if(PM_ELF))
@@ -1677,7 +1709,7 @@ rndmonst_adj(int minadj, int maxadj)
     struct permonst *ptr;
     int mndx;
     int weight, totalweight, selected_mndx, zlevel, minmlev, maxmlev;
-    boolean elemlevel, upper;
+    boolean elemlevel, upper, gtown = In_goblintown(&u.uz);
 
     if (u.uz.dnum == quest_dnum && rn2(7) && (ptr = qt_montype()) != 0)
         return ptr;
@@ -1704,6 +1736,8 @@ rndmonst_adj(int minadj, int maxadj)
         if (uncommon(mndx))
             continue;
         if (Inhell && (ptr->geno & G_NOHELL))
+            continue;
+        if (gtown && !likes_gtown(ptr)) /* EvilHack */
             continue;
 
         /*
@@ -2305,6 +2339,9 @@ golemhp(int type)
         return 80;
     case PM_IRON_GOLEM:
         return 120;
+    case PM_FRANKENSTEIN_S_MONSTER:
+        /* Slash'EM gives it 400 on a scale where iron golems have 240 */
+        return 200;
     default:
         return 0;
     }

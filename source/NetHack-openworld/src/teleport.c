@@ -2163,6 +2163,15 @@ mlevel_tele_trap(
                     seetrap(trap);
                 }
                 return Trap_Effect_Finished;
+            } else if (mtmp->mtame && (Is_blackmarket(&trap->dst)
+                                       || Is_blackmarket(&u.uz))) {
+                /* Slash'EM: pets aren't allowed in the black market */
+                if (in_sight) {
+                    pline_mon(mtmp, "%s seems to shimmer for a moment.",
+                              Monnam(mtmp));
+                    seetrap(trap);
+                }
+                return Trap_Effect_Finished;
             } else {
                 assign_level(&tolevel, &trap->dst);
                 migrate_typ = MIGR_PORTAL;

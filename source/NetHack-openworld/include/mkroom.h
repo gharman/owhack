@@ -74,10 +74,11 @@ enum roomtype_types {
     TOOLSHOP   = 22,
     BOOKSHOP   = 23,
     FODDERSHOP = 24, /* health food store */
-    CANDLESHOP = 25
+    CANDLESHOP = 25,
+    BLACKSHOP  = 26  /* Slash'EM: One-eyed Sam's black market */
 };
 
-#define MAXRTYPE (CANDLESHOP) /* maximum valid room type */
+#define MAXRTYPE (BLACKSHOP) /* maximum valid room type */
 #define UNIQUESHOP (CANDLESHOP) /* shops here & above not randomly gen'd. */
 
 /* Special type for search_special() */

@@ -385,6 +385,12 @@ struct dgn_topology { /* special dungeon levels for speed */
     d_level d_knox_level;
     d_level d_mineend_level;
     d_level d_sokoend_level;
+    /* open world: extra special levels from Slash'EM */
+    d_level d_blackmarket_level;   /* One-eyed Sam's market */
+    d_level d_lawful_quest_level;  /* the Nightmare's lair */
+    d_level d_neutral_quest_level; /* the Beholder's lair */
+    d_level d_chaotic_quest_level; /* Vecna's lair */
+    xint16 d_goblintown_dnum;      /* EvilHack's Goblin Town */
 };
 
 /* macros for accessing the dungeon levels by their old names */
@@ -420,6 +426,11 @@ struct dgn_topology { /* special dungeon levels for speed */
 #define knox_level              (svd.dungeon_topology.d_knox_level)
 #define mineend_level           (svd.dungeon_topology.d_mineend_level)
 #define sokoend_level           (svd.dungeon_topology.d_sokoend_level)
+#define blackmarket_level       (svd.dungeon_topology.d_blackmarket_level)
+#define lawful_quest_level      (svd.dungeon_topology.d_lawful_quest_level)
+#define neutral_quest_level     (svd.dungeon_topology.d_neutral_quest_level)
+#define chaotic_quest_level     (svd.dungeon_topology.d_chaotic_quest_level)
+#define goblintown_dnum         (svd.dungeon_topology.d_goblintown_dnum)
 /* clang-format on */
 
 #define dunlev_reached(x) (svd.dungeons[(x)->dnum].dunlev_ureached)

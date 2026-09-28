@@ -35,6 +35,8 @@ des.map([[
 des.non_diggable(selection.area(00,00,75,19))
 -- Portal arrival point
 des.levregion({ region = {08,16,08,16}, type="branch" });
+-- Open world (as in Hack'EM): stairs down to the dungeon under the fort
+des.stair("down", 22,09)
 -- accessible via ^V in wizard mode; arrive near the portal
 des.teleport_region({ region = {06,15,09,16}, dir="up" })
 des.teleport_region({ region = {06,15,09,16}, dir="down" })

@@ -883,7 +883,9 @@ dochug(struct monst *mtmp)
         || (mtmp->minvis && !rn2(3))
         || (mdat->mlet == S_LEPRECHAUN && !findgold(gi.invent)
             && (findgold(mtmp->minvent) || rn2(2)))
-        || (is_wanderer(mdat) && !rn2(4)) || (Conflict && !mtmp->iswiz)
+        || (is_wanderer(mdat) && !rn2(4))
+        /* Slash'EM: Conflict has no hold in One-eyed Sam's market */
+        || (Conflict && !mtmp->iswiz && !Is_blackmarket(&u.uz))
         || (!mtmp->mcansee && !rn2(4)) || mtmp->mpeaceful) {
 
         /* Possibly cast an undirected spell if not attacking you */
@@ -964,7 +966,8 @@ dochug(struct monst *mtmp)
 
     /* Now, attack the player if possible - one attack set per monst */
     if (status != MMOVE_DONE && (!mtmp->mpeaceful
-                                 || (Conflict && !resist_conflict(mtmp)))) {
+                                 || (Conflict && !Is_blackmarket(&u.uz)
+                                     && !resist_conflict(mtmp)))) {
         if (((inrange && !scared) || panicattk) && !noattacks(mdat)
             /* [is this hp check really needed?] */
             && (Upolyd ? u.mh : u.uhp) > 0) {
