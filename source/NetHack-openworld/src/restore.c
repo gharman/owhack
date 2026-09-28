@@ -810,6 +810,7 @@ dorecover(NHFILE *nhfp)
     xint8 ltmp = 0;
     int rtmp;
     char plname[PL_NSIZ_PLUS];
+    coordxy hero_x, hero_y, hero_x0, hero_y0;
 
     /* suppress map display if some part of the code tries to update that */
     program_state.restoring = REST_GSTATE;
@@ -844,6 +845,10 @@ dorecover(NHFILE *nhfp)
     }
     /* after restgamestate() -> restnames() so that 'bases[]' is populated */
     init_oclass_probs(); /* recompute go.oclass_prob_totals[] */
+    /* open world: loading the other levels sets their dimensions, and
+       set_level_dims() keeps the hero's coordinates inside a smaller
+       level; remember where the hero really is on the current one */
+    hero_x = u.ux, hero_y = u.uy, hero_x0 = u.ux0, hero_y0 = u.uy0;
 
     restlevelstate();
     rtmp = restlevelfile(ledger_no(&u.uz));
@@ -915,6 +920,7 @@ dorecover(NHFILE *nhfp)
     program_state.restoring = REST_CURRENT_LEVEL;
 
     getlev(nhfp, 0, (xint8) 0);
+    u.ux = hero_x, u.uy = hero_y, u.ux0 = hero_x0, u.uy0 = hero_y0;
     close_nhfile(nhfp);
     restlevelstate();
     program_state.something_worth_saving = 1; /* useful data now exists */
