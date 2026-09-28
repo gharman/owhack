@@ -702,6 +702,11 @@ charge_ok(struct obj *obj)
     if (is_weptool(obj)) /* specific check before general tools */
         return GETOBJ_EXCLUDE;
 
+    /* lightsabers have power cells */
+    if (is_lightsaber(obj))
+        return (obj->dknown && objects[obj->otyp].oc_name_known)
+                 ? GETOBJ_SUGGEST : GETOBJ_DOWNPLAY;
+
     if (obj->oclass == TOOL_CLASS) {
         /* suggest tools that aren't oc_charged but can still be recharged */
         if (obj->otyp == BRASS_LANTERN
@@ -833,6 +838,19 @@ recharge(struct obj *obj, int curse_bless)
                 alter_cost(obj, 0L);
         }
 
+    } else if (is_lightsaber(obj)) {
+        if (is_cursed) {
+            (void) charge_lightsaber(obj, -obj->age, 0L);
+            if (!Blind)
+                pline("%s drained of power.", Yobjnam2(obj, "are"));
+        } else if (is_blessed) {
+            if (obj->age < 1500L)
+                (void) charge_lightsaber(obj, 1500L - obj->age, 1500L);
+            p_glow2(obj, NH_BLUE);
+        } else {
+            (void) charge_lightsaber(obj, 750L, 1500L);
+            p_glow1(obj);
+        }
     } else if (obj->oclass == TOOL_CLASS) {
         int rechrg = (int) obj->recharged;
 

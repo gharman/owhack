@@ -114,6 +114,14 @@ thitu(
         } else
             You("are almost hit by %s.", onm);
         return 0;
+    } else if (Role_if(PM_JEDI) && !Upolyd && uwep && is_lightsaber(uwep)
+               && uwep->lamplit && P_SKILL(weapon_type(uwep)) >= P_SKILLED
+               && rn2(5)) {
+        /* a Jedi deflects four of five missiles, even when blind
+           (see "A New Hope") */
+        ++gm.mesg_given;
+        You("deflect %s with %s.", onm, yname(uwep));
+        return 0;
     } else {
         if (Blind || !flags.verbose)
             You("are hit%s", exclam(dam));
@@ -172,6 +180,16 @@ drop_throw(
         broken = TRUE;
     } else {
         broken = (ohit && should_mulch_missile(obj));
+    }
+
+    if (is_bomb(obj)) {
+        if (ohit) {
+            /* it goes off on impact */
+            bomb_explode(obj, x, y, obj->yours ? TRUE : FALSE);
+            return TRUE;
+        }
+        broken = FALSE;
+        arm_bomb(obj, FALSE); /* (already lit when thrown) */
     }
 
     if (broken) {
@@ -616,6 +634,13 @@ m_throw(
     gt.thrownobj = singleobj;
 
     singleobj->owornmask = 0L; /* threw one of multiple weapons in hand? */
+    if (is_bomb(singleobj)) {
+        /* the monster lights the fuse as it throws */
+        if (singleobj->timed)
+            (void) stop_timer(BOMB_BLOW, obj_to_any(singleobj));
+        singleobj->oarmed = 0;
+        arm_bomb(singleobj, FALSE);
+    }
     if (!canseemon(mon))
         clear_dknown(singleobj); /* singleobj->dknown = 0; */
 
@@ -1245,6 +1270,13 @@ thrwmu(struct monst *mtmp)
         always_toss = TRUE;
     }
 
+    /* a few simple checks for throwing bombs, similar to potions of oil */
+    if (is_bomb(otmp)
+        && (m_seenres(mtmp, M_SEEN_FIRE)
+            || (dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) < 3
+                && mtmp->mhp < 20)))
+        return;
+
     x = mtmp->mx;
     y = mtmp->my;
     /* If you are coming toward the monster, the monster
@@ -1443,6 +1475,14 @@ hit_bars(
             if (!nodissolve)
                 dissolve_bars(barsx, barsy);
         }
+    } else if (is_lightsaber(otmp) && otmp->lamplit) {
+        if (cansee(barsx, barsy) && !nodissolve)
+            pline_The("lightsaber slices right through the iron bars!");
+        else
+            You_hear(Hallucination ? "a hot knife slice through butter!"
+                                   : "a hissing noise.");
+        if (!nodissolve)
+            dissolve_bars(barsx, barsy);
     } else {
         if (!Deaf) {
             static enum sound_effect_entries se[] = {

@@ -20,6 +20,7 @@ staticfn void use_bell(struct obj **);
 staticfn void use_candelabrum(struct obj *);
 staticfn void use_candle(struct obj **);
 staticfn void use_lamp(struct obj *);
+staticfn int use_bomb(struct obj *);
 staticfn void light_cocktail(struct obj **);
 staticfn int rub_ok(struct obj *);
 staticfn void display_jump_positions(boolean);
@@ -1438,7 +1439,13 @@ use_candle(struct obj **optr)
 
         You("attach %ld%s %s to %s.", obj->quan, !otmp->spe ? "" : " more", s,
             the(xname(otmp)));
-        if (!otmp->spe || otmp->age > obj->age)
+        if (obj->otyp == MAGIC_CANDLE) {
+            /* the candelabrum draws the magic out of them */
+            pline("%s very ordinary.",
+                  (obj->quan > 1L) ? "They look" : "It looks");
+            if (!otmp->spe)
+                otmp->age = 600L;
+        } else if (!otmp->spe || otmp->age > obj->age)
             otmp->age = obj->age;
         otmp->spe += (int) obj->quan;
         if (otmp->lamplit && !was_lamplit)
@@ -1476,6 +1483,11 @@ snuff_candle(struct obj *otmp)
 {
     boolean candle = Is_candle(otmp);
 
+    if (is_art(otmp, ART_CANDLE_OF_ETERNAL_FLAME) && otmp->lamplit) {
+        pline("%s flickers briefly, but its flame burns on!",
+              The(xname(otmp)));
+        return FALSE;
+    }
     if ((candle || otmp->otyp == CANDELABRUM_OF_INVOCATION)
         && otmp->lamplit) {
         char buf[BUFSZ];
@@ -1643,6 +1655,23 @@ use_lamp(struct obj *obj)
      */
 
     if (obj->lamplit) {
+        if (is_lightsaber(obj)) {
+            if (obj->otyp == RED_DOUBLE_LIGHTSABER) {
+                /* switch to dual bladed mode first */
+                if (!obj->altmode && (!obj->cursed || rn2(4))) {
+                    You("ignite the second blade of %s.", yname(obj));
+                    obj->altmode = TRUE;
+                    return;
+                }
+                obj->altmode = FALSE;
+            }
+            lightsaber_deactivate(obj, TRUE);
+            return;
+        }
+        if (is_art(obj, ART_CANDLE_OF_ETERNAL_FLAME)) {
+            pline("%s will not stop burning!", The(xname(obj)));
+            return;
+        }
         if (lamp) /* lamp or lantern */
             pline("%s%s is now off.", Shk_Your(buf, obj), lamp);
         else
@@ -1650,18 +1679,22 @@ use_lamp(struct obj *obj)
         end_burn(obj, TRUE);
         return;
     }
-    if (Underwater) {
+    if (Underwater && obj->otyp != MAGIC_CANDLE) {
         pline("%s.",
               !Is_candle(obj) ? "This is not a diving lamp"
                               : "Sorry, fire and water don't mix");
         return;
     }
+    /* the Lightsaber Prototype's power cell never runs down */
+    if (is_art(obj, ART_LIGHTSABER_PROTOTYPE) && !obj->age)
+        obj->age = 300L;
     /* magic lamps with an spe == 0 (wished for) cannot be lit */
     if ((!Is_candle(obj) && obj->age == 0)
         || (obj->otyp == MAGIC_LAMP && obj->spe == 0)) {
-        if (obj->otyp == BRASS_LANTERN) {
+        if (obj->otyp == BRASS_LANTERN || is_lightsaber(obj)) {
             if (!Blind)
-                Your("lantern is out of power.");
+                Your("%s is out of power.",
+                     is_lightsaber(obj) ? xname(obj) : "lantern");
             else
                 pline("%s", nothing_seems_to_happen);
         } else {
@@ -1684,10 +1717,18 @@ use_lamp(struct obj *obj)
         if (lamp) { /* lamp or lantern */
             check_unpaid(obj);
             pline("%s%s is now on.", Shk_Your(buf, obj), lamp);
+        } else if (is_lightsaber(obj)) {
+            /* you can see the color of the blade */
+            check_unpaid(obj);
+            if (!Blind)
+                makeknown(obj->otyp);
+            You("ignite %s.", yname(obj));
+            gu.unweapon = FALSE;
         } else { /* candle(s) */
             pline("%s flame%s %s%s", s_suffix(Yname2(obj)), plur(obj->quan),
                   otense(obj, "burn"), Blind ? "." : " brightly!");
             if (obj->unpaid && costly_spot(u.ux, u.uy)
+                && obj->otyp != MAGIC_CANDLE
                 && obj->age == 20L * (long) objects[obj->otyp].oc_cost) {
                 const char *ithem = (obj->quan > 1L) ? "them" : "it";
                 struct monst *shkp VOICEONLY
@@ -1700,6 +1741,34 @@ use_lamp(struct obj *obj)
         }
         begin_burn(obj, FALSE);
     }
+}
+
+/* apply a bomb: light its fuse (after which it had better be thrown) */
+staticfn int
+use_bomb(struct obj *obj)
+{
+    if (obj->oarmed) {
+        pline("%s already armed!", Tobjnam(obj, "are"));
+        return ECMD_OK;
+    }
+    if (Underwater) {
+        pline("Its fuse won't burn under water.");
+        return ECMD_OK;
+    }
+    if (obj->quan > 1L) {
+        struct obj *otmp = splitobj(obj, 1L);
+
+        obj_extract_self(otmp); /* free from inventory */
+        You("arm %s.", yname(otmp));
+        arm_bomb(otmp, TRUE);
+        (void) hold_another_object(otmp, "You drop %s!", doname(otmp),
+                                   (const char *) 0);
+    } else {
+        You("arm %s.", yname(obj));
+        arm_bomb(obj, TRUE);
+    }
+    update_inventory();
+    return ECMD_TIME;
 }
 
 staticfn void
@@ -4168,7 +4237,7 @@ apply_ok(struct obj *obj)
     /* certain weapons */
     if (obj->oclass == WEAPON_CLASS
         && (is_pick(obj) || is_axe(obj) || is_pole(obj)
-            || obj->otyp == BULLWHIP))
+            || obj->otyp == BULLWHIP || is_lightsaber(obj) || is_bomb(obj)))
         return GETOBJ_SUGGEST;
 
     if (obj->oclass == POTION_CLASS) {
@@ -4340,7 +4409,21 @@ doapply(void)
         break;
     case WAX_CANDLE:
     case TALLOW_CANDLE:
+    case MAGIC_CANDLE:
         use_candle(&obj);
+        break;
+    case GREEN_LIGHTSABER:
+    case BLUE_LIGHTSABER:
+    case RED_LIGHTSABER:
+    case RED_DOUBLE_LIGHTSABER:
+        /* a lightsaber is ignited in hand */
+        if (!(uswapwep == obj && u.twoweap) && uwep != obj
+            && !wield_tool(obj, "ignite"))
+            break;
+        use_lamp(obj);
+        break;
+    case FIRE_BOMB:
+        res = use_bomb(obj);
         break;
     case OIL_LAMP:
     case MAGIC_LAMP:

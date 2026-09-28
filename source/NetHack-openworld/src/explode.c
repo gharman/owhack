@@ -977,6 +977,57 @@ splatter_burning_oil(coordxy x, coordxy y, boolean diluted_oil)
     explode(x, y, ZT_SPELL_O_FIRE, dmg, BURNING_OIL, EXPL_FIERY);
 }
 
+/* light the fuse of a bomb (Slash'EM); 'yours' says who gets the blame
+   when it goes off */
+void
+arm_bomb(struct obj *obj, boolean yours)
+{
+    long fuse;
+
+    if (!is_bomb(obj) || obj->oarmed)
+        return;
+    if (yours) {
+        if (carried(obj) && obj->unpaid && costly_spot(u.ux, u.uy)) {
+            /* if it goes off while you have it, it's your tough luck */
+            verbalize("You arm %s, you bought %s!",
+                      (obj->quan > 1L) ? "them" : "it",
+                      (obj->quan > 1L) ? "them" : "it");
+            bill_dummy_object(obj);
+        } else if (obj->where == OBJ_FLOOR
+                   && costly_spot(obj->ox, obj->oy)
+                   && (!obj->no_charge || obj->unpaid)) {
+            verbalize("You play with it, you pay for it!");
+            bill_dummy_object(obj);
+        }
+    }
+    /* a cursed fuse sometimes fizzles out right away */
+    if (obj->cursed && !rn2(2))
+        return;
+    fuse = obj->cursed ? (long) rn2(5) + 2L
+           : obj->blessed ? 4L : (long) rn2(2) + 3L;
+    obj->yours = yours ? 1 : 0;
+    obj->oarmed = 1;
+    (void) start_timer(fuse, TIMER_OBJECT, BOMB_BLOW, obj_to_any(obj));
+}
+
+/* a bomb that isn't anywhere (being thrown) goes off at <x,y>; it is used
+   up */
+void
+bomb_explode(struct obj *obj, coordxy x, coordxy y, boolean yours)
+{
+    if (obj->timed)
+        (void) stop_timer(BOMB_BLOW, obj_to_any(obj));
+    obj->oarmed = 0;
+    if (obj->where != OBJ_FREE)
+        obj_extract_self(obj);
+    if (obj == gt.thrownobj)
+        gt.thrownobj = (struct obj *) 0;
+    obfree(obj, (struct obj *) 0);
+    explode(x, y, yours ? ZT_SPELL_O_FIRE : -ZT_SPELL_O_FIRE, d(3, 6),
+            WEAPON_CLASS, EXPL_FIERY);
+    wake_nearto(x, y, 400);
+}
+
 /* lit potion of oil is exploding; extinguish it as a light source before
    possibly killing the hero and attempting to save bones */
 void

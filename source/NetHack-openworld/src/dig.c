@@ -170,11 +170,13 @@ dig_typ(struct obj *otmp, coordxy x, coordxy y)
 {
     int ltyp;
 
-    if (!isok(x, y) || !otmp || (!is_pick(otmp) && !is_axe(otmp)))
+    if (!isok(x, y) || !otmp
+        || (!is_pick(otmp) && !is_axe(otmp) && !is_lightsaber(otmp)))
         return DIGTYP_UNDIGGABLE;
 
     ltyp = levl[x][y].typ;
-    if (is_axe(otmp))
+    /* a lit lightsaber cuts through doors and trees like an axe */
+    if (is_axe(otmp) || is_lightsaber(otmp))
         return closed_door(x, y) ? DIGTYP_DOOR
                : IS_TREE(ltyp) ? DIGTYP_TREE /* axe vs tree */
                  : DIGTYP_UNDIGGABLE;
@@ -301,14 +303,17 @@ dig(void)
 {
     struct rm *lev;
     coordxy dpx = svc.context.digging.pos.x, dpy = svc.context.digging.pos.y;
-    boolean ispick = uwep && is_pick(uwep);
-    const char *verb = (!uwep || is_pick(uwep)) ? "dig into" : "chop through";
+    boolean ispick = uwep && is_pick(uwep),
+            saber = uwep && is_lightsaber(uwep);
+    const char *verb = (!uwep || is_pick(uwep)) ? "dig into"
+                       : saber ? "cut through" : "chop through";
     enum digcheck_result dcresult = DIGCHECK_PASSED;
 
     lev = &levl[dpx][dpy];
     /* perhaps a nymph stole your pick-axe while you were busy digging */
-    /* or perhaps you teleported away */
-    if (u.uswallow || !uwep || (!ispick && !is_axe(uwep))
+    /* or perhaps you teleported away (or your lightsaber went out) */
+    if (u.uswallow || !uwep
+        || (!ispick && !is_axe(uwep) && !(saber && uwep->lamplit))
         || !on_level(&svc.context.digging.level, &u.uz)
         || ((svc.context.digging.down ? (dpx != u.ux || dpy != u.uy)
                                   : !next2u(dpx, dpy))))
@@ -333,7 +338,8 @@ dig(void)
             return 0;
         }
     }
-    if (Fumbling && !rn2(3)) {
+    /* can't exactly miss when holding a lightsaber to the door */
+    if (Fumbling && !saber && !rn2(3)) {
         switch (rn2(3)) {
         case 0:
             if (!welded(uwep)) {
@@ -366,6 +372,8 @@ dig(void)
         10 + rn2(5) + abon() + uwep->spe - greatest_erosion(uwep) + u.udaminc;
     if (Race_if(PM_DWARF))
         svc.context.digging.effort *= 2;
+    if (saber)
+        svc.context.digging.effort -= rn2(20); /* melting takes longer */
     if (svc.context.digging.down) {
         struct trap *ttmp = t_at(dpx, dpy);
 
@@ -1165,8 +1173,8 @@ use_pick_axe2(struct obj *obj)
     struct rm *lev;
     struct trap *trap, *trap_with_u;
     int dig_target;
-    boolean ispick = is_pick(obj);
-    const char *verbing = ispick ? "digging" : "chopping";
+    boolean ispick = is_pick(obj), saber = is_lightsaber(obj);
+    const char *verbing = ispick ? "digging" : saber ? "cutting" : "chopping";
 
     if (u.uswallow && do_attack(u.ustuck)) {
         ; /* return 1 */
@@ -1207,7 +1215,11 @@ use_pick_axe2(struct obj *obj)
 
             /* ACCESSIBLE or POOL */
             trap = t_at(rx, ry);
-            if (trap && trap->ttyp == WEB) {
+            if (trap && trap->ttyp == WEB && saber) {
+                pline("%s cuts through the web!", Yname2(obj));
+                deltrap(trap);
+                newsym(rx, ry);
+            } else if (trap && trap->ttyp == WEB) {
                 if (!trap->tseen) {
                     seetrap(trap);
                     There("is a spider web there!");
@@ -1277,7 +1289,14 @@ use_pick_axe2(struct obj *obj)
                                                      "chipping the statue",
                                                      "hitting the boulder",
                                                      "chopping at the door",
-                                                     "cutting the tree" };
+                                                     "cutting the tree" },
+                              *const saber_action[6] = { "swinging",
+                                                     "melting the rock",
+                                                     "melting the statue",
+                                                     "melting the boulder",
+                                                     "cutting through the door",
+                                                     "cutting through the tree" };
+            const char *const *act = saber ? saber_action : d_action;
 
             gd.did_dig_msg = FALSE;
             svc.context.digging.quiet = FALSE;
@@ -1302,10 +1321,10 @@ use_pick_axe2(struct obj *obj)
                 assign_level(&svc.context.digging.level, &u.uz);
                 svc.context.digging.effort = 0;
                 if (!svc.context.digging.quiet)
-                    You("start %s.", d_action[dig_target]);
+                    You("start %s.", act[dig_target]);
             } else {
                 You("%s %s.", svc.context.digging.chew ? "begin" : "continue",
-                    d_action[dig_target]);
+                    act[dig_target]);
                 svc.context.digging.chew = FALSE;
             }
             set_occupation(dig, verbing, 0);

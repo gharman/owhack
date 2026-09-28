@@ -21,6 +21,8 @@ staticfn void slip_or_trip(void);
 staticfn void see_lamp_flicker(struct obj *, const char *) NONNULLPTRS;
 staticfn void lantern_message(struct obj *) NONNULLARG1;
 staticfn void cleanup_burn(ANY_P *, long) NONNULLARG1;
+staticfn void bomb_blow(ANY_P *, long) NONNULLARG1;
+staticfn boolean mon_is_local(struct monst *);
 
 /* used by wizard mode #timeout and #wizintrinsic; order by 'interest'
    for timeout countdown, where most won't occur in normal play */
@@ -1671,6 +1673,61 @@ burn_object(anything *arg, long timeout)
             begin_burn(obj, TRUE);
         break; /* case [otyp ==] candelabrum|tallow_candle|wax_candle */
 
+    case RED_DOUBLE_LIGHTSABER:
+        if (obj->altmode && obj->cursed && !rn2(25)) {
+            obj->altmode = FALSE;
+            if (canseeit)
+                pline("%s%s reverts to single blade mode!", whose,
+                      xname(obj));
+        }
+        FALLTHROUGH;
+        /*FALLTHRU*/
+    case GREEN_LIGHTSABER:
+    case BLUE_LIGHTSABER:
+    case RED_LIGHTSABER:
+        /* a lightsaber shuts itself off if it isn't wielded (it is only
+           ever lit while wielded), and a cursed one sometimes does */
+        if ((obj->cursed && !rn2(50))
+            || obj->where == OBJ_FLOOR
+            || (obj->where == OBJ_MINVENT
+                && MON_WEP(obj->ocarry) != obj)
+            || (obj->where == OBJ_INVENT && obj != uwep
+                && !(u.twoweap && obj == uswapwep))) {
+            lightsaber_deactivate(obj, FALSE);
+            break;
+        }
+        switch (obj->age) {
+        case 100:
+            /* single warning */
+            if (canseeit) {
+                switch (obj->where) {
+                case OBJ_INVENT:
+                    need_invupdate = TRUE;
+                    FALLTHROUGH;
+                    /*FALLTHRU*/
+                case OBJ_MINVENT:
+                    pline("%s%s dims!", whose, xname(obj));
+                    break;
+                case OBJ_FLOOR:
+                    You_see("%s dim!", an(xname(obj)));
+                    break;
+                }
+            } else if (!Deaf) {
+                You_hear("the hum of %s change!", an(xname(obj)));
+            }
+            break;
+        case 0:
+            lightsaber_deactivate(obj, FALSE);
+            break;
+        default:
+            /* someone added charge while it was lit; begin_burn()
+               handles the new age */
+            break;
+        }
+        if (obj->age && obj->lamplit) /* might have been deactivated */
+            begin_burn(obj, TRUE);
+        break;
+
     default:
         impossible("burn_object: unexpected obj %s", xname(obj));
         break;
@@ -1748,6 +1805,34 @@ begin_burn(struct obj *obj, boolean already_lit)
             turns = obj->age;
         break;
 
+    case MAGIC_CANDLE:
+        /* magic candles burn forever */
+        obj->lamplit = 1;
+        do_timer = FALSE;
+        radius = candle_light_range(obj);
+        break;
+
+    case RED_DOUBLE_LIGHTSABER:
+        if (obj->altmode && obj->age > 1) {
+            obj->age--; /* double power usage */
+            radius = 3; /* but more light */
+        } else {
+            radius = 2;
+        }
+        turns = 1;
+        break;
+    case GREEN_LIGHTSABER:
+    case BLUE_LIGHTSABER:
+    case RED_LIGHTSABER:
+        turns = 1;
+        radius = 2;
+        /* the prototype has an inexhaustible power cell */
+        if (is_art(obj, ART_LIGHTSABER_PROTOTYPE)) {
+            obj->lamplit = 1;
+            do_timer = FALSE;
+        }
+        break;
+
     case CANDELABRUM_OF_INVOCATION:
     case TALLOW_CANDLE:
     case WAX_CANDLE:
@@ -1810,7 +1895,8 @@ end_burn(struct obj *obj, boolean timer_attached)
         return;
     }
 
-    if (obj->otyp == MAGIC_LAMP || artifact_light(obj))
+    if (obj->otyp == MAGIC_LAMP || obj->otyp == MAGIC_CANDLE
+        || is_art(obj, ART_LIGHTSABER_PROTOTYPE) || artifact_light(obj))
         timer_attached = FALSE;
 
     if (!timer_attached) {
@@ -1821,6 +1907,133 @@ end_burn(struct obj *obj, boolean timer_attached)
             update_inventory();
     } else if (!stop_timer(BURN_OBJECT, obj_to_any(obj)))
         impossible("end_burn: obj %s not timed!", xname(obj));
+}
+
+/* the fuse of an armed bomb has burnt down: it explodes wherever it is */
+staticfn void
+bomb_blow(anything *arg, long timeout)
+{
+    struct obj *bomb = arg->a_obj;
+    struct monst *mtmp;
+    coordxy x = 0, y = 0;
+    boolean silent = (timeout != svm.moves), /* went off while away */
+            yours = bomb->yours ? TRUE : FALSE, blast = TRUE;
+    int dmg = d(2, 5);
+
+    bomb->oarmed = 0;
+    /* a bomb carried by a monster that is on its way to another level
+       just fizzles out */
+    if (bomb->where == OBJ_MINVENT && !mon_is_local(bomb->ocarry))
+        return;
+    if (!get_obj_location(bomb, &x, &y, BURIED_TOO | CONTAINED_TOO))
+        blast = FALSE;
+    switch (bomb->where) {
+    case OBJ_INVENT:
+        if (bomb->owornmask)
+            pline("%s explodes in your %s!", Yname2(bomb),
+                  (bomb == uquiver) ? "quiver" : body_part(HAND));
+        else
+            pline("Something explodes inside your pack!");
+        stop_occupation();
+        if (bomb->owornmask)
+            remove_worn_item(bomb, FALSE);
+        freeinv(bomb);
+        losehp(Maybe_Half_Phys(dmg), "carrying live explosives", KILLED_BY);
+        break;
+    case OBJ_MINVENT:
+        mtmp = bomb->ocarry;
+        if (bomb == MON_WEP(mtmp))
+            setmnotwielded(mtmp, bomb);
+        obj_extract_self(bomb);
+        if (!silent && canseemon(mtmp))
+            You_see("%s engulfed in an explosion!", mon_nam(mtmp));
+        mtmp->mhp -= dmg;
+        if (DEADMONSTER(mtmp)) {
+            if (yours)
+                xkilled(mtmp, silent ? XKILL_NOMSG : XKILL_GIVEMSG);
+            else
+                monkilled(mtmp, silent ? "" : "explosion", AD_PHYS);
+        }
+        break;
+    case OBJ_FLOOR:
+        obj_extract_self(bomb);
+        newsym(x, y);
+        if (!silent) {
+            if (u_at(x, y)) {
+                pline("A bomb explodes under your %s!",
+                      makeplural(body_part(FOOT)));
+                losehp(Maybe_Half_Phys(dmg), "exploding bomb", KILLED_BY_AN);
+            } else if (cansee(x, y)) {
+                You_see("a bomb explode.");
+            }
+        }
+        break;
+    default: /* buried, contained, migrating */
+        if (!silent && blast)
+            You_hear("a muffled explosion.");
+        obj_extract_self(bomb);
+        blast = FALSE;
+        break;
+    }
+    obfree(bomb, (struct obj *) 0);
+    if (blast) {
+        explode(x, y, yours ? 11 : -11, /* ZT_SPELL(ZT_FIRE) */
+                d(3, 6), WEAPON_CLASS, EXPL_FIERY);
+        wake_nearto(x, y, 400);
+    }
+}
+
+/* a lit lightsaber shuts off (when it is dropped, unwielded, out of
+   power, ...); caller checks that it is lit */
+void
+lightsaber_deactivate(struct obj *obj, boolean timer_attached)
+{
+    coordxy x, y;
+    char whose[BUFSZ];
+
+    (void) Shk_Your(whose, obj);
+    if (get_obj_location(obj, &x, &y, 0)) {
+        if (cansee(x, y)) {
+            switch (obj->where) {
+            case OBJ_INVENT:
+            case OBJ_MINVENT:
+                pline("%s%s deactivates.", whose, xname(obj));
+                break;
+            case OBJ_FLOOR:
+                You_see("%s deactivate.", an(xname(obj)));
+                break;
+            }
+        } else if (!Deaf && obj->where != OBJ_INVENT) {
+            You_hear("a lightsaber deactivate.");
+        }
+    }
+    if (obj->otyp == RED_DOUBLE_LIGHTSABER)
+        obj->altmode = FALSE;
+    if (obj == uwep || (u.twoweap && obj == uswapwep))
+        gu.unweapon = TRUE;
+    end_burn(obj, timer_attached);
+}
+
+/* add charge to a lightsaber (scroll of charging, the Jedi's "charge
+   saber" technique, ...); amount may be negative; maxcharge > 0 caps the
+   result; returns the new charge */
+long
+charge_lightsaber(struct obj *obj, long amount, long maxcharge)
+{
+    long charge = obj->age + amount;
+
+    if (maxcharge > 0L && charge > maxcharge)
+        charge = maxcharge;
+    if (charge < 0L)
+        charge = 0L;
+    obj->age = charge;
+    /* a lit lightsaber whose charge went away shuts off right away;
+       one that got more keeps burning (burn_object() resyncs the timer) */
+    if (!charge && obj->lamplit)
+        lightsaber_deactivate(obj, TRUE);
+    if (carried(obj))
+        update_inventory();
+    return charge;
 }
 
 /*
@@ -1987,6 +2200,7 @@ static const ttable timeout_funcs[NUM_TIME_FUNCS] = {
     TTAB(hatch_egg, (timeout_proc) 0, "hatch_egg"),
     TTAB(fig_transform, (timeout_proc) 0, "fig_transform"),
     TTAB(shrink_glob, (timeout_proc) 0, "shrink_glob"),
+    TTAB(bomb_blow, (timeout_proc) 0, "bomb_blow"),
     /* level timers */
     TTAB(melt_ice_away, (timeout_proc) 0, "melt_ice_away"),
     /* currently no monster or global timers */

@@ -4506,6 +4506,10 @@ mergable(
     if (obj->otyp == POT_OIL && obj->lamplit)
         return FALSE;
 
+    /* nor do bombs with lit fuses */
+    if (is_bomb(obj) && (obj->oarmed || otmp->oarmed))
+        return FALSE;
+
     /* don't merge surcharged item with base-cost item */
     if (obj->unpaid && !same_price(obj, otmp))
         return FALSE;

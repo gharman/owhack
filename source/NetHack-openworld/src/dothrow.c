@@ -30,8 +30,15 @@ staticfn boolean mhurtle_step(genericptr_t, coordxy, coordxy);
 #define AutoReturn(o,wmsk) \
     ((((wmsk) & W_WEP) != 0                                             \
       && ((o)->otyp == AKLYS                                            \
-          || ((o)->oartifact == ART_MJOLLNIR && Role_if(PM_VALKYRIE)))) \
+          || ((o)->oartifact == ART_MJOLLNIR && Role_if(PM_VALKYRIE))   \
+          || jedi_forcethrow(o)))                                       \
      || (o)->otyp == BOOMERANG)
+/* a skilled Jedi can throw a lit lightsaber and call it back with the
+   Force (SlashTHEM/Hack'EM) */
+#define jedi_forcethrow(o) \
+    (Role_if(PM_JEDI) && is_lightsaber(o) && (o)->lamplit               \
+     && !(Confusion || Stunned || Blind || Hallucination || Fumbling)   \
+     && P_SKILL(P_LIGHTSABER) >= P_SKILLED)
 
 /* gt.thrownobj (decl.c) tracks an object until it lands */
 
@@ -1568,6 +1575,10 @@ throwit(
     /* NOTE:  No early returns after this point or returning_missile
        will be left with a stale pointer. */
 
+    /* a thrown bomb's fuse is lit; if it hits someone it goes off */
+    if (is_bomb(obj))
+        arm_bomb(obj, TRUE);
+
     if (u.uswallow) {
         if (obj == uball) {
             uball->ox = uchain->ox = u.ux;
@@ -1721,7 +1732,16 @@ throwit(
     } else {
         /* Mjollnir must be wielded to be thrown--caller verifies this;
            aklys must be wielded as primary to return when thrown */
-        if (iflags.returning_missile) { /* Mjollnir or aklys */
+        if (iflags.returning_missile && is_lightsaber(obj)
+            && u.uen < 5) {
+            You("don't have enough of the Force left to call %s back.",
+                the(xname(obj)));
+            iflags.returning_missile = 0;
+        } else if (iflags.returning_missile && is_lightsaber(obj)) {
+            u.uen -= 5;
+            disp.botl = TRUE;
+        }
+        if (iflags.returning_missile) { /* Mjollnir, aklys, Jedi saber */
             if (rn2(100)) {
                 if (tethered_weapon)
                     tmp_at(DISP_END, BACKTRACK);
@@ -2252,6 +2272,16 @@ thitmonst(
             boolean wasthrown = (gt.thrownobj != 0),
                     /* remember weapon attribute; hmon() might destroy obj */
                     chopper = is_axe(obj);
+
+            if (is_bomb(obj) && wasthrown && hmode == HMON_THROWN) {
+                if (canspotmon(mon))
+                    pline("%s hits %s and explodes!", The(xname(obj)),
+                          mon_nam(mon));
+                if (*u.ushops || obj->unpaid)
+                    check_shop_obj(obj, gb.bhitpos.x, gb.bhitpos.y, TRUE);
+                bomb_explode(obj, gb.bhitpos.x, gb.bhitpos.y, TRUE);
+                return 1;
+            }
 
             /* attack hits mon */
             if (hmode == HMON_APPLIED) { /* ranged hit with wielded polearm */

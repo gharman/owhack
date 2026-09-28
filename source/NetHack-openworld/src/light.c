@@ -782,7 +782,7 @@ obj_sheds_light(struct obj *obj)
 boolean
 obj_is_burning(struct obj *obj)
 {
-    return (boolean) (obj->lamplit && (ignitable(obj)
+    return (boolean) (obj->lamplit && (ignitable(obj) || is_lightsaber(obj)
                                        || artifact_light(obj)));
 }
 

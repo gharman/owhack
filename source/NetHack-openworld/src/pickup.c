@@ -2630,8 +2630,12 @@ in_container(struct obj *obj)
 
     freeinv(obj);
 
-    if (obj_is_burning(obj)) /* this used to be part of freeinv() */
-        (void) snuff_lit(obj);
+    if (obj_is_burning(obj)) { /* this used to be part of freeinv() */
+        if (is_lightsaber(obj))
+            lightsaber_deactivate(obj, TRUE);
+        else
+            (void) snuff_lit(obj);
+    }
 
     if (floor_container && costly_spot(u.ux, u.uy)) {
         /* defer gold until after put-in message */

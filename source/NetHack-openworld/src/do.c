@@ -21,6 +21,7 @@ staticfn void familiar_level_msg(void);
 staticfn void final_level(void);
 staticfn void temperature_change_msg(schar);
 staticfn boolean better_not_try_to_drop_that(struct obj *);
+staticfn void u_fall_with_lightsaber(void);
 
     /* static boolean badspot(coordxy,coordxy); */
 
@@ -1350,6 +1351,36 @@ doup(void)
 }
 
 /* check that we can write out the current level */
+/* falling down the stairs with a lit lightsaber is dangerous
+   (from dNetHack, via Hack'EM) */
+staticfn void
+u_fall_with_lightsaber(void)
+{
+    boolean mainsaber = (uwep && is_lightsaber(uwep) && uwep->lamplit),
+            secsaber = (uswapwep && u.twoweap && is_lightsaber(uswapwep)
+                        && uswapwep->lamplit);
+
+    if (!mainsaber && !secsaber)
+        return;
+    if (rnl(20) < ACURR(A_DEX)) {
+        You("hurriedly deactivate your lightsaber%s.",
+            (mainsaber && secsaber) ? "s" : "");
+    } else {
+        You("come into contact with your lightsaber%s.",
+            (mainsaber && secsaber) ? "s" : "");
+        if (mainsaber)
+            losehp(dmgval(uwep, &gy.youmonst),
+                   "falling downstairs with a lit lightsaber", KILLED_BY);
+        if (secsaber)
+            losehp(dmgval(uswapwep, &gy.youmonst),
+                   "falling downstairs with a lit lightsaber", KILLED_BY);
+    }
+    if (mainsaber && uwep && uwep->lamplit)
+        lightsaber_deactivate(uwep, TRUE);
+    if (secsaber && uswapwep && uswapwep->lamplit)
+        lightsaber_deactivate(uswapwep, TRUE);
+}
+
 staticfn NHFILE *
 currentlevel_rewrite(void)
 {
@@ -1831,6 +1862,7 @@ goto_level(
                     if (!welded(uball))
                         ballrelease(FALSE);
                 }
+                u_fall_with_lightsaber();
                 /* falling off steed has its own losehp() call */
                 if (u.usteed)
                     dismount_steed(DISMOUNT_FELL);

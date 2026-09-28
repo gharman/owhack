@@ -147,14 +147,17 @@ struct obj {
     Bitfield(how_lost, 3);  /* stolen by mon or thrown, dropped by hero, etc */
 
     Bitfield(named_how, 1);  /* source of name per TODO in resetobjs() */
+    Bitfield(altmode, 1); /* double lightsaber: both blades are lit */
+    Bitfield(oarmed, 1);  /* bomb: its fuse is burning */
+    Bitfield(yours, 1);   /* bomb: armed by the hero */
 #if 0
     /* not implemented */
     Bitfield(eknown, 1); /* effect known for wands zapped or rings worn when
                           * not seen yet after being picked up while blind
                           * [maybe for remaining stack of used potion too] */
-    /* 5 free bits */
+    /* 2 free bits */
 #else
-    /* 6 free bits */
+    /* 3 free bits */
 #endif
 
     int corpsenm;         /* type of corpse is mons[corpsenm] */
@@ -380,7 +383,15 @@ struct obj {
 
 /* Light sources */
 #define Is_candle(otmp) \
-    (otmp->otyp == TALLOW_CANDLE || otmp->otyp == WAX_CANDLE)
+    (otmp->otyp == TALLOW_CANDLE || otmp->otyp == WAX_CANDLE \
+     || otmp->otyp == MAGIC_CANDLE)
+/* lightsabers (Slash'EM) are weapons which burn charge (kept in obj->age)
+   while lit and only do real damage when lit */
+#define is_lightsaber(otmp) \
+    ((otmp)->oclass == WEAPON_CLASS                  \
+     && objects[(otmp)->otyp].oc_skill == P_LIGHTSABER)
+/* bombs (Slash'EM) explode when their fuse runs out */
+#define is_bomb(otmp) ((otmp)->otyp == FIRE_BOMB)
 #define MAX_OIL_IN_FLASK 400 /* maximum amount of oil in a potion of oil */
 
 /* age field of this is relative age rather than absolute; does not include
@@ -389,7 +400,7 @@ struct obj {
     ((otmp)->otyp == BRASS_LANTERN || (otmp)->otyp == OIL_LAMP      \
      || (otmp)->otyp == CANDELABRUM_OF_INVOCATION                   \
      || (otmp)->otyp == TALLOW_CANDLE || (otmp)->otyp == WAX_CANDLE \
-     || (otmp)->otyp == POT_OIL)
+     || (otmp)->otyp == POT_OIL || is_lightsaber(otmp))
 /* object can be ignited; magic lamp used to excluded here too but all
    usage of this macro ended up testing
      (ignitable(obj) || obj->otyp == MAGIC_LAMP)
@@ -399,7 +410,7 @@ struct obj {
      || ((otmp)->otyp == MAGIC_LAMP && (otmp)->spe > 0)             \
      || (otmp)->otyp == CANDELABRUM_OF_INVOCATION                   \
      || (otmp)->otyp == TALLOW_CANDLE || (otmp)->otyp == WAX_CANDLE \
-     || (otmp)->otyp == POT_OIL)
+     || (otmp)->otyp == MAGIC_CANDLE || (otmp)->otyp == POT_OIL)
 
 /* things that can be read */
 #define is_readable(otmp) \

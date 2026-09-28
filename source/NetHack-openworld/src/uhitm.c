@@ -343,6 +343,10 @@ check_caitiff(struct monst *mtmp)
         /* attacking peaceful creatures is bad for the samurai's giri */
         You("dishonorably attack the innocent!");
         adjalign(-1);
+    } else if (Role_if(PM_JEDI) && mtmp->mpeaceful) {
+        /* as well as for the way of the Jedi */
+        You("violate the way of the Jedi!");
+        adjalign(-5);
     }
 }
 
@@ -399,6 +403,12 @@ find_roll_to_hit(
             tmp -= (*role_roll_penalty = gu.urole.spelarmr);
         else if (!uwep && !uarms)
             tmp += (u.ulevel / 3) + 2;
+    }
+    /* a Jedi fights in robes; body armor gets in the way of the saber */
+    if (Role_if(PM_JEDI) && !Upolyd && uarm && weapon
+        && is_lightsaber(weapon) && weapon->lamplit) {
+        You_cant("use %s effectively in this armor...", yname(weapon));
+        tmp -= 20;
     }
     if (is_orc(mtmp->data)
         && maybe_polyd(is_elf(gy.youmonst.data), Race_if(PM_ELF)))
@@ -944,6 +954,18 @@ hmon_hitmon_weapon_melee(
     hmd->dmg = dmgval(obj, mon);
     /* a minimal hit doesn't exercise proficiency */
     hmd->train_weapon_skill = (hmd->dmg > 1);
+    if (is_lightsaber(obj) && !obj->lamplit) {
+        /* dmgval() gave the 1-2 points of a bare hilt; a Jedi knows how
+           to use an unlit lightsaber as a weapon */
+        hmd->use_weapon_skill = hmd->train_weapon_skill = FALSE;
+        if (Role_if(PM_JEDI) && hmd->dmg > 0) {
+            hmd->dmg = d(1, 4) + obj->spe
+                       + (P_SKILL(P_BARE_HANDED_COMBAT) - P_UNSKILLED);
+            if (hmd->dmg < 1)
+                hmd->dmg = 1;
+            use_skill(P_BARE_HANDED_COMBAT, 1); /* throw them a bone */
+        }
+    }
 
     /* Healer with anatomy knowledge */
     if (Role_if(PM_HEALER) && hmd->hand_to_hand
@@ -1009,6 +1031,32 @@ hmon_hitmon_weapon_melee(
         if (rn2(4)) {
             monflee(mon, d(2, 3), TRUE, TRUE);
         }
+        hmd->hittxt = TRUE;
+    } else if (obj == uwep && Role_if(PM_JEDI) && is_lightsaber(obj)
+               && obj->lamplit && hmd->hand_to_hand
+               && ((wtype = uwep_skill_type()) != P_NONE
+                   && P_SKILL(wtype) >= P_SKILLED)
+               && ((monwep = MON_WEP(mon)) != 0
+                   /* no cutting other lightsabers or artifacts */
+                   && !is_lightsaber(monwep) && !monwep->oartifact
+                   && !is_flimsy(monwep)
+                   && objects[monwep->otyp].oc_material != MITHRIL
+                   && objects[monwep->otyp].oc_material != GEMSTONE
+                   && !obj_resists(monwep, 50 + 15 * greatest_erosion(obj),
+                                   100))) {
+        char buf[BUFSZ];
+
+        setmnotwielded(mon, monwep);
+        mon->weapon_check = NEED_WEAPON;
+        if (canseemon(mon))
+            Strcpy(buf, s_suffix(mon_nam(mon)));
+        else
+            Strcpy(buf, "its");
+        Your("%s cuts %s %s in half!", xname(obj), buf, xname(monwep));
+        m_useupall(mon, monwep);
+        /* If someone just cut MY weapon in two, I'd flee! */
+        if (!rn2(4))
+            monflee(mon, d(2, 3), TRUE, TRUE);
         hmd->hittxt = TRUE;
     }
 

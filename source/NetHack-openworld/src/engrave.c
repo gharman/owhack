@@ -825,6 +825,11 @@ doengrave_sfx_item(struct _doengrave_ctx *de)
     case WEAPON_CLASS:
         if (is_art(de->otmp, ART_FIRE_BRAND)) {
             de->type = BURN; /* doesn't dull weapon */
+        } else if (is_lightsaber(de->otmp)) {
+            if (de->otmp->lamplit)
+                de->type = BURN;
+            else
+                Your("%s is deactivated!", simpleonames(de->otmp));
         } else if (is_blade(de->otmp)) {
             /* if non-blade or welded or too dull, engraving type stays set
                to DUST; feedback for that is only given for bladed weapons */
