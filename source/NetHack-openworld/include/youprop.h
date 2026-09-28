@@ -104,7 +104,7 @@
            are mutually exclusive; explicitly applying !BBlinded to both
            internal and external blindness should be more robust in case
            of future changes */
-#define Blind ((HBlinded || EBlinded) && !BBlinded)
+#define Blind (((HBlinded || EBlinded) && !BBlinded) || Hidinshell)
 
 /*
  * Maladies
@@ -346,7 +346,8 @@
 
 #define HHalf_physical_damage u.uprops[HALF_PHDAM].intrinsic
 #define EHalf_physical_damage u.uprops[HALF_PHDAM].extrinsic
-#define Half_physical_damage (HHalf_physical_damage || EHalf_physical_damage)
+#define Half_physical_damage \
+    (HHalf_physical_damage || EHalf_physical_damage || Hidinshell)
 
 #define HRegeneration u.uprops[REGENERATION].intrinsic
 #define ERegeneration u.uprops[REGENERATION].extrinsic
@@ -393,6 +394,9 @@
 #define Fixed_abil u.uprops[FIXED_ABIL].extrinsic /* KMH */
 
 #define Lifesaved u.uprops[LIFESAVED].extrinsic
+
+/* a tortle retreated into its shell (EvilHack) */
+#define Hidinshell (u.uinshell > 0)
 
 /*
  * Some pseudo-properties.

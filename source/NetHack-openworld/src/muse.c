@@ -2571,7 +2571,7 @@ use_misc(struct monst *mtmp)
             if (vismon)
                 pline_mon(mtmp, "%s flicks a bullwhip towards your %s!",
                           Monnam(mtmp), hand_buf);
-            if (obj->otyp == HEAVY_IRON_BALL) {
+            if (obj->otyp == HEAVY_IRON_BALL || Hidinshell) {
                 pline("%s fails to wrap around %s.", The_whip, the_weapon);
                 return 1;
             }

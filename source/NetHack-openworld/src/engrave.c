@@ -473,6 +473,8 @@ del_engr_at(coordxy x, coordxy y)
 int
 freehand(void)
 {
+    if (Hidinshell)
+        return FALSE;
     return (!uwep || !welded(uwep)
             || (!bimanual(uwep) && (!uarms || !uarms->cursed)));
 }
@@ -996,6 +998,11 @@ doengrave(void)
     /* There's no reason you should be able to write with a wand
      * while both your hands are tied up.
      */
+    if (Hidinshell) {
+        Your("%s are constrained within your shell.",
+             makeplural(body_part(HAND)));
+        goto doengr_exit;
+    }
     if (!freehand() && de->otmp != uwep && !de->otmp->owornmask) {
         You("have no free %s to write with!", body_part(HAND));
         goto doengr_exit;

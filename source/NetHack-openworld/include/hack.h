@@ -682,6 +682,7 @@ struct mvitals {
     uchar born;
     uchar died;
     uchar mvflags;
+    uchar eaten;    /* times hero has eaten one (doppelganger forms) */
     Bitfield(seen_close, 1);
     Bitfield(photographed, 1);
 };

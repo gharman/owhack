@@ -868,6 +868,39 @@ cprefx(int pm)
     }
 }
 
+/* a vampire hero's bite drinks some of the victim's blood, which can have
+   some of the effects of eating it (Slash'EM, EvilHack); returns TRUE if
+   the hero was killed and life-saved */
+boolean
+bite_monster(struct monst *mon)
+{
+    switch (monsndx(mon->data)) {
+    case PM_LIZARD:
+        if (Stoned)
+            fix_petrification();
+        break;
+    case PM_DEATH:
+    case PM_PESTILENCE:
+    case PM_FAMINE:
+        pline("Unfortunately, draining any of it is fatal.");
+        done_in_by(mon, DIED);
+        return TRUE; /* lifesaved */
+    case PM_GREEN_SLIME:
+        if (!Slimed && !Unchanging && !slimeproof(gy.youmonst.data)) {
+            You("don't feel very well.");
+            make_slimed(10L, (char *) 0);
+            delayed_killer(SLIMED, KILLED_BY_AN, "");
+        }
+        FALLTHROUGH;
+    /*FALLTHRU*/
+    default:
+        if (acidic(mon->data) && Stoned)
+            fix_petrification();
+        break;
+    }
+    return FALSE;
+}
+
 void
 fix_petrification(void)
 {
@@ -2827,7 +2860,10 @@ doeat(void)
             already_partly_eaten;
     int ll_conduct = 0;
 
-    if (Strangled) {
+    if (Hidinshell) {
+        You_cant("eat while hiding in your shell.");
+        return ECMD_OK;
+    } else if (Strangled) {
         pline("If you can't breathe air, how can you consume solids?");
         return ECMD_OK;
     }

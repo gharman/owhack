@@ -1110,6 +1110,10 @@ use_pick_axe(struct obj *obj)
     ispick = is_pick(obj);
     verb = ispick ? "dig" : "chop";
 
+    if (Hidinshell) {
+        You_cant("%s while hiding in your shell.", verb);
+        return res;
+    }
     if (u.utrap && u.utraptype == TT_WEB) {
         pline("%s you can't %s while entangled in a web.",
               /* res==0 => no prior message;

@@ -217,6 +217,19 @@ static const struct trobj Wishing[] =
 static const struct trobj Money[] =
     { { GOLD_PIECE, 0, COIN_CLASS, 1, 1, 0 },
       { 0, 0, 0, 0, 0, 0 } };
+/* racial extras (EvilHack); giant and tortle wizards get an amulet in
+   place of the cloak of magic resistance they can't wear (EvilHack's
+   amulet of magic resistance doesn't exist here; guarding is the nearest
+   protective amulet) */
+static const struct trobj Amulet_guard[] =
+    { { AMULET_OF_GUARDING, 0, AMULET_CLASS, 1, 1, 0 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Oilskin[] =
+    { { OILSKIN_SACK, 0, TOOL_CLASS, 1, 1, 0 },
+      { 0, 0, 0, 0, 0, 0 } };
+static const struct trobj Dra_food[] =
+    { { EGG, 0, FOOD_CLASS, 5, 5, 0 },
+      { 0, 0, 0, 0, 0, 0 } };
 
 /* race-based substitutions for initial inventory;
    the weaker cloak for elven rangers is intentional--they shoot better */
@@ -251,6 +264,39 @@ static const struct inv_sub {
     { PM_DWARF, LEMBAS_WAFER, CRAM_RATION },
     { PM_GNOME, BOW, CROSSBOW },
     { PM_GNOME, ARROW, CROSSBOW_BOLT },
+    /* giants can't get into body armor, cloaks or shirts (EvilHack) */
+    { PM_GIANT, ROBE, HIGH_BOOTS },
+    { PM_GIANT, RING_MAIL, HELMET },
+    { PM_GIANT, LEATHER_ARMOR, HELMET },
+    { PM_GIANT, SPLINT_MAIL, HELMET },
+    { PM_GIANT, CLOAK_OF_MAGIC_RESISTANCE, LOW_BOOTS },
+    { PM_GIANT, RIN_STEALTH, RIN_SEARCHING },
+    { PM_GIANT, LEATHER_JACKET, LOW_BOOTS },
+    { PM_GIANT, HAWAIIAN_SHIRT, LOW_BOOTS },
+    /* nor can tortles, with their shells; they like tridents and hats */
+    { PM_TORTLE, LEATHER_JACKET, LEATHER_GLOVES },
+    { PM_TORTLE, RING_MAIL, FEDORA },
+    { PM_TORTLE, SPLINT_MAIL, FEDORA },
+    { PM_TORTLE, BATTLE_AXE, TRIDENT },
+    { PM_TORTLE, TWO_HANDED_SWORD, TRIDENT },
+    { PM_TORTLE, ROBE, FEDORA },
+    { PM_TORTLE, HAWAIIAN_SHIRT, FEDORA },
+    { PM_TORTLE, CLOAK_OF_MAGIC_RESISTANCE, LEATHER_GLOVES },
+    { PM_TORTLE, SACK, OILSKIN_SACK },
+    /* draugr eat only meat and eggs */
+    { PM_DRAUGR, FOOD_RATION, EGG },
+    { PM_DRAUGR, FORTUNE_COOKIE, EGG },
+    { PM_DRAUGR, CRAM_RATION, EGG },
+    { PM_DRAUGR, LEMBAS_WAFER, EGG },
+    /* vampires live on blood */
+    { PM_VAMPIRE, POT_SICKNESS, POT_BLOOD },
+    { PM_VAMPIRE, POT_FRUIT_JUICE, POT_BLOOD },
+    { PM_VAMPIRE, FOOD_RATION, POT_BLOOD },
+    { PM_VAMPIRE, CRAM_RATION, POT_VAMPIRE_BLOOD },
+    /* lycanthropes eat raw meat and avoid silver (Slash'EM) */
+    { PM_HUMAN_WEREWOLF, FOOD_RATION, TRIPE_RATION },
+    { PM_HUMAN_WEREWOLF, SILVER_SPEAR, SPEAR },
+    { PM_HUMAN_WEREWOLF, SILVER_DAGGER, DAGGER },
     { NON_PM, STRANGE_OBJECT, STRANGE_OBJECT }
 };
 
@@ -773,6 +819,9 @@ u_init_role(void)
         break;
     case PM_WIZARD:
         ini_inv(Wizard);
+        /* giants and tortles can't wear the cloak of magic resistance */
+        if (Race_if(PM_GIANT) || Race_if(PM_TORTLE))
+            ini_inv(Amulet_guard);
         if (!rn2(5))
             ini_inv(Blindfold);
         break;
@@ -856,6 +905,79 @@ u_init_race(void)
         knows_object(ORCISH_SHIELD, FALSE);
         knows_object(URUK_HAI_SHIELD, FALSE);
         knows_object(ORCISH_CLOAK, FALSE);
+        break;
+
+    case PM_GIANT: {
+        int i;
+
+        /* giants hoard gems (EvilHack) */
+        while (!rn2(4)) {
+            int gem = rnd_class(TOPAZ, JADE);
+            const struct trobj Gem[] = { { gem, 0, GEM_CLASS, 1, 1, 0 },
+                                         { 0, 0, 0, 0, 0, 0 } };
+
+            ini_inv(Gem);
+            knows_object(gem, FALSE);
+        }
+        /* giants know valuable gems from glass, and may recognize a few
+           types of valuable gem */
+        for (i = FIRST_REAL_GEM; i <= LUCKSTONE; i++)
+            if (objects[i].oc_cost <= 1 || rn2(100) < 5 + ACURR(A_INT))
+                knows_object(i, FALSE);
+        break;
+    }
+
+    case PM_CENTAUR:
+        /* centaurs know all bow-based projectile weapons */
+        knows_object(ELVEN_ARROW, FALSE);
+        knows_object(ELVEN_BOW, FALSE);
+        knows_object(ORCISH_ARROW, FALSE);
+        knows_object(ORCISH_BOW, FALSE);
+        knows_object(ARROW, FALSE);
+        knows_object(BOW, FALSE);
+        knows_object(YA, FALSE);
+        knows_object(YUMI, FALSE);
+        knows_object(CROSSBOW_BOLT, FALSE);
+        knows_object(CROSSBOW, FALSE);
+        break;
+
+    case PM_ILLITHID:
+        /* every illithid has the psionic 'spell' */
+        (void) force_learn_spell(SPE_PSIONIC_WAVE);
+        break;
+
+    case PM_TORTLE:
+        /* in case they want to go for a swim */
+        if (!Role_if(PM_ARCHEOLOGIST) && !rn2(4))
+            ini_inv(Oilskin);
+        break;
+
+    case PM_DRAUGR:
+        /* draugr can only eat meat and eggs; start them out with some
+           provisions */
+        ini_inv(Dra_food);
+        break;
+
+    case PM_VAMPIRE:
+        knows_object(POT_BLOOD, FALSE);
+        knows_object(POT_VAMPIRE_BLOOD, FALSE);
+        break;
+
+    case PM_HUMAN_WEREWOLF:
+        /* a lycanthrope knows its bane */
+        knows_object(SPRIG_OF_WOLFSBANE, FALSE);
+        break;
+
+    case PM_DOPPELGANGER:
+        /* doppelgangers naturally know everything about polymorph */
+        knows_object(POT_POLYMORPH, FALSE);
+        knows_object(WAN_POLYMORPH, FALSE);
+        knows_object(SPE_POLYMORPH, FALSE);
+        knows_object(RIN_POLYMORPH, FALSE);
+        break;
+
+    case PM_GHOST:
+        /* no food; see ini_inv() */
         break;
 
     default: /* impossible */
@@ -989,11 +1111,16 @@ u_init_misc(void)
     u.ugrave_arise = NON_PM;
 
     u.umonnum = u.umonster = gu.urole.mnum;
-    u.ulycn = NON_PM;
+    /* the werewolf race is born with lycanthropy (Slash'EM) */
+    u.ulycn = Race_if(PM_HUMAN_WEREWOLF) ? PM_WEREWOLF : NON_PM;
     set_uasmon();
 
     u.ulevel = 0; /* set up some of the initial attributes */
     u.uhp = u.uhpmax = u.uhppeak = newhp();
+    /* the gods look askance at the undead races: the same alignment
+       penalty as a typical convict (EvilHack) */
+    if (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))
+        u.ualign.record -= 20;
     u.uen = u.uenmax = u.uenpeak = newpw();
     u.uspellprot = 0;
     adjabil(0, 1);
@@ -1146,8 +1273,14 @@ ini_inv_mkobj_filter(int oclass, boolean got_level1_spellbook)
            || otyp == RIN_AGGRAVATE_MONSTER
            || otyp == RIN_HUNGER
            || otyp == WAN_NOTHING
-           /* orcs start with poison resistance */
-           || (otyp == RIN_POISON_RESISTANCE && Race_if(PM_ORC))
+           /* orcs, draugr and vampires start with poison resistance */
+           || (otyp == RIN_POISON_RESISTANCE
+               && (Race_if(PM_ORC) || Race_if(PM_DRAUGR)
+                   || Race_if(PM_VAMPIRE)))
+           /* illithids already have psychic resistance */
+           || (otyp == RIN_PSYCHIC_RESISTANCE && Race_if(PM_ILLITHID))
+           /* doppelgangers shouldn't start with polymorph control */
+           || (otyp == RIN_POLYMORPH_CONTROL && Race_if(PM_DOPPELGANGER))
            /* Monks don't use weapons */
            || (otyp == SCR_ENCHANT_WEAPON && Role_if(PM_MONK))
            /* wizard patch -- they already have one */
@@ -1343,11 +1476,18 @@ ini_inv(const struct trobj *trop)
         otyp = ini_inv_obj_substitution(trop, obj);
         nhUse(otyp);
 
-        /* nudist gets no armor */
-        if (u.uroleplay.nudist && obj->oclass == ARMOR_CLASS) {
+        /* nudist gets no armor; a ghost has no use for food */
+        if ((u.uroleplay.nudist && obj->oclass == ARMOR_CLASS)
+            || (Race_if(PM_GHOST) && obj->oclass == FOOD_CLASS)) {
             dealloc_obj(obj);
             trop++;
+            quan = trquan(trop);
             continue;
+        }
+        /* tortles look after their tridents (EvilHack) */
+        if (Race_if(PM_TORTLE) && obj->otyp == TRIDENT) {
+            obj->oerodeproof = 1;
+            obj->rknown = 1;
         }
 
         if (ini_inv_adjust_obj(trop, obj))

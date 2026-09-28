@@ -1145,6 +1145,11 @@ dodown(void)
     if (u_rooted())
         return ECMD_TIME;
 
+    if (Hidinshell) {
+        You_cant("climb down while hiding in your shell.");
+        return ECMD_OK;
+    }
+
     if (stucksteed(TRUE)) {
         return ECMD_OK;
     }
@@ -1309,6 +1314,11 @@ doup(void)
 
     if (u_rooted())
         return ECMD_TIME;
+
+    if (Hidinshell) {
+        You_cant("climb up while hiding in your shell.");
+        return ECMD_OK;
+    }
 
     /* "up" to get out of a pit... */
     if (u.utrap && u.utraptype == TT_PIT) {

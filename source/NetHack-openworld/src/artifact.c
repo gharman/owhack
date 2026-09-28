@@ -1629,9 +1629,14 @@ artifact_hit(
                     return TRUE;
                 }
                 if (noncorporeal(gy.youmonst.data)
-                    || amorphous(gy.youmonst.data)) {
+                    || amorphous(gy.youmonst.data) || u_ghost()) {
                     pline("%s slices through your %s.", wepdesc,
                           body_part(NECK));
+                    return TRUE;
+                }
+                if (Hidinshell) {
+                    pline("%s glances harmlessly off of your protective "
+                          "shell.", wepdesc);
                     return TRUE;
                 }
                 *dmgptr = 2 * (Upolyd ? u.mh : u.uhp) + FATAL_DAMAGE_MODIFIER;
@@ -1753,6 +1758,11 @@ doinvoke(void)
     obj = getobj("invoke", invoke_ok, GETOBJ_PROMPT);
     if (!obj)
         return ECMD_CANCEL;
+    if (Hidinshell) {
+        You_cant("invoke %s while hiding in your shell.",
+                 the(distant_name(obj, xname)));
+        return ECMD_OK;
+    }
     if (!retouch_object(&obj, FALSE))
         return ECMD_TIME;
     return arti_invoke(obj);

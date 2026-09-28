@@ -365,6 +365,9 @@ zombie_maker(struct monst *mon)
 
     if (mon->mcan)
         return FALSE;
+    /* the draugr race, kin to the walking dead, makes zombies too */
+    if (mon == &gy.youmonst && !Upolyd && Race_if(PM_DRAUGR))
+        return TRUE;
 
     switch (pm->mlet) {
     case S_ZOMBIE:
@@ -3638,9 +3641,10 @@ xkilled(
         }
         /* corpse--none if hero was inside the monster */
         if (!wasinside && corpse_chance(mtmp, (struct monst *) 0, FALSE)) {
-            gz.zombify = (!gt.thrownobj && !gs.stoned && !uwep
-                         && zombie_maker(&gy.youmonst)
-                         && zombie_form(mtmp->data) != NON_PM);
+            gz.zombify = (!gt.thrownobj && !gs.stoned
+                          && (!uwep || racial_bite_active())
+                          && zombie_maker(&gy.youmonst)
+                          && zombie_form(mtmp->data) != NON_PM);
             cadaver = make_corpse(mtmp, burycorpse ? CORPSTAT_BURIED
                                                    : CORPSTAT_NONE);
             gz.zombify = FALSE; /* reset */

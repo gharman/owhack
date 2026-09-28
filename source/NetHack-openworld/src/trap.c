@@ -5275,6 +5275,8 @@ could_untrap(boolean verbosely, boolean check_floor)
     } else if (u.ustuck || (welded(uwep) && bimanual(uwep))) {
         Sprintf(buf, "Your %s seem to be too busy for that.",
                 makeplural(body_part(HAND)));
+    } else if (Hidinshell) {
+        Strcpy(buf, "You can't do that while hiding in your shell.");
     } else if (check_floor && !can_reach_floor(FALSE)) {
         /* only checked here for autounlock of chest/box and that will
            be !verbosely so precise details of the message don't matter */

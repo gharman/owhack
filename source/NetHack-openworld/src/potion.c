@@ -34,6 +34,7 @@ staticfn void peffect_gain_energy(struct obj *);
 staticfn void peffect_oil(struct obj *);
 staticfn void peffect_acid(struct obj *);
 staticfn void peffect_polymorph(struct obj *);
+staticfn void peffect_blood(struct obj *);
 staticfn boolean H2Opotion_dip(struct obj *, struct obj *, boolean,
                              const char *);
 staticfn short mixtype(struct obj *, struct obj *);
@@ -527,6 +528,10 @@ dodrink(void)
 {
     struct obj *otmp;
 
+    if (Hidinshell) {
+        You_cant("drink anything while hiding in your shell.");
+        return ECMD_OK;
+    }
     if (Strangled) {
         pline("If you can't breathe air, how can you drink liquid?");
         return ECMD_OK;
@@ -1349,6 +1354,86 @@ peffect_polymorph(struct obj *otmp)
     }
 }
 
+/* potions of blood and vampire blood (Slash'EM, EvilHack): they sustain
+   vampires, and vampire blood also heals them; other creatures find blood
+   vile, and vampire blood might even turn them into a vampire for a while */
+staticfn void
+peffect_blood(struct obj *otmp)
+{
+    boolean vampblood = (otmp->otyp == POT_VAMPIRE_BLOOD);
+
+    gp.potion_unkn++;
+    u.uconduct.unvegan++;
+    if (u_vampire()) {
+        violated_vegetarian();
+        if (otmp->cursed)
+            pline("Yecch!  This %s.", Hallucination
+                  ? "liquid could do with a good stir"
+                  : "blood has congealed");
+        else
+            pline(Hallucination
+                  ? "The %sliquid stirs memories of home."
+                  : "The %sblood tastes delicious.",
+                  otmp->odiluted ? "thinned " : "");
+        if (!otmp->cursed) {
+            if (vampblood)
+                lesshungry((otmp->odiluted ? 1 : 2)
+                           * (otmp->blessed ? 400 : 100));
+            else
+                lesshungry((otmp->odiluted ? 1 : 2)
+                           * (otmp->blessed ? 100 : 30));
+        }
+        if (vampblood) {
+            if (otmp->blessed) {
+                healup(otmp->odiluted ? 100 : 200, 0, FALSE, FALSE);
+                You_feel("%s healed.",
+                         (Upolyd ? (u.mh == u.mhmax) : (u.uhp == u.uhpmax))
+                             ? "completely" : "mostly");
+            } else if (!otmp->cursed) {
+                You_feel("better.");
+                healup(d(otmp->odiluted ? 1 : 4, 4), 0, FALSE, FALSE);
+            }
+        }
+    } else if (vampblood) {
+        /* doesn't use violated_vegetarian() to avoid a duplicate
+           "you feel guilty" message */
+        u.uconduct.unvegetarian++;
+        if (!Race_if(PM_VAMPIRE)) {
+            if (u.ualign.type == A_LAWFUL || Role_if(PM_MONK)) {
+                You_feel("%sguilty about drinking such a vile liquid.",
+                         Role_if(PM_MONK) ? "especially " : "");
+                u.ugangr++;
+                adjalign(-15);
+            } else if (u.ualign.type == A_NEUTRAL) {
+                You_feel("guilty.");
+                adjalign(-3);
+            }
+            exercise(A_CON, FALSE);
+        }
+        if (Upolyd && Race_if(PM_VAMPIRE)) {
+            /* a shapechanged vampire is restored to its true form */
+            if (!Unchanging)
+                rehumanize();
+        } else if (!Unchanging && !rn2(5)) {
+            int mndx = otmp->blessed ? PM_VAMPIRE_LEADER
+                       : otmp->cursed ? PM_VAMPIRE_BAT : PM_VAMPIRE;
+
+            if (polymon(mndx))
+                u.mtimedone = 3000;
+        } else {
+            pline("Ugh.  That was utterly disgusting.");
+            losehp(d(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8)
+                       / (otmp->odiluted ? 4 : 1),
+                   "potion of vampire blood", KILLED_BY_AN);
+            exercise(A_CON, FALSE);
+        }
+    } else {
+        violated_vegetarian();
+        pline("Ugh.  That was vile.");
+        make_vomiting(Vomiting + d(10, 8), TRUE);
+    }
+}
+
 int
 peffects(struct obj *otmp)
 {
@@ -1436,6 +1521,10 @@ peffects(struct obj *otmp)
         break;
     case POT_POLYMORPH:
         peffect_polymorph(otmp);
+        break;
+    case POT_BLOOD:
+    case POT_VAMPIRE_BLOOD:
+        peffect_blood(otmp);
         break;
     default:
         impossible("What a funny potion! (%u)", otmp->otyp);
@@ -2113,6 +2202,17 @@ potionbreathe(struct obj *obj)
     case POT_POLYMORPH:
         exercise(A_CON, FALSE);
         break;
+    case POT_BLOOD:
+    case POT_VAMPIRE_BLOOD:
+        if (u_vampire()) {
+            kn++;
+            exercise(A_WIS, FALSE);
+            You_feel("a %ssense of loss.",
+                     (obj->otyp == POT_VAMPIRE_BLOOD) ? "terrible " : "");
+        } else {
+            exercise(A_CON, FALSE);
+        }
+        break;
     /*
     case POT_GAIN_LEVEL:
     case POT_GAIN_ENERGY:
@@ -2301,6 +2401,10 @@ dodip(void)
         return ECMD_CANCEL;
     if (inaccessible_equipment(obj, "dip", FALSE))
         return ECMD_OK;
+    if (Hidinshell) {
+        You_cant("dip anything while hiding in your shell.");
+        return ECMD_OK;
+    }
 
     is_hands = (obj == &hands_obj);
     shortestname = (is_hands || is_plural(obj) || pair_of(obj)) ? "them"

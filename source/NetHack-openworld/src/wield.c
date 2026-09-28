@@ -849,6 +849,10 @@ set_twoweap(boolean on_off)
 int
 dotwoweapon(void)
 {
+    if (Hidinshell) {
+        pline("Don't be ridiculous!");
+        return ECMD_OK;
+    }
     /* You can always toggle it off */
     if (u.twoweap) {
         You("switch to your primary weapon.");

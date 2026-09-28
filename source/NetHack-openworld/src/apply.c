@@ -1395,7 +1395,7 @@ use_candle(struct obj **optr)
     char qbuf[QBUFSZ], qsfx[QBUFSZ], *q;
     boolean was_lamplit;
 
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         You(no_elbow_room);
         return;
     }
@@ -1709,7 +1709,7 @@ light_cocktail(struct obj **optr)
     char buf[BUFSZ];
     boolean split1off;
 
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         You(no_elbow_room);
         return;
     }
@@ -2001,6 +2001,9 @@ jump(int magic) /* 0=Physical, otherwise skill level */
            but that isn't necessarily the case for knights */
         You_cant("jump; you have no legs!");
         return ECMD_OK;
+    } else if (Hidinshell) {
+        You_cant("jump while hiding in your shell!");
+        return ECMD_OK;
     } else if (!magic && !Jumping) {
         You_cant("jump very far.");
         return ECMD_OK;
@@ -2266,6 +2269,10 @@ use_unicorn_horn(struct obj **optr)
     int trouble_list[PROP_COUNT];
     struct obj *obj = (optr ? *optr : (struct obj *) 0);
 
+    if (obj && Hidinshell) {
+        You_cant("use %s while hiding in your shell.", yname(obj));
+        return;
+    }
     if (obj && obj->cursed) {
         long lcount = (long) rn1(90, 10);
 
@@ -2975,6 +2982,10 @@ use_whip(struct obj *obj)
     if (!getdir((char *) 0))
         return (res|ECMD_CANCEL);
 
+    if (Hidinshell) {
+        There("is not enough room to flick your bullwhip.");
+        return res;
+    }
     if (u.uswallow) {
         mtmp = u.ustuck;
         rx = mtmp->mx;
@@ -3436,7 +3447,7 @@ use_pole(struct obj *obj, boolean autohit)
     boolean freehit = FALSE;
 
     /* Are you allowed to use the pole? */
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         pline(not_enough_room);
         return ECMD_OK;
     }
@@ -3737,7 +3748,7 @@ use_grapple(struct obj *obj)
     struct obj *otmp;
 
     /* Are you allowed to use the hook? */
-    if (u.uswallow) {
+    if (u.uswallow || Hidinshell) {
         pline(not_enough_room);
         return ECMD_OK;
     }

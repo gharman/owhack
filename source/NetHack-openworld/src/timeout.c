@@ -667,6 +667,8 @@ nh_timeout(void)
             pline("%s stops galloping.", Monnam(u.usteed));
     }
 
+    race_timeouts(); /* tortle's shell, vampire's shapechange */
+
     was_flying = Flying;
     for (upp = u.uprops; upp < u.uprops + SIZE(u.uprops); upp++)
         if ((upp->intrinsic & TIMEOUT) && !(--upp->intrinsic & TIMEOUT)) {

@@ -2764,6 +2764,12 @@ domove_core(void)
     boolean cause_delay = FALSE,        /* dragging ball will skip a move */
             displaceu = FALSE;          /* involuntary swap */
 
+    if (Hidinshell) {
+        Your("movement is constrained by your shell.");
+        nomul(0);
+        svc.context.move = 0;
+        return;
+    }
     if (svc.context.travel) {
         if (!findtravelpath(TRAVP_TRAVEL))
             (void) findtravelpath(TRAVP_GUESS);

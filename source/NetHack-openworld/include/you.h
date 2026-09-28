@@ -505,6 +505,12 @@ struct you {
     short umovement;         /* instead of youmonst.movement */
     schar uachieved[N_ACH];  /* list of achievements in the order attained */
     struct monst *umonst;    /* for future conversion of &gy.youmonst to u.umonst */
+    /* Open World races (see racial.c) */
+    int uinshell;            /* tortle: >0 turns left hiding in the shell,
+                              * <0 turns until it can hide again */
+    int uvampireshape;       /* vampire: turns until #monster shapechange
+                              * can be used again */
+    int ughostfear;          /* ghost: times humans have fled in fear */
 }; /* end of `struct you' */
 
 

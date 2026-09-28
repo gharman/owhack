@@ -1870,7 +1870,11 @@ m_move(struct monst *mtmp, int after)
             || (is_obj_mappear(&gy.youmonst, GOLD_PIECE) && !likes_gold(ptr))
             || (mtmp->mpeaceful && !mtmp->isshk) /* allow shks to follow */
             || ((monsndx(ptr) == PM_STALKER || ptr->mlet == S_BAT
-                 || ptr->mlet == S_LIGHT) && !rn2(3)))
+                 || ptr->mlet == S_LIGHT) && !rn2(3))
+            /* unintelligent monsters won't realize a hiding tortle is a
+               creature, and even intelligent ones overlook it at times */
+            || (Hidinshell
+                && (is_animal(ptr) || mindless(ptr) || !rn2(6))))
             appr = 0;
 
         if (appr == 1 && leppie_avoidance(mtmp))

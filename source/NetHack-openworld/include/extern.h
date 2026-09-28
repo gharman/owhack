@@ -993,6 +993,7 @@ extern void eating_conducts(struct permonst *) NONNULLARG1;
 extern int eat_brains(struct monst *, struct monst *, boolean,
                                                           int *) NONNULLARG12;
 extern void fix_petrification(void);
+extern boolean bite_monster(struct monst *) NONNULLARG1;
 extern int intrinsic_possible(int, struct permonst *) NONNULLARG2;
 extern boolean should_givit(int, struct permonst *) NONNULLARG2;
 extern void consume_oeaten(struct obj *, int) NONNULLARG1;
@@ -2740,6 +2741,27 @@ extern boolean u_throws_rocks(void);
 extern boolean u_illithid(void);
 extern boolean u_vampire(void);
 extern boolean u_draugr(void);
+extern boolean u_ghost(void);
+extern boolean your_race_form(int);
+extern void set_racial_bite(boolean);
+extern boolean racial_bite_active(void);
+extern boolean u_breakarm(void);
+extern boolean u_sliparm(void);
+extern int u_base_ac(void);
+extern int u_race_ac_adjust(void);
+extern int u_arm_bonus(struct obj *) NONNULLARG1;
+extern int toggleshell(void);
+extern int doenshelling(void);
+extern boolean shell_blocks(struct monst *, struct attack *) NONNULLPTRS;
+extern void race_timeouts(void);
+extern void leave_shell(void);
+extern boolean u_vampire_form(void);
+extern int polyatwill(void);
+extern boolean dopp_knows_form(int);
+extern void note_eaten_form(int);
+extern void forget_eaten_forms(void);
+extern boolean u_psionics_blocked(boolean);
+extern int race_monability(void);
 extern void race_form_props(boolean);
 
 /* ### read.c ### */

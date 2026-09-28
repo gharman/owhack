@@ -355,6 +355,10 @@ doread(void)
     gk.known = FALSE;
     if (check_capacity((char *) 0))
         return ECMD_OK;
+    if (Hidinshell) {
+        You_cant("read anything while hiding in your shell.");
+        return ECMD_OK;
+    }
 
     scroll = getobj("read", read_ok, GETOBJ_PROMPT);
     if (!scroll)

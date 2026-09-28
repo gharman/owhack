@@ -1270,6 +1270,10 @@ dokick(void)
     } else if (verysmall(gy.youmonst.data)) {
         You("are too small to do any kicking.");
         no_kick = TRUE;
+    } else if (Hidinshell) {
+        Your("%s are constrained within your shell.",
+             makeplural(body_part(LEG)));
+        no_kick = TRUE;
     } else if (u.usteed) {
         if (yn_function("Kick your steed?", ynchars, 'y', TRUE) == 'y') {
             You("kick %s.", mon_nam(u.usteed));

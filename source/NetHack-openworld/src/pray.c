@@ -1864,6 +1864,9 @@ dosacrifice(void)
     } else if (Confusion || Stunned) {
         You("are too impaired to perform the rite.");
         return ECMD_OK;
+    } else if (Hidinshell) {
+        You_cant("offer a sacrifice while hiding in your shell.");
+        return ECMD_OK;
     }
     highaltar = (levl[u.ux][u.uy].altarmask & AM_SANCTUM);
 
@@ -2435,6 +2438,10 @@ doturn(void)
         if (known_spell(SPE_TURN_UNDEAD))
             return spelleffects(SPE_TURN_UNDEAD, FALSE, FALSE);
         You("don't know how to turn undead!");
+        return ECMD_OK;
+    }
+    if (Hidinshell) {
+        You_cant("turn undead while hiding in your shell!");
         return ECMD_OK;
     }
     if (!u.uconduct.gnostic++)

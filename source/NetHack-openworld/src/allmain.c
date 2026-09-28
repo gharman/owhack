@@ -675,6 +675,9 @@ regen_hp(int wtcap)
                 heal += 1;
             if (Sleepy && u.usleep)
                 heal++;
+            /* tortles heal a little faster inside their shell */
+            if (Hidinshell && !U_CAN_REGEN() && !rn2(5))
+                heal++;
 
             if (heal) {
                 disp.botl = TRUE;
