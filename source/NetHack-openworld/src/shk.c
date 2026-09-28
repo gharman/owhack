@@ -597,7 +597,8 @@ blkmar_shk(struct monst *shkp)
                       && ESHK(shkp)->shoptype == BLACKSHOP);
 }
 
-/* Slash'EM: the black marketeer won't do business with non-humans */
+/* Slash'EM: the black marketeer won't do business with customers in
+   non-human form (the hero's own form is the role's human monster) */
 staticfn boolean
 blkmar_unwelcome(void)
 {

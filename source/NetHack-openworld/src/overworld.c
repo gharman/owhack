@@ -882,9 +882,11 @@ ow_init(void)
             ring = ow_slash_hell_ring(extras[i].base, extras[i].range,
                                       valley, gehlen);
         } else {
-            ring = extras[i].base + rn2(extras[i].range);
-            if (ring > medusa - 1)
-                ring = medusa - 1;
+            /* the range is cut short rather than piling up just outside
+               Medusa's ring */
+            int range = min((int) extras[i].range, medusa - extras[i].base);
+
+            ring = extras[i].base + rn2(max(range, 1));
         }
         ow_add_ring(dn, ring, 0);
         ow_set_dgn_depth(dn, ring + extras[i].levels);
@@ -2999,6 +3001,15 @@ ow_debug_dump(int cx, int cy, int rx, int ry)
                 fprintf(fp, "mon %d,%d %d %d %d %s\n", mtmp->mx, mtmp->my,
                         (int) mtmp->mpeaceful, (int) mtmp->isshk,
                         (int) mtmp->m_lev, pmname(mtmp->data, Mgender(mtmp)));
+                if (mtmp->isshk) {
+                    struct obj *otmp;
+
+                    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
+                        fprintf(fp, "shkinv %s%s %+d worn=%lx\n",
+                                OBJ_NAME(objects[otmp->otyp]),
+                                otmp->oartifact ? " (artifact)" : "",
+                                (int) otmp->spe, otmp->owornmask);
+                }
             }
         }
         fclose(fp);

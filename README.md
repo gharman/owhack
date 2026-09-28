@@ -181,7 +181,8 @@ replaced by the nearest thing 5.0 has.
   shop in the game, stocked with every kind of object, laid out class by
   class, at 25 times the usual price (50 times for anything magical).  Sam
   is a formidable fighter (Thiefbane, reflection, speed, life saving); he
-  welcomes invisible customers but not non-human ones.  Pets and steeds
+  welcomes invisible customers but not ones who have polymorphed into
+  something inhuman.  Pets and steeds
   can't enter, taming and Conflict don't work, and you can't level
   teleport out.  Shoplift and his assistants (the named monsters of the
   market) turn on you, while soldiers gather at the way out.
