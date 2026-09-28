@@ -642,6 +642,7 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_HUMAN_ZOMBIE:
     case PM_GIANT_ZOMBIE:
     case PM_ETTIN_ZOMBIE:
+    case PM_DRAUGR:
         num = undead_to_corpse(mndx);
         corpstatflags |= CORPSTAT_INIT;
         obj = mkcorpstat(CORPSE, mtmp, &mons[num], x, y, corpstatflags);
@@ -756,7 +757,8 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
 
     case PM_HOBBIT: case PM_DWARF: case PM_BUGBEAR: case PM_DWARF_LEADER:
     case PM_DWARF_RULER:
-    case PM_MIND_FLAYER: case PM_MASTER_MIND_FLAYER: case PM_MANES:
+    case PM_MIND_FLAYER: case PM_MASTER_MIND_FLAYER: case PM_ILLITHID:
+    case PM_MANES:
     case PM_HOMUNCULUS: case PM_IMP: case PM_LEMURE: case PM_QUASIT:
     case PM_TENGU: case PM_BLUE_JELLY: case PM_SPOTTED_JELLY:
     case PM_OCHRE_JELLY: case PM_KOBOLD: case PM_LARGE_KOBOLD:
@@ -788,6 +790,7 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
     case PM_KI_RIN: case PM_ARCHON:
 
     case PM_BAT: case PM_GIANT_BAT: case PM_RAVEN: case PM_VAMPIRE_BAT:
+    case PM_CENTAUR:
     case PM_PLAINS_CENTAUR: case PM_FOREST_CENTAUR: case PM_MOUNTAIN_CENTAUR:
 
     case PM_BABY_GRAY_DRAGON: case PM_BABY_GOLD_DRAGON:
@@ -864,6 +867,7 @@ make_corpse(struct monst *mtmp, unsigned int corpseflags)
 
     case PM_JELLYFISH: case PM_PIRANHA: case PM_SHARK: case PM_GIANT_EEL:
     case PM_ELECTRIC_EEL: case PM_KRAKEN:
+    case PM_TORTLE:
     case PM_NEWT: case PM_GECKO: case PM_IGUANA: case PM_BABY_CROCODILE:
     case PM_LIZARD: case PM_CHAMELEON: case PM_CROCODILE:
     case PM_SALAMANDER: case PM_LONG_WORM_TAIL:

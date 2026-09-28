@@ -583,7 +583,7 @@ update_mon_extrinsics(
     boolean silently)
 {
     int unseen;
-    uchar mask;
+    unsigned short mask;
     struct obj *otmp;
     int which = (int) objects[obj->otyp].oc_oprop,
         altwhich = altprop(obj);
@@ -627,7 +627,7 @@ update_mon_extrinsics(
         case JUMPING:
             break;
         default:
-            mon->mextrinsics |= (unsigned short) res_to_mr(which);
+            mon->mextrinsics |= (unsigned long) res_to_mr(which);
             break;
         }
     } else { /* off */
@@ -651,6 +651,8 @@ update_mon_extrinsics(
         case POISON_RES:
         case ACID_RES:
         case STONE_RES:
+        case DRAIN_RES:
+        case PSYCHIC_RES:
             /*
              * Update monster's extrinsics (for worn objects only;
              * 'obj' itself might still be worn or already unworn).
@@ -676,7 +678,7 @@ update_mon_extrinsics(
                     break;
             }
             if (!otmp)
-                mon->mextrinsics &= ~((unsigned short) mask);
+                mon->mextrinsics &= ~((unsigned long) mask);
             break;
         default:
             break;

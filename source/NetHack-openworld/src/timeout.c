@@ -77,6 +77,7 @@ static const struct propname {
     { SHOCK_RES, "shock resistance" },
     { POISON_RES, "poison resistance" },
     { DRAIN_RES, "drain resistance" },
+    { PSYCHIC_RES, "psychic resistance" },
     { SICK_RES, "sickness resistance" },
     { ANTIMAGIC, "magic resistance" },
     { HALLUC_RES, "hallucination resistance" },

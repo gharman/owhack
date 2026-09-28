@@ -51,6 +51,10 @@
 #define EDrain_resistance u.uprops[DRAIN_RES].extrinsic
 #define Drain_resistance (HDrain_resistance || EDrain_resistance)
 
+#define HPsychic_resistance u.uprops[PSYCHIC_RES].intrinsic
+#define EPsychic_resistance u.uprops[PSYCHIC_RES].extrinsic
+#define Psychic_resistance (HPsychic_resistance || EPsychic_resistance)
+
 /* Hxxx due to FROMFORM only */
 #define HAntimagic u.uprops[ANTIMAGIC].intrinsic
 #define EAntimagic u.uprops[ANTIMAGIC].extrinsic
@@ -270,11 +274,15 @@
 #define HMagical_breathing u.uprops[MAGICAL_BREATHING].intrinsic
 #define EMagical_breathing u.uprops[MAGICAL_BREATHING].extrinsic
 #define Amphibious \
-    (HMagical_breathing || EMagical_breathing || amphibious(gy.youmonst.data))
+    (HMagical_breathing || EMagical_breathing || amphibious(gy.youmonst.data) \
+     || (!Upolyd && Race_if(PM_TORTLE)))
 /* Get wet, may go under surface */
 
+/* draugr and vampires don't breathe in their natural form (the ghost's
+   lack of breath is HMagical_breathing FROMRACE, see race_form_props()) */
 #define Breathless \
-    (HMagical_breathing || EMagical_breathing || breathless(gy.youmonst.data))
+    (HMagical_breathing || EMagical_breathing || breathless(gy.youmonst.data) \
+     || (!Upolyd && (Race_if(PM_DRAUGR) || Race_if(PM_VAMPIRE))))
 
 #define Underwater (u.uinwater)
 /* Note that Underwater and u.uinwater are both used in code.

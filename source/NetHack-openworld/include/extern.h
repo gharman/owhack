@@ -1948,6 +1948,7 @@ extern void mon_learns_traps(struct monst *, int) NONNULLARG1;
 extern void mons_see_trap(struct trap *) NONNULLARG1;
 extern int get_atkdam_type(int);
 extern void init_mhflags(void);
+extern void init_mresists(void);
 #if (NH_DEVEL_STATUS != NH_STATUS_RELEASED) || defined(DEBUG)
 extern int mstrength(struct permonst *) NONNULLARG1;
 #endif
@@ -2725,6 +2726,21 @@ extern char *setstate(char *);
 extern long random(void);
 #endif /* CROSS_TO_AMIGA */
 #endif /* RANDOM */
+
+/* ### racial.c ### */
+
+extern boolean u_undead(void);
+extern int u_size(void);
+extern unsigned u_bodyweight(void);
+extern int u_race_speed(void);
+extern boolean u_race_no_boots(void);
+extern boolean u_giant(void);
+extern boolean u_centaur(void);
+extern boolean u_throws_rocks(void);
+extern boolean u_illithid(void);
+extern boolean u_vampire(void);
+extern boolean u_draugr(void);
+extern void race_form_props(boolean);
 
 /* ### read.c ### */
 

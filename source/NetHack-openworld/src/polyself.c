@@ -69,6 +69,7 @@ set_uasmon(void)
     PROPSET(POISON_RES, resist_from_form(MR_POISON));
     PROPSET(ACID_RES, resist_from_form(MR_ACID));
     PROPSET(STONE_RES, resist_from_form(MR_STONE));
+    PROPSET(PSYCHIC_RES, resist_from_form(MR_PSYCHIC));
     {
         /* resists_drli() takes wielded weapon into account; suppress it */
         struct obj *save_uwep = uwep;
@@ -109,6 +110,9 @@ set_uasmon(void)
                        || dmgtype_fromattack(mdat, AD_BLND, AT_GAZE)));
 #undef PROPSET
 #undef resist_from_form
+
+    /* racial flight and breathlessness only work in the natural form */
+    race_form_props(FALSE);
 
     /* whether the player is flying/floating depends on their steed,
        which won't be known during the restore process: but BFlying

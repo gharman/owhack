@@ -35,6 +35,7 @@ early_init(int argc, char *argv[])
     objects_globals_init();
     monst_globals_init();
     init_mhflags();
+    init_mresists();
     sys_early_init();
     runtime_info_init();
     nhUse(argc);

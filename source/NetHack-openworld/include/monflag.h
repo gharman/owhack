@@ -70,17 +70,20 @@ enum ms_sounds {
 /* NB: the above resistances correspond to the first 8 hero properties in
    prop_types (FIRE_RES through STONE_RES), which can be converted to their
    MR_foo equivalents with the macro res_to_mr() defined in prop.h */
+#define MR_DRAIN      0x0100 /* resists level drain (DRAIN_RES) */
+#define MR_PSYCHIC    0x0200 /* resists psionic attacks (PSYCHIC_RES) */
 /* other resistances: magic, sickness */
 /* other conveyances: teleport, teleport control, telepathy */
 
-/* individual resistances */
-#define MR2_SEE_INVIS   0x0100 /* see invisible */
-#define MR2_LEVITATE    0x0200 /* levitation */
-#define MR2_WATERWALK   0x0400 /* water walking */
-#define MR2_MAGBREATH   0x0800 /* magical breathing */
-#define MR2_DISPLACED   0x1000 /* displaced */
-#define MR2_STRENGTH    0x2000 /* gauntlets of power */
-#define MR2_FUMBLING    0x4000 /* clumsy */
+/* individual resistances; these only occur in monst.mintrinsics and
+   mextrinsics (unsigned long), never in permonst.mresists/mconveys */
+#define MR2_SEE_INVIS   0x00010000UL /* see invisible */
+#define MR2_LEVITATE    0x00020000UL /* levitation */
+#define MR2_WATERWALK   0x00040000UL /* water walking */
+#define MR2_MAGBREATH   0x00080000UL /* magical breathing */
+#define MR2_DISPLACED   0x00100000UL /* displaced */
+#define MR2_STRENGTH    0x00200000UL /* gauntlets of power */
+#define MR2_FUMBLING    0x00400000UL /* clumsy */
 
 #define M1_FLY          0x00000001L /* can fly or float */
 #define M1_SWIM         0x00000002L /* can traverse water */

@@ -207,6 +207,13 @@ resists_drli(struct monst *mon)
         || (mon == &gy.youmonst && u.ulycn >= LOW_PM)
         || ptr == &mons[PM_DEATH] || is_vampshifter(mon))
         return TRUE;
+    /* MR_DRAIN, innate or (for monsters) acquired; the hero's intrinsic
+       and extrinsic drain resistance is Drain_resistance, which callers
+       check themselves (set_uasmon() derives FROMFORM from this routine,
+       so only the form's own resistances are considered for the hero) */
+    if (mon == &gy.youmonst ? pm_resistance(ptr, MR_DRAIN)
+                            : (mon_resistancebits(mon) & MR_DRAIN) != 0)
+        return TRUE;
     return defended(mon, AD_DRLI);
 }
 
@@ -1592,9 +1599,13 @@ give_u_to_m_resistances(struct monst *mtmp)
        add each to the mintrinsics field for the given monster */
     for (intr = FIRE_RES; intr <= STONE_RES; intr++) {
         if ((u.uprops[intr].intrinsic & INTRINSIC) != 0L) {
-            mtmp->mintrinsics |= (unsigned short) res_to_mr(intr);
+            mtmp->mintrinsics |= (unsigned long) res_to_mr(intr);
         }
     }
+    if ((u.uprops[DRAIN_RES].intrinsic & INTRINSIC) != 0L)
+        mtmp->mintrinsics |= MR_DRAIN;
+    if ((u.uprops[PSYCHIC_RES].intrinsic & INTRINSIC) != 0L)
+        mtmp->mintrinsics |= MR_PSYCHIC;
 }
 
 /* Can monster resist conflict caused by hero?
@@ -1668,6 +1679,25 @@ get_atkdam_type(int adtyp)
     return adtyp;
 }
 
+/* Complete the MR_DRAIN resistance: undead, demons, lycanthropes (in both
+   forms) and Death resist level drain.  monsters.h lists MR_DRAIN
+   explicitly only for the exceptions to this rule; the rule itself is
+   applied here, once at startup after monst_globals_init(), so that every
+   undead or demon (including ones added later) has the bit in mresists. */
+void
+init_mresists(void)
+{
+    int i;
+
+    for (i = LOW_PM; i < NUMMONS; i++) {
+        struct permonst *ptr = &mons[i];
+
+        if (is_undead(ptr) || is_demon(ptr) || is_were(ptr)
+            || i == PM_DEATH)
+            ptr->mresists |= MR_DRAIN;
+    }
+}
+
 /* Compute mons[].mhflags, the monster race flags that races[] selfmask,
    lovemask and hatemask are matched against.  The classic five races come
    from the M2_ flags; the others from monster class or identity.  Called
@@ -1696,8 +1726,16 @@ init_mhflags(void)
             f |= MH_GIANT;
         if (ptr->mlet == S_CENTAUR)
             f |= MH_CENTAUR;
-        if (i == PM_MIND_FLAYER || i == PM_MASTER_MIND_FLAYER)
+        if (i == PM_MIND_FLAYER || i == PM_MASTER_MIND_FLAYER
+            || i == PM_ILLITHID)
             f |= MH_ILLITHID;
+        if (i == PM_TORTLE)
+            f |= MH_TORTLE;
+        /* draugr are kin to the walking dead: the true zombies (not the
+           ghouls or skeletons that share their class) */
+        if (i == PM_DRAUGR
+            || (ptr->mlet == S_ZOMBIE && i != PM_GHOUL && i != PM_SKELETON))
+            f |= MH_DRAUGR;
         if (ptr->mlet == S_VAMPIRE)
             f |= MH_VAMPIRE;
         if (ptr->mflags2 & M2_WERE)
