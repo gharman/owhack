@@ -7,6 +7,7 @@
 #include <math.h>
 
 staticfn int compass_bearing(int, int, int, int);
+staticfn int paces(long);
 staticfn const char *bearing_name(int);
 staticfn int shaky_distance(int);
 staticfn int shaky_bearing(int);
@@ -37,6 +38,18 @@ compass_bearing(int x1, int y1, int x2, int y2)
         return 0;
     a = atan2((double) dx, (double) -dy) * 180.0 / 3.14159265358979;
     return ((int) (a + 360.5)) % 360;
+}
+
+/* a distance, given its square, in whole paces (rounded to nearest, as
+   the Cartographer's techniques reckon it) */
+staticfn int
+paces(long d2)
+{
+    long r = (long) ow_isqrt(d2);
+
+    if (d2 - r * r > r)
+        r++;
+    return (int) r;
 }
 
 /* name of the compass point nearest to 'bearing' */
@@ -99,7 +112,8 @@ sighting_report(
             from_branch ? "Its way out lies in" : "You are in", ring, ring,
             ow_in_gehennom(x, y) ? ", in Gehennom" : "");
     putstr(win, 0, buf);
-    d = ow_dist(x, y);
+    d = paces((long) (x - OW_CX) * (x - OW_CX)
+              + (long) (y - OW_CY) * (y - OW_CY));
     if (d < 2) {
         putstr(win, 0, from_branch
                        ? "That is at the very centre of the world."
@@ -108,7 +122,7 @@ sighting_report(
         b = compass_bearing(x, y, OW_CX, OW_CY);
         if (!exact)
             d = shaky_distance(d), b = shaky_bearing(b);
-        Sprintf(buf, "The centre of the world lies %d square%s %s, "
+        Sprintf(buf, "The centre of the world lies %d pace%s %s, "
                      "bearing %d (%s).",
                 d, plur(d), from_branch ? "from there" : "away", b,
                 bearing_name(b));
@@ -134,7 +148,7 @@ sighting_report(
             putstr(win, 0, from_branch ? "Nearest portals to it:"
                                        : "Nearest portals:");
         }
-        d = ow_isqrt(bestdd);
+        d = paces(bestdd);
         b = compass_bearing(x, y, bx, by);
         if (!exact && d)
             d = shaky_distance(d), b = shaky_bearing(b);
@@ -142,7 +156,7 @@ sighting_report(
             Sprintf(buf, "  %s (ring %d): right here.",
                     dungeon_title(ri->dnum, dbuf), (int) ri->ring);
         else
-            Sprintf(buf, "  %s (ring %d): %d square%s, bearing %d (%s).",
+            Sprintf(buf, "  %s (ring %d): %d pace%s, bearing %d (%s).",
                     dungeon_title(ri->dnum, dbuf), (int) ri->ring, d,
                     plur(d), b, bearing_name(b));
         putstr(win, 0, buf);
