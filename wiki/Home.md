@@ -45,6 +45,6 @@ variants, plus a new role and a new race of its own.
 | Winning | Astral Plane | the high altars at the centre of the world |
 | Roles | 13 | 21 (+ Necromancer, Flame Mage, Ice Mage, Jedi, Pirate, Convict, Infidel, **Cartographer**) |
 | Races | 5 | 14 (+ giant, centaur, illithid, tortle, draugr, vampire, werewolf, doppelganger, **ghost**) |
-| Techniques | none | every role and most races (`#technique`, M-x) |
+| Techniques | none | every role but the Tourist, and most races (`#technique`, M-x) |
 | Object materials | fixed by type | per object (mithril chain mail, silver saber, wooden dagger...) |
 | `#enhance` | skill levels | levels plus training percentage |
