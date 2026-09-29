@@ -45,7 +45,9 @@ Terminal (tty) only.  Colour is on.  **Number-pad movement is on by default**
 terminal window shows more of the world; the map uses the whole window.
 
 In the game, `?` then "About the open world (read this first)" explains
-everything below.
+everything below.  The [wiki](wiki/Home.md) goes into more detail on what
+is unique to this build: the open world, the Cartographer and its quest,
+the ghost race, techniques, and how the imported features were adapted.
 
 ### The world
 
@@ -515,6 +517,8 @@ replaced by the nearest thing 5.0 has.
 ## Files
 
     play.sh                 launcher
+    wiki/                   supplemental wiki: what is new or different in
+                            this build (start at wiki/Home.md)
     game/                   the installed game (not tracked by git): nethack,
                             nhdat, sysconf, high scores, save/ directory
     source/NetHack-openworld/
