@@ -797,8 +797,10 @@ stock_blkmar(struct mkroom *sroom, int sh)
 
             for (i = 0; i < 50; i++) {
                 typ = rn2(next - first) + first;
-                /* forbidden objects */
-                if (!typ || objects[typ].oc_nowish
+                /* forbidden objects; the unnamed extra descriptions
+                   (spare scroll labels, wand woods and so on) aren't
+                   real objects at all */
+                if (!typ || !OBJ_NAME(objects[typ]) || objects[typ].oc_nowish
                     || typ == AMULET_OF_YENDOR
                     || typ == CANDELABRUM_OF_INVOCATION
                     || typ == BELL_OF_OPENING || typ == SPE_BOOK_OF_THE_DEAD

@@ -842,6 +842,9 @@ dropz(struct obj *obj, boolean with_impact)
         else if (svl.level.flags.has_shop)
             sellobj(obj, u.ux, u.uy);
         stackobj(obj);
+        /* a boulder put down (by a giant) blocks the view there */
+        if (obj->otyp == BOULDER)
+            recalc_block_point(u.ux, u.uy);
         if (Blind && Levitation)
             map_object(obj, 0);
         newsym(u.ux, u.uy); /* remap location under self */

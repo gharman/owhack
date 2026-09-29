@@ -2089,6 +2089,9 @@ throwit(
         stackobj(obj);
         if (obj == uball)
             drop_ball(gb.bhitpos.x, gb.bhitpos.y);
+        /* a boulder thrown by a giant blocks the view where it lands */
+        if (obj->otyp == BOULDER)
+            recalc_block_point(gb.bhitpos.x, gb.bhitpos.y);
         if (cansee(gb.bhitpos.x, gb.bhitpos.y))
             newsym(gb.bhitpos.x, gb.bhitpos.y);
         if (obj_sheds_light(obj))

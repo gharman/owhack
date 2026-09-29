@@ -1910,8 +1910,13 @@ pick_obj(struct obj *otmp)
 
     robshop = (!u.uswallow && otmp != uball && costly_spot(ox, oy));
     obj_extract_self(otmp);
-    if (fromfloor)
+    if (fromfloor) {
+        /* a boulder picked up (by a giant, or with telekinesis from a
+           distance) no longer blocks the view there */
+        if (otmp->otyp == BOULDER)
+            recalc_block_point(ox, oy);
         newsym(ox, oy);
+    }
 
     /* for shop items, addinv() needs to be after addtobill() (so that
        object merger can take otmp->unpaid into account) but before
