@@ -1785,8 +1785,10 @@ doname_base(
 
     /* show weight for items (debug tourist info);
        "aum" is stolen from Crawl's "Arbitrary Unit of Measure" */
-    if (wizard && iflags.wizweight) {
-        /* wizard mode user has asked to see object weights */
+    if ((wizard && iflags.wizweight)
+        || (iflags.invweight && obj->where == OBJ_INVENT)) {
+        /* wizard mode user has asked to see object weights, or the
+           'invweight' option (as in Hack'EM) for carried ones */
         if (with_price && bp_eos[-1] == ')')
             ConcatF1(bp, 1, ", %u aum)", obj->owt);
         else

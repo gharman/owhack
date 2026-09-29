@@ -829,7 +829,7 @@ hurtle_step(genericptr_t arg, coordxy x, coordxy y)
     lev = &levl[x][y];
     ltyp = lev->typ;
 
-    if (!Passes_walls || !(may_pass = may_passwall(x, y))) {
+    if (!Passes_walls || !(may_pass = u_may_passwall(x, y))) {
         const char *why = NULL;
         boolean diagonal = (u.ux - x) != 0 && (u.uy - y) != 0,
                 open_door = IS_DOOR(ltyp) && (lev->doormask & D_ISOPEN) != 0,

@@ -336,6 +336,7 @@ struct instance_flags {
     boolean defer_decor;      /* terrain change message vs slipping on ice */
     boolean echo;             /* 1 to echo characters */
     boolean force_invmenu;    /* always menu when handling inventory */
+    boolean invweight;        /* show the weight of carried objects */
     boolean hilite_pile;      /* mark piles of objects with a hilite */
     boolean menu_head_objsym; /* Show obj symbol in menu headings; controlled
                                * by 'menuobjsyms' */

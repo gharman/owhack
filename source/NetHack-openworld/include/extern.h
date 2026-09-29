@@ -2832,6 +2832,8 @@ extern void ghost_frightens(struct monst *) NONNULLARG1;
 extern boolean ghost_scares_peaceful(struct monst *) NONNULLARG1;
 extern boolean u_ghost_phasing(void);
 extern boolean u_ghost_phasing_only(void);
+extern boolean ghost_passwall_level(void);
+extern boolean u_may_passwall(coordxy, coordxy);
 extern boolean ghost_solid_at(coordxy, coordxy);
 extern boolean ghost_phase_ok(coordxy, coordxy, int, boolean);
 extern void ghost_phase_step(void);

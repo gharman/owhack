@@ -162,6 +162,17 @@ percentage, where every 100% is one level, or `MAX` when there is nothing
 left to train. (Hack'EM's cross-training multipliers aren't part of this
 game.)
 
+## Inventory weight
+
+As in Hack'EM, the full inventory (`i`) starts with a line such as
+`Inventory: 342/1000 weight (17/52 slots)`: the weight you are carrying,
+the most you can carry before you are Burdened, and how many of the 52
+inventory letters are in use. The `invweight` option (off by default, as
+in Hack'EM; it is in the `O` menu under General) adds each carried item's
+weight to its name, such as `a +0 katana (weapon in right hand) (40 aum)`.
+Beyond Hack'EM, picking an item from the inventory shows its weight at
+the top of the menu of things to do with it (`Weight: 40 aum`).
+
 ## Character selection
 
 With 21 roles and 14 races, first letters collide (Cartographer, Caveman,

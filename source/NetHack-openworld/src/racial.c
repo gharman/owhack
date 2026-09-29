@@ -290,6 +290,28 @@ u_ghost_phasing(void)
     return (u_ghost() && near_capacity() == UNENCUMBERED);
 }
 
+/* does this level let a ghost's phasing through the walls that it marks
+   as not to be passed through (Goblin Town's, the black market's)?
+   Not Sokoban's, the open world's Barrier and edge, the Wizard's and
+   Vlad's towers, the Sanctum or the endgame: those hold the game
+   together */
+boolean
+ghost_passwall_level(void)
+{
+    return (!In_overworld && !Sokoban && !In_endgame(&u.uz)
+            && !Is_sanctum(&u.uz) && !On_W_tower_level(&u.uz)
+            && !In_V_tower(&u.uz));
+}
+
+/* may the hero, if able to pass through walls at all, pass through the
+   wall or rock at <x,y>? */
+boolean
+u_may_passwall(coordxy x, coordxy y)
+{
+    return (may_passwall(x, y)
+            || (u_ghost_phasing() && ghost_passwall_level()));
+}
+
 /* does the hero pass through walls only by a ghost's energy-costing
    phasing, rather than by some other means? */
 boolean

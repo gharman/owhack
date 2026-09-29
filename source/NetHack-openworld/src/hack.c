@@ -1011,10 +1011,10 @@ test_move(
     if (IS_OBSTRUCTED(tmpr->typ) || tmpr->typ == IRONBARS) {
         if (Blind && mode == DO_MOVE)
             feel_location(x, y);
-        if (Passes_walls && may_passwall(x, y)
+        if (Passes_walls && u_may_passwall(x, y)
             && ghost_phase_ok(x, y, mode, TRUE)) {
             ; /* do nothing */
-        } else if (Passes_walls && may_passwall(x, y)) {
+        } else if (Passes_walls && u_may_passwall(x, y)) {
             /* a ghost out of energy (message given), or travel */
             return FALSE;
         } else if (Underwater) {
@@ -1060,7 +1060,8 @@ test_move(
                            && In_sokoban(&u.uz)) {
                     /* soko restriction stays even after puzzle is solved */
                     pline_The("Sokoban walls resist your ability.");
-                } else if (u_ghost() && may_passwall(x, y)) {
+                } else if (u_ghost() && (may_passwall(x, y)
+                                         || ghost_passwall_level())) {
                     /* a burdened ghost can't phase */
                     Your("possessions are too heavy to pass through "
                          "solid matter.");

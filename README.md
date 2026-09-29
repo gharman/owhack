@@ -41,8 +41,13 @@ and Dispater, with the monsters and artifacts that belong to them (see
     ./play.sh -D           wizard (debug) mode (sysconf allows user "gharman")
 
 Terminal (tty) only.  Colour is on.  **Number-pad movement is on by default**
-(set `number_pad:0` in `~/.nethackrc` if you ever want vi-keys).  A bigger
+(set `number_pad:0` in your options if you ever want vi-keys).  A bigger
 terminal window shows more of the world; the map uses the whole window.
+
+**Options**: if there is a file called `nethackrc` next to `play.sh`, the
+game reads it instead of `~/.nethackrc`.  It is ignored by git, so it is
+yours to keep; `--nethackrc=FILE`, or `NETHACKOPTIONS` naming a file,
+overrides it.
 
 In the game, `?` then "About the open world (read this first)" explains
 everything below.  The [wiki](wiki/Home.md) goes into more detail on what
@@ -339,8 +344,10 @@ has a hard time with the physical world:
 * **Drifts through walls, rock, trees, doors, bars and boulders**, but only
   while unburdened, and each move into solid matter costs 1 power point.
   Out of power, a ghost can't enter solid matter (and if already inside,
-  each step costs a little health, so it can never get stuck).  Levels
-  whose walls resist phasing (Sokoban and others) stop it.
+  each step costs a little health, so it can never get stuck).  Walls
+  that stop xorns (Goblin Town's, the black market's) don't stop a ghost;
+  only Sokoban, the Barrier and the world's edge, the Wizard's and Vlad's
+  Towers, the Sanctum and the endgame resist it.
 * **Incorporeal**: ordinary physical blows and missiles do half damage,
   unless silver or blessed, or struck by another incorporeal being;
   grabs slip through it.  Always floats; doesn't breathe; resists cold,
@@ -415,6 +422,12 @@ leather, cloth, dragonhide, plastic, paper and others.  Names show it
 
 ## Also new
 
+* **Weights, as in Hack'EM**: the inventory (`i`) starts with
+  `Inventory: 342/1000 weight (17/52 slots)`: what you carry, what you can
+  carry before you are Burdened, and the letters in use.  Picking an item
+  from the inventory shows its weight at the top of the menu of things to
+  do with it.  The `invweight` option adds `(40 aum)` to the name of every
+  carried item.
 * **#enhance** shows each skill as `[current / maximum]` and how far its
   training has come toward the next level, as a percentage (every 100% is
   a level, `MAX` when there is nothing left to train).
@@ -517,6 +530,8 @@ replaced by the nearest thing 5.0 has.
 ## Files
 
     play.sh                 launcher
+    nethackrc               your options for play.sh, if you make one
+                            (not tracked by git)
     wiki/                   supplemental wiki: what is new or different in
                             this build (start at wiki/Home.md); build.sh
                             also makes HTML pages of it in game/wiki/

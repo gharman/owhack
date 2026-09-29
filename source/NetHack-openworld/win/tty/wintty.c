@@ -1468,6 +1468,21 @@ process_menu_window(winid window, struct WinDesc *cw)
     finished = FALSE;
     previous_page_lines = 0;
 
+    /* an item may ask for the menu to open on its page (a menu that is
+       put back up after each choice, such as #options) */
+    if (cw->npages > 1) {
+        int pg;
+
+        for (pg = 0; pg < cw->npages; pg++)
+            for (curr = cw->plist[pg]; curr && curr != cw->plist[pg + 1];
+                 curr = curr->next)
+                if (curr->itemflags & MENU_ITEMFLAGS_STARTPAGE) {
+                    curr_page = pg;
+                    pg = cw->npages; /* end the outer loop too */
+                    break;
+                }
+    }
+
     /* collect group accelerators; for PICK_NONE, they're ignored;
        for PICK_ONE, only those which match exactly one entry will be
        accepted; for PICK_ANY, those which match any entry are okay */

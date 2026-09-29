@@ -167,6 +167,8 @@ typedef struct glyphinfo {
 #define MENU_ITEMFLAGS_SELECTED       0x0000001U
 #define MENU_ITEMFLAGS_SKIPINVERT     0x0000002U
 #define MENU_ITEMFLAGS_SKIPMENUCOLORS 0x0000004U
+/* hint: open the menu on the page that holds this item (tty) */
+#define MENU_ITEMFLAGS_STARTPAGE      0x0000008U
 
 /* 5.0+ enhanced menu flags that not all window ports are likely to
  * support initially.

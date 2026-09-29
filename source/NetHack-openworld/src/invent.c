@@ -2993,9 +2993,13 @@ xprname(
     boolean use_invlet = (flags.invlet_constant && obj != NULL
                           && let != CONTAINED_SYM && let != HANDS_SYM);
     long savequan = 0L;
+    unsigned saveowt = 0;
 
     if (quan && obj) {
         savequan = obj->quan;
+        /* 'invweight' shows the weight of just the part being listed */
+        saveowt = obj->owt;
+        obj->owt = (unsigned) ((obj->owt * quan) / savequan);
         obj->quan = quan;
     }
     /*
@@ -3033,8 +3037,10 @@ xprname(
         txtlen = BUFSZ - 1 - (4 + sfxlen);
     Sprintf(li, fmt, let, txtlen, txt, suffix);
 
-    if (savequan)
+    if (savequan) {
         obj->quan = savequan;
+        obj->owt = saveowt;
+    }
 
     return li;
 }
@@ -3347,6 +3353,20 @@ display_pickinv(
         add_menu(win, &nul_glyphinfo, &any, HANDS_SYM, 0, ATR_NONE,
                  clr, xtra_choice, MENU_ITEMFLAGS_NONE);
         gotsomething = TRUE;
+    }
+
+    /* the whole inventory: say how much it weighs and how many of the
+       52 letters are in use (as Hack'EM does) */
+    if (!lets && !usextra && !wizid && !doing_perm_invent && !inuse_only
+        && gi.invent) {
+        char heading[QBUFSZ];
+        int wcap = weight_cap();
+
+        Sprintf(heading, "Inventory: %d/%d weight (%d/52 slots)",
+                inv_weight() + wcap, wcap, inv_cnt(FALSE));
+        any = cg.zeroany;
+        add_menu(win, &nul_glyphinfo, &any, 0, 0, ATR_BOLD, clr, heading,
+                 MENU_ITEMFLAGS_SKIPINVERT);
     }
 
  nextclass:

@@ -41,8 +41,11 @@ boulders**, but:
   inside it, you can keep going, but each step costs 1d2 hit points
   (*Your essence frays as you strain through solid matter!*), so you can
   never be trapped.
-* **Some walls resist it**: Sokoban's (*The Sokoban walls resist your
-  ability.*), and any level whose walls can't be phased through.
+* **Most walls that stop xorns and other wall-walkers don't stop a
+  ghost**: Goblin Town's rock, the black market's walls, the Nightmare's
+  lair. **Only these resist it**: Sokoban's walls (*The Sokoban walls
+  resist your ability.*), the Barrier and the edge of the world, the
+  Wizard's Tower, Vlad's Tower, the Sanctum and the endgame.
 * **Travel (`_`) never plans a route through solid matter**, so it won't
   burn your power by surprise.
 

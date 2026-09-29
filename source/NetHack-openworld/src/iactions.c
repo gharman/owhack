@@ -290,6 +290,16 @@ itemactions(struct obj *otmp)
     win = create_nhwindow(NHW_MENU);
     start_menu(win, MENU_BEHAVE_STANDARD);
 
+    /* what it weighs, to go with the inventory's weight total */
+    if (otmp->quan > 1L)
+        Sprintf(buf, "Weight: %u aum (%ld of them)", otmp->owt, otmp->quan);
+    else if (Has_contents(otmp) && otmp->cknown)
+        Sprintf(buf, "Weight: %u aum, contents included", otmp->owt);
+    else
+        Sprintf(buf, "Weight: %u aum", otmp->owt);
+    add_menu_str(win, buf);
+    add_menu_str(win, "");
+
     /* -: unwield; picking current weapon offers an opportunity for 'w-'
        to wield bare/gloved hands; likewise for 'Q-' with quivered item(s) */
     if (otmp == uwep || otmp == uswapwep || otmp == uquiver) {

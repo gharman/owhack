@@ -48,3 +48,4 @@ variants, plus a new role and a new race of its own.
 | Techniques | none | every role but the Tourist, and most races (`#technique`, M-x) |
 | Object materials | fixed by type | per object (mithril chain mail, silver saber, wooden dagger...) |
 | `#enhance` | skill levels | levels plus training percentage |
+| Inventory | no weights shown | total weight and capacity; item weights (as in Hack'EM) |

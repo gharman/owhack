@@ -5363,6 +5363,7 @@ optfn_boolean(
         case opt_price_quotes:
         case opt_sortpack:
         case opt_implicit_uncursed:
+        case opt_invweight:
         case opt_wizweight:
             if (!flags.invlet_constant)
                 reassign();
@@ -8571,6 +8572,10 @@ longest_option_name(int startpass, int endpass)
     return longest_name_len;
 }
 
+/* the option picked last time round, so that doset_simple_menu() can put
+   the menu back up on the same page; -1 for none */
+static int simple_opt_last = -1;
+
 /* guts of doset_simple(); called repeatedly until no choice is made */
 staticfn int
 doset_simple_menu(void)
@@ -8671,7 +8676,9 @@ doset_simple_menu(void)
                 || allopt[i].idx == opt_dropped_nopick)
                 Strcat(buf, "  (for autopickup)");
             add_menu(tmpwin, &nul_glyphinfo, &any, 0, 0,
-                     ATR_NONE, NO_COLOR, buf, MENU_ITEMFLAGS_NONE);
+                     ATR_NONE, NO_COLOR, buf,
+                     (any.a_int - 1 == simple_opt_last)
+                         ? MENU_ITEMFLAGS_STARTPAGE : MENU_ITEMFLAGS_NONE);
             if (gs.simple_options_help && allopt[i].descr) {
                 Sprintf(buf, "    %s", allopt[i].descr);
                 add_menu_str(tmpwin, buf);
@@ -8691,6 +8698,7 @@ doset_simple_menu(void)
        menu returning pick_cnt > 0 implies exactly 1 */
     if (pick_cnt > 0) {
         k = pick_list[0].item.a_int - 1;
+        simple_opt_last = k;
 
         abuf[0] = '\0';
         if (k == -2) {
@@ -8760,6 +8768,7 @@ doset_simple(void)
     /* select and change one option at a time, then reprocess the menu
        with updated settings to offer chance for further change */
     give_opt_msg = FALSE;
+    simple_opt_last = -1;
     do {
         pickedone = doset_simple_menu();
         flush = go.opt_need_redraw;
