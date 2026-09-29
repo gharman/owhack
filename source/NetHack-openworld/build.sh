@@ -23,8 +23,11 @@ fi
 for f in perm record logfile xlogfile livelog; do
     [ -f "$game/$f" ] || : > "$game/$f"
 done
+# replace each file by renaming a fresh copy over it, so that a game that
+# is running keeps the files it started with
 for f in nethack nhdat recover symbols license; do
-    cp -p "playground/$f" "$game/$f"
+    cp -p "playground/$f" "$game/$f.new"
+    mv -f "$game/$f.new" "$game/$f"
 done
 # the supplemental wiki (../../wiki/*.md) as HTML pages beside the game
 if command -v python3 >/dev/null 2>&1; then
