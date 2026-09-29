@@ -75,11 +75,10 @@ walks round, or slip into a vault. Power regenerates as usual.
 * **Worn armor gives only half its base AC** (rounded down; material and
   erosion count before halving), while **enchantment counts in full**. A +3
   cloak is worth more to a ghost than plain plate mail.
-* **Wielded weapons are at −1 to hit.**
-* In exchange, **a ghost's touch chills**: bare hands do an extra
-  rnd(4 + XL/3) cold damage, and **the cold comes through a wielded weapon
-  too**, less keenly: an extra rnd(2 + XL/6). Not against targets that
-  resist cold, nor shades: *You chill the jackal.*
+* **Wielded weapons are at −2 to hit.**
+* In exchange, **bare hands deliver a chilling touch**: an extra
+  rnd(4 + XL/3) cold damage, unless the target resists cold (and not
+  against shades): *You chill the jackal.*
 
 ### Starting out
 
@@ -146,9 +145,10 @@ A ghost counts as undead (as the draugr and vampire races do):
 * **Enchanted armor over heavy armor**: you get half the base AC but all
   the enchantment. An elven cloak, a +2 helmet and good gloves beat a
   suit of plate.
-* **Your touch is your edge**: the chill is strongest bare-handed and
-  still adds to every weapon hit; the Wizard, Priest and Necromancer
-  ghosts have spells too. Weapons are at −1.
+* **Fight with your hands or with magic**: the chilling touch is strong
+  early, and the Wizard, Priest and Necromancer ghosts have spells.
+  Weapons are at −2. Like the ghosts of the dungeon, you are hard to kill
+  rather than dangerous.
 * **Silver and blessed weapons** get through your half-damage, and ghosts
   and shades hit you fully. Holy water hurts.
 * **Mountains are shortcuts** in the open world, and vaults are a few

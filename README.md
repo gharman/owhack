@@ -358,10 +358,9 @@ has a hard time with the physical world:
   nearby.
 * **Clumsy with material things**: two thirds of the usual carrying
   capacity; worn armor gives only half its base AC (enchantment counts in
-  full); wielded weapons are at -1 to hit.  In exchange its insubstantial
-  form is hard to strike (natural AC 7, improving with level), and its
-  touch chills: extra cold damage bare-handed, and a little through a
-  weapon.
+  full); wielded weapons are at -2 to hit.  In exchange its insubstantial
+  form is hard to strike (natural AC 7, improving with level), and bare
+  hands deliver a chilling touch (extra cold damage).
 * **Never eats and never gets hungry**, so it gains nothing from corpses.
 * Polymorphed into a solid form, a ghost has that form's body and needs.
 
