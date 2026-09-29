@@ -35,6 +35,9 @@ variants, plus a new role and a new race of its own.
 * **[Differences from the source variants](Variant_differences.md)**: how
   the imported roles, races, materials, techniques and levels were adapted,
   and what was left out.
+* **[Lineage and credits](Lineage.md)**: what this build is based on, which
+  versions of which variants its features were ported from, and the
+  license.
 
 ## At a glance
 

@@ -528,6 +528,31 @@ replaced by the nearest thing 5.0 has.
   Monster) and Slash'EM's lairs for **Yeenoghu, Demogorgon, Geryon and
   Dispater**, the demon lords that vanilla NetHack gives no lair.
 
+## Lineage and credits
+
+NetHack: Open World is a variant of **NetHack 5.0.0**, forked from the
+DevTeam's source ([github.com/NetHack/NetHack](https://github.com/NetHack/NetHack),
+branch `NetHack-5.0`, commit `c1b1b08`, dated 2026-09-26); it is not a fork
+of any other variant.  Features from six variants were ported from their
+source code (rewritten for 5.0, not merged, as each is built on an older
+NetHack):
+
+| Variant | Version | Repository and commit | Main contributions |
+|---|---|---|---|
+| Slash'EM | 0.0.8 | k21971/SlashEM `aae9ef2` | Necromancer, Flame and Ice Mage; vampire, werewolf, doppelganger; techniques; levels |
+| SlashTHEM | 0.9.7 | Soviet5lo/SlashTHEM `d828e64` | Jedi; Pirate; techniques |
+| SpliceHack | 1.2.0 | NullCGT/SpliceHack `8d70ade` | Pirate; Convict |
+| Hack'EM | 1.3.0 | elunna/hackem `cebe2f3` | versions of the above; drain and psychic resistance; #enhance percentages; inventory weights; levels |
+| EvilHack | 0.9.3 | k21971/EvilHack `c444f6a` | Infidel; Convict; giant, centaur, illithid, tortle, draugr; material rules; levels |
+| xNetHack | 10.0 | copperwater/xNetHack `6eef394` | object materials |
+
+The open world, the Cartographer and the ghost race are original to this
+build.  Lua 5.4.8 (MIT license), which runs the level scripts, is downloaded
+by the build.  Like NetHack and all six variants, this build is distributed
+under the NetHack General Public License
+(`source/NetHack-openworld/dat/license`).  Details, with full commit ids:
+[wiki/Lineage.md](wiki/Lineage.md).
+
 ## Files
 
     play.sh                 launcher
