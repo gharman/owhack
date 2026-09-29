@@ -332,13 +332,17 @@ ghost_solid_at(coordxy x, coordxy y)
 }
 
 /* may the hero, if its only way through walls is ghostly phasing, move
-   into solid matter at <x,y>?  travel never plans a route through it */
+   into solid matter at <x,y>?  travel and running never go into it */
 boolean
 ghost_phase_ok(coordxy x, coordxy y, int mode, boolean verbose)
 {
     if (!u_ghost_phasing_only() || !ghost_solid_at(x, y))
         return TRUE;
     if (mode == TEST_TRAV || mode == TEST_TRAP)
+        return FALSE;
+    /* only a deliberate step goes into solid matter, never travel or
+       running, which would spend energy (or health) unasked */
+    if (svc.context.run || svc.context.travel)
         return FALSE;
     if (u.uen < 1 && !ghost_solid_at(u.ux, u.uy)) {
         if (mode == DO_MOVE && verbose)

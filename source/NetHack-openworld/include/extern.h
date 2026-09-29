@@ -2481,6 +2481,7 @@ extern void ow_prepare_levtele(int, boolean);
 extern boolean ow_mon_dormant(struct monst *);
 extern boolean ow_rnd_monpos(struct monst *, mmflags_nht, coord *);
 extern void lvl_effect_bounds(coordxy *, coordxy *, coordxy *, coordxy *);
+extern boolean ow_local_watch(struct monst *) NONNULLARG1;
 extern boolean in_lvl_effect_bounds(coordxy, coordxy);
 extern int ow_home_dir(void);
 extern char *ow_compass_str(char *);

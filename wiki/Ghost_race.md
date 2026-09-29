@@ -46,8 +46,9 @@ boulders**, but:
   lair. **Only these resist it**: Sokoban's walls (*The Sokoban walls
   resist your ability.*), the Barrier and the edge of the world, the
   Wizard's Tower, Vlad's Tower, the Sanctum and the endgame.
-* **Travel (`_`) never plans a route through solid matter**, so it won't
-  burn your power by surprise.
+* **Only a deliberate step takes you into solid matter.** Travel (`_`)
+  never plans a route through it, and travel and running (`G`, shift and a
+  direction) stop at its edge, so neither burns your power by surprise.
 
 In the open world this means mountains are no obstacle, as long as your
 power lasts: a ghost can cut straight through a range that everyone else

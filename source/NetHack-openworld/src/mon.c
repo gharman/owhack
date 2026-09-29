@@ -5988,7 +5988,8 @@ angry_guards(boolean silent)
     for (mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;
-        if (is_watch(mtmp->data) && mtmp->mpeaceful) {
+        if (is_watch(mtmp->data) && mtmp->mpeaceful
+            && ow_local_watch(mtmp)) {
             ct++;
             if (canspotmon(mtmp) && mtmp->mcanmove) {
                 if (m_next2u(mtmp))

@@ -47,9 +47,13 @@ The world is made of zones, which get harsher with depth:
   caves in the largest); **lakelands**; **swamps**; **frozen tundra**;
   **desert** with the occasional oasis; **ancient ruins**.
 * **Roads** run outward from the plaza.
-* **Towns** have shops, a temple with a priest, houses, townsfolk and the
-  town watch, which reacts to the usual crimes (don't dip in their
-  fountains). Far out, towns are abandoned and haunted.
+* **Towns** have shops, a temple with a priest, houses and townsfolk.
+  Big towns in the first 14 rings also have a **town watch**, which reacts
+  to the usual crimes (don't dip in their fountains); villages have none.
+  Only the watch of the town you are in hears of trouble you cause there,
+  not every watchman in the world. A town may grow up around a magic
+  portal, leaving a small open square around it. Far out, towns are
+  abandoned and haunted.
 * **Walled compounds** hold what special rooms hold in NetHack (throne
   rooms, zoos, beehives, barracks, morgues, leprechaun halls, anthills,
   cockatrice nests), at the depths where those rooms would normally

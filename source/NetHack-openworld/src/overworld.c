@@ -1014,6 +1014,64 @@ ow_generated(int x, int y)
     return (boolean) (svow.genmap[cx][cy] != 0);
 }
 
+/* test aid: when OWHACK_ROOMCHECK names a file, report there every shop
+   whose walls have a gap and every temple without an altar */
+staticfn void ow_check_rooms(void);
+
+staticfn void
+ow_check_room(FILE *fp, struct mkroom *croom)
+{
+    int x, y, lx = croom->lx, hx = croom->hx, ly = croom->ly,
+        hy = croom->hy, altars = 0;
+
+    if (croom->rtype >= SHOPBASE || croom->rtype == TEMPLE) {
+        for (x = lx - 1; x <= hx + 1; x++)
+            for (y = ly - 1; y <= hy + 1; y++) {
+                int typ = levl[x][y].typ;
+
+                if (x >= lx && x <= hx && y >= ly && y <= hy) {
+                    if (IS_ALTAR(typ))
+                        altars++;
+                    continue;
+                }
+                if (!IS_WALL(typ) && typ != DOOR && typ != SDOOR)
+                    fprintf(fp, "gap %s room %d,%d-%d,%d at %d,%d typ %d"
+                            " flavor %d trap %d\n",
+                            croom->rtype == TEMPLE ? "temple" : "shop",
+                            lx, ly, hx, hy, x, y, typ, levl[x][y].flavor,
+                            t_at(x, y) ? t_at(x, y)->ttyp : -1);
+            }
+        if (croom->rtype == TEMPLE && !altars)
+            fprintf(fp, "noaltar temple %d,%d-%d,%d\n", lx, ly, hx, hy);
+    }
+}
+
+staticfn void
+ow_check_rooms(void)
+{
+    const char *f = getenv("OWHACK_ROOMCHECK");
+    FILE *fp;
+    int i, j, nshop = 0, ntemple = 0;
+
+    if (!f || !*f || !(fp = fopen(f, "a")))
+        return;
+    for (i = 0; i < svn.nroom; i++) {
+        struct mkroom *croom = &svr.rooms[i];
+
+        ow_check_room(fp, croom);
+        nshop += (croom->rtype >= SHOPBASE);
+        ntemple += (croom->rtype == TEMPLE);
+        for (j = 0; j < croom->nsubrooms; j++) {
+            ow_check_room(fp, croom->sbrooms[j]);
+            nshop += (croom->sbrooms[j]->rtype >= SHOPBASE);
+            ntemple += (croom->sbrooms[j]->rtype == TEMPLE);
+        }
+    }
+    fprintf(fp, "checked %d rooms: %d shops, %d temples\n", svn.nroom,
+            nshop, ntemple);
+    fclose(fp);
+}
+
 /* generate every chunk within 'radius' of <x,y> */
 staticfn void
 ow_generate_area(int x, int y, int radius)
@@ -1042,6 +1100,8 @@ ow_generate_area(int x, int y, int radius)
         vision_reset_rows(max(0, miny), min(ROWNO - 1, maxy));
         gv.vision_full_recalc = 1;
     }
+    if (nmade)
+        ow_check_rooms();
     if (nmade && getenv("OWHACK_TIMING"))
         fprintf(stderr, "ow_generate_area: %d chunks in %.3fs\n", nmade,
                 (double) (clock() - t0) / CLOCKS_PER_SEC);
@@ -1347,6 +1407,7 @@ ow_gen_chunk(int cx, int cy)
         x1 = min(x0 + OW_CHUNK - 1, OW_SIZE - 1),
         y1 = min(y0 + OW_CHUNK - 1, OW_SIZE - 1), x, y, ring;
     unsigned h = ow_hash(cx, cy, 1301);
+    boolean plaza;
 
     clock_t c0 = clock(), c1, c2, c3, c4;
     static double tt[5];
@@ -1363,13 +1424,16 @@ ow_gen_chunk(int cx, int cy)
     ow_gen_depth = ring;
     ow_gen_x = (x0 + x1) / 2, ow_gen_y = (y0 + y1) / 2;
 
-    if (OW_CX >= x0 - 9 && OW_CX <= x1 + 9 && OW_CY >= y0 - 9
-        && OW_CY <= y1 + 9)
+    /* portal sites before structures, so that no building is put where
+       a portal's clearing would pave over its walls or altar */
+    plaza = (OW_CX >= x0 - 9 && OW_CX <= x1 + 9 && OW_CY >= y0 - 9
+             && OW_CY <= y1 + 9);
+    if (plaza)
         ow_paint_plaza();
-    else
+    ow_make_portal_sites(x0, y0, x1, y1);
+    if (!plaza)
         ow_structures(cx, cy, x0, y0, x1, y1);
     c2 = clock();
-    ow_make_portal_sites(x0, y0, x1, y1);
 
     ow_fix_walls(max(x0 - 1, 1), max(y0 - 1, 0), min(x1 + 1, OW_SIZE - 1),
                  min(y1 + 1, OW_SIZE - 1));
@@ -1437,6 +1501,34 @@ ow_fix_walls(int x0, int y0, int x1, int y1)
 /* structures                                                          */
 /* ------------------------------------------------------------------ */
 
+/* how many magic portals' clearings (see ow_make_portal_sites(); they
+   reach 3 squares from the portal) overlap <x0,y0>-<x1,y1>?  <*px,*py>
+   is set to one of them */
+staticfn int
+ow_portal_sites_in(int x0, int y0, int x1, int y1, int *px, int *py)
+{
+    int r, k, x, y, n = 0;
+
+    for (r = 0; r < svow.nrings; r++) {
+        struct ow_ringinfo *ri = &svow.rings[r];
+
+        if (ri->dnum < 0 || ri->dnum >= svn.n_dgns)
+            continue;
+        for (k = 0; k < ri->nportals; k++) {
+            ow_portal_pos(ri, k, &x, &y);
+            if (x + 3 >= x0 && x - 3 <= x1 && y + 3 >= y0 && y - 3 <= y1) {
+                *px = x, *py = y;
+                n++;
+            }
+        }
+    }
+    return n;
+}
+
+/* the portal a town is being built around (see ow_structures()); its
+   clearing counts as clear ground; 0,0 for none */
+static coord ow_town_portal;
+
 /* a location that monsters/objects/features can be put on */
 staticfn boolean
 ow_open_spot(int x, int y)
@@ -1467,6 +1559,9 @@ ow_rect_clear(int x0, int y0, int x1, int y1, boolean rock)
         for (y = y0; y <= y1; y++) {
             struct rm *lev = &levl[x][y];
 
+            if (ow_town_portal.x && abs(x - ow_town_portal.x) <= 3
+                && abs(y - ow_town_portal.y) <= 3)
+                continue; /* the clearing of the portal a town surrounds */
             if (IS_POOL(lev->typ) || IS_LAVA(lev->typ) || lev->roomno
                 || lev->flavor == OWF_BARRIER || lev->flavor == OWF_PAVED
                 || lev->flavor == OWF_MARBLE || IS_WALL(lev->typ)
@@ -1774,8 +1869,10 @@ ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
         svl.level.flags.has_town = 1;
     }
 
-    /* fountain square in the middle */
+    /* fountain square in the middle (beside the portal, if it is there) */
     bx = (x0 + x1) / 2, by = (y0 + y1) / 2;
+    if (bx == ow_town_portal.x && by == ow_town_portal.y)
+        bx += 2;
     levl[bx][by].typ = FOUNTAIN;
     levl[bx][by].flags = 0;
     svl.level.flags.nfountains++;
@@ -1788,6 +1885,13 @@ ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
 
             if (!size)
                 ly = row ? y1 - 4 : y0 + 1, hy = ly + 3;
+            /* nothing is built on a portal's clearing: that lot stays
+               open, a little square around the portal */
+            if (ow_town_portal.x && lx - 1 <= ow_town_portal.x + 3
+                && hx + 1 >= ow_town_portal.x - 3
+                && ly - 1 <= ow_town_portal.y + 3
+                && hy + 1 >= ow_town_portal.y - 3)
+                continue;
             kind = rn2(10);
             if (ruined) {
                 /* ruined buildings: broken walls and debris */
@@ -2077,7 +2181,8 @@ ow_oasis(int x0, int y0, int x1, int y1, int ring)
             long dd = (long) (x - cc.x) * (x - cc.x) * 2
                       + (long) (y - cc.y) * (y - cc.y) * 4;
 
-            if (dd > 40 || levl[x][y].typ != ROOM)
+            if (dd > 40 || levl[x][y].typ != ROOM || t_at(x, y)
+                || levl[x][y].flavor == OWF_PAVED)
                 continue;
             levl[x][y].flavor = OWF_GRASS;
             if (dd <= 6)
@@ -2085,7 +2190,7 @@ ow_oasis(int x0, int y0, int x1, int y1, int ring)
             else if (!rn2(3))
                 levl[x][y].typ = TREE;
         }
-    if (levl[cc.x + 3][cc.y].typ == ROOM) {
+    if (levl[cc.x + 3][cc.y].typ == ROOM && !t_at(cc.x + 3, cc.y)) {
         levl[cc.x + 3][cc.y].typ = FOUNTAIN;
         levl[cc.x + 3][cc.y].flags = 0;
         svl.level.flags.nfountains++;
@@ -2170,14 +2275,20 @@ ow_structures(int cx, int cy, int x0, int y0, int x1, int y1)
     if (roll < 110 && biome != OWB_MOUNTAIN && biome != OWB_LAKE
         && biome != OWB_SWAMP && biome != OWB_BARRENS) {
         boolean big = (roll < 40);
+        int ptx, pty, tx1, ty1;
 
         tx = x0 + (big ? 2 : 6), ty = y0 + (big ? 7 : 9);
-        if (ow_rect_clear(tx, ty, tx + (big ? 26 : 18), ty + (big ? 16 : 12),
-                          FALSE)) {
+        tx1 = tx + (big ? 26 : 18), ty1 = ty + (big ? 16 : 12);
+        /* the town grows up around a portal in its way, if just one */
+        if (ow_portal_sites_in(tx, ty, tx1, ty1, &ptx, &pty) == 1)
+            ow_town_portal.x = ptx, ow_town_portal.y = pty;
+        if (ow_rect_clear(tx, ty, tx1, ty1, FALSE)) {
             ow_town(tx, ty, ring, biome, big ? 1 : 0,
                     (boolean) (ring > 16 && rn2(3)));
+            ow_town_portal.x = ow_town_portal.y = 0;
             return;
         }
+        ow_town_portal.x = ow_town_portal.y = 0;
     }
     if (roll < 160 && biome == OWB_MOUNTAIN) {
         ow_vault(x0, y0, x1, y1, ring);
@@ -2700,6 +2811,24 @@ lvl_effect_bounds(coordxy *lx, coordxy *ly, coordxy *hx, coordxy *hy)
         *lx = 1, *hx = COLNO - 1;
         *ly = 0, *hy = ROWNO - 1;
     }
+}
+
+/* does this member of a town watch hear about trouble the hero causes?
+   In the open world only the watch of the town the hero is in does (or,
+   out of town, the watch close by), not every watchman in the world */
+boolean
+ow_local_watch(struct monst *mtmp)
+{
+    struct mkroom *sroom;
+
+    if (!In_overworld)
+        return TRUE;
+    /* (the overworld's towns are its wall-less ordinary rooms; see
+       in_town()) */
+    for (sroom = &svr.rooms[0]; sroom->hx > 0; sroom++)
+        if (sroom->rtype == OROOM && inside_room(sroom, u.ux, u.uy))
+            return inside_room(sroom, mtmp->mx, mtmp->my);
+    return in_lvl_effect_bounds(mtmp->mx, mtmp->my);
 }
 
 /* is <x,y> within the area affected by level-wide effects? */
@@ -3446,7 +3575,7 @@ boolean
 ow_nearest_town(coordxy x, coordxy y, coordxy *tx, coordxy *ty)
 {
     int cx0 = x / OW_CHUNK, cy0 = y / OW_CHUNK, rad, cx, cy, qx, qy,
-        ngen = 0, bx = 0, by = 0, lastrad = 10;
+        ngen = 0, bx = 0, by = 0, lastrad = 10, pdx, pdy;
     long d, best = -1L;
 
     if (!svow.inited)
@@ -3467,11 +3596,16 @@ ow_nearest_town(coordxy x, coordxy y, coordxy *tx, coordxy *ty)
                     ow_generate_area(qx, qy, 0);
                     ngen++;
                 }
-                /* was the town really built? */
+                /* was the town really built?  (its fountain may have been
+                   drunk dry, and a portal's clearing is paved too) */
                 if (!IS_FOUNTAIN(levl[qx][qy].typ)
+                    && !IS_FOUNTAIN(levl[qx + 2][qy].typ)
+                    && levl[qx][qy].roomno < ROOMOFFSET
                     && !(levl[qx][qy].flavor == OWF_PAVED
                          && levl[qx - 3][qy].flavor == OWF_PAVED
-                         && levl[qx + 3][qy].flavor == OWF_PAVED))
+                         && levl[qx + 3][qy].flavor == OWF_PAVED
+                         && !ow_portal_sites_in(qx - 3, qy, qx + 3, qy,
+                                                &pdx, &pdy)))
                     continue;
                 d = (long) (qx - x) * (qx - x) + (long) (qy - y) * (qy - y);
                 if (best < 0L || d < best)
