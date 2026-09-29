@@ -62,31 +62,37 @@ walks round, or slip into a vault. Power regenerates as usual.
 * **Grabs slip through you**, and **your brain can't be eaten** (*Your
   brain is unharmed.*).
 * **You can't ride** (*You would pass right through the saddle.*).
+* **Hard to strike squarely**: a ghost's natural AC is **7 at XL 1**,
+  improving by 1 every 5 levels (AC 1 at XL 30), where other races have
+  10. This makes up for most of what halved armor costs (see below): a
+  ghost Wizard starts at AC 7, a ghost Samurai at AC 4 like a human one.
 
 ## Clumsy with material things
 
 "Hard to work with physical items, but not impossible":
 
-* **Half the usual carrying capacity.**
+* **Two thirds of the usual carrying capacity.**
 * **Worn armor gives only half its base AC** (rounded down; material and
   erosion count before halving), while **enchantment counts in full**. A +3
   cloak is worth more to a ghost than plain plate mail.
-* **Wielded weapons are at −2 to hit.**
-* In exchange, **bare hands deliver a chilling touch**: an extra
-  rnd(4 + XL/3) cold damage, unless the target resists cold (and not
-  against shades): *You chill the jackal.*
+* **Wielded weapons are at −1 to hit.**
+* In exchange, **a ghost's touch chills**: bare hands do an extra
+  rnd(4 + XL/3) cold damage, and **the cold comes through a wielded weapon
+  too**, less keenly: an extra rnd(2 + XL/6). Not against targets that
+  resist cold, nor shades: *You chill the jackal.*
 
 ### Starting out
 
-A ghost can't carry everything a living member of its role would. Before
-the game begins, **the heaviest things in the starting kit are left on the
-ground where you start** until you are unburdened: *Too insubstantial to
-bear all that you owned in life, you have left some of it on the altar.*
-You can pick them up if you want to carry them. A ghost Cartographer
-usually leaves its leather armor, a ghost Samurai its splint mail, a ghost
-Necromancer its pick-axe. Food is left out of the kit altogether, and so
-are things a ghost has no use for (a ring of see invisible or of slow
-digestion, a spellbook of detect food).
+A ghost may not be able to carry everything a living member of its role
+would. If its kit would leave it Burdened, **the heaviest things in it are
+left on the ground where you start** until you are unburdened: *Too
+insubstantial to bear all that you owned in life, you have left some of it
+on the altar.* You can pick them up if you want to carry them. With two
+thirds of the usual capacity most kits fit (a ghost Samurai keeps its
+splint mail); a weak ghost with a heavy kit may still leave something.
+Food is left out of the kit altogether, and so are things a ghost has no
+use for (a ring of see invisible or of slow digestion, a spellbook of
+detect food).
 
 ## No food, no hunger
 
@@ -140,9 +146,9 @@ A ghost counts as undead (as the draugr and vampire races do):
 * **Enchanted armor over heavy armor**: you get half the base AC but all
   the enchantment. An elven cloak, a +2 helmet and good gloves beat a
   suit of plate.
-* **Fight with your hands or with magic**: the chilling touch is strong
-  early, and the Wizard, Priest and Necromancer ghosts have spells.
-  Weapons are at −2.
+* **Your touch is your edge**: the chill is strongest bare-handed and
+  still adds to every weapon hit; the Wizard, Priest and Necromancer
+  ghosts have spells too. Weapons are at −1.
 * **Silver and blessed weapons** get through your half-damage, and ghosts
   and shades hit you fully. Holy water hurts.
 * **Mountains are shortcuts** in the open world, and vaults are a few

@@ -4461,7 +4461,7 @@ weight_cap(void)
 
     /* a ghost can barely bear the weight of physical things */
     if (u_ghost())
-        carrcap /= 2;
+        carrcap = (carrcap * 2) / 3;
 
     return (int) max(carrcap, 1L); /* never return 0 */
 }

@@ -421,7 +421,7 @@ find_roll_to_hit(
     tmp += tech_tohit_bonus();
     /* a ghost can barely keep hold of a weapon */
     if (u_ghost() && weapon && aatyp == AT_WEAP)
-        tmp -= 2;
+        tmp -= 1;
     /* a shapechanged vampire fights well with its natural weapons */
     if (!uwep && u_vampire_form())
         tmp += (u.ulevel / 3) + 5;
@@ -1122,6 +1122,15 @@ hmon_hitmon_weapon_melee(
         && obj->oclass == WEAPON_CLASS
         && objects[obj->otyp].oc_skill == P_KNIFE)
         hmd->dmg += min(3, svm.mvitals[monsndx(mon->data)].died / 6);
+
+    /* a ghost's chill comes through whatever it holds, if less keenly
+       than through its bare touch (see hmon_hitmon_barehands()) */
+    if (u_ghost() && hmd->thrown == HMON_MELEE && hmd->dmg > 0
+        && hmd->mdat != &mons[PM_SHADE]
+        && !resists_cold(mon) && !defended(mon, AD_COLD)) {
+        hmd->dmg += rnd(2 + u.ulevel / 6);
+        hmd->ghostchill = TRUE;
+    }
 
     /* special attack actions */
     if (!hmd->train_weapon_skill || mon == u.ustuck || u.twoweap

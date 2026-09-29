@@ -469,7 +469,9 @@ u_sliparm(void)
 
 /* the hero's natural armor class before any worn gear: the current form
    when polymorphed; giants have a thick hide (AC 6) and tortles their
-   shell (AC 0), which grows thicker as they grow up (EvilHack) */
+   shell (AC 0), which grows thicker as they grow up (EvilHack); a ghost's
+   insubstantial form is hard to strike squarely (AC 7, and better as it
+   grows more spectral), making up for how little its armor gives it */
 int
 u_base_ac(void)
 {
@@ -480,6 +482,8 @@ u_base_ac(void)
             uac = 6;
         else if (Race_if(PM_TORTLE))
             uac = 0 - u.ulevel / 3;
+        else if (Race_if(PM_GHOST))
+            uac = 7 - u.ulevel / 5;
     }
     return uac;
 }
