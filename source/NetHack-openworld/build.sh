@@ -23,4 +23,10 @@ done
 for f in nethack nhdat recover symbols license; do
     cp -p "playground/$f" "$game/$f"
 done
+# the supplemental wiki (../../wiki/*.md) as HTML pages beside the game
+if command -v python3 >/dev/null 2>&1; then
+    python3 "$here/wiki2html.py" "$here/../../wiki" "$game/wiki"
+else
+    echo "python3 not found: skipping the wiki's HTML pages"
+fi
 echo "Installed into $game"

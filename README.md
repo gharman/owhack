@@ -518,7 +518,8 @@ replaced by the nearest thing 5.0 has.
 
     play.sh                 launcher
     wiki/                   supplemental wiki: what is new or different in
-                            this build (start at wiki/Home.md)
+                            this build (start at wiki/Home.md); build.sh
+                            also makes HTML pages of it in game/wiki/
     game/                   the installed game (not tracked by git): nethack,
                             nhdat, sysconf, high scores, save/ directory
     source/NetHack-openworld/
@@ -563,6 +564,19 @@ The rest is spread across about 60 NetHack source files, mainly
   regenerated repeatedly with sanity checking; buying, selling and
   shoplifting in One-eyed Sam's market; save and restore inside the new
   branches; and fuzzing with games that start inside them.
+* The new roles, races, techniques and materials: character creation, a
+  look at inventory, attributes, skills and techniques, a few turns of play
+  and save/restore for every one of the 129 allowed role and race pairs;
+  every new role's quest played through from its portal to the nemesis and
+  back; wizard-mode checks of each technique, race mechanic, new object and
+  artifact; normal-mode bot games with new role and race combinations; and
+  many more hours of fuzzing, normal, wizard mode and AddressSanitizer,
+  with every failure fixed except the one below.
+* Known issue: once in the final 111 fuzzed games, the debug sanity check
+  found a boulder resting on a lava square in a branch level (a boulder
+  normally sinks into lava).  The cause wasn't found; it doesn't crash the
+  game, and without sanity checking (which only wizard-mode debugging turns
+  on) nothing is reported.
 * Performance: roughly 60 ms per move in a 200x60 terminal, world generation
   a few milliseconds per 32x32 area as you explore; save files are around
   0.5 MB early on and grow as you explore.
