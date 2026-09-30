@@ -58,7 +58,8 @@ The world is made of zones, which get harsher with depth:
   rooms, zoos, beehives, barracks, morgues, leprechaun halls, anthills,
   cockatrice nests), at the depths where those rooms would normally
   appear. There are also ruins, shrines, monster camps, graveyards and
-  oases.
+  oases. A camp's band, a graveyard's dead and the like are never
+  stronger than monsters wandering in at that depth would be.
 * **Treasure vaults**, with their guards, are sealed inside mountains.
   Beyond depth 10 one of them may hold the portal to Fort Ludios.
 

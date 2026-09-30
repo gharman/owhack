@@ -1501,6 +1501,24 @@ ow_fix_walls(int x0, int y0, int x1, int y1)
 /* structures                                                          */
 /* ------------------------------------------------------------------ */
 
+/* a monster of class 'cls' no stronger than random generation allows here
+   (see rndmonst()): mkclass() now and then reaches far past the level's
+   difficulty, which made the open world's bands, graveyards and the like
+   far deadlier than their depth (a master mind flayer among the dwarves
+   and hobbits of a camp near the Sokoban portals, a titan with the giants
+   of ring 14); Null if the class has nothing weak enough */
+staticfn struct permonst *
+ow_mkclass(char cls)
+{
+    int tries, cap = monmax_difficulty_lev();
+    struct permonst *pm;
+
+    for (tries = 0; tries < 20; tries++)
+        if ((pm = mkclass(cls, 0)) != 0 && (int) pm->difficulty <= cap)
+            return pm;
+    return (struct permonst *) 0;
+}
+
 /* how many magic portals' clearings (see ow_make_portal_sites(); they
    reach 3 squares from the portal) overlap <x0,y0>-<x1,y1>?  <*px,*py>
    is set to one of them */
@@ -1972,10 +1990,11 @@ ow_town(int x0, int y0, int ring, int biome, int size, boolean ruined)
         /* ghost towns are haunted, or overrun */
         for (i = rn1(3, 2); i > 0; i--)
             if (ow_find_spot(x0, y0, x1, y1, &cc, TRUE)) {
-                struct permonst *pm = rn2(2) ? mkclass(S_ZOMBIE, 0)
-                                             : mkclass(S_ORC, 0);
+                struct permonst *pm = rn2(2) ? ow_mkclass(S_ZOMBIE)
+                                             : ow_mkclass(S_ORC);
 
-                (void) makemon(pm, cc.x, cc.y, NO_MM_FLAGS);
+                if (pm)
+                    (void) makemon(pm, cc.x, cc.y, NO_MM_FLAGS);
             }
         if (ow_find_spot(x0, y0, x1, y1, &cc, TRUE))
             (void) makemon(&mons[PM_GHOST], cc.x, cc.y, NO_MM_FLAGS);
@@ -2103,7 +2122,7 @@ ow_ruins(int x0, int y0, int x1, int y1, int ring)
         if (!rn2(2) && ow_find_spot(x, y, x + w - 1, y + h - 1, &cc, TRUE))
             mktrap(0, MKTRAP_NOFLAGS, (struct mkroom *) 0, &cc);
         if (!rn2(3) && ow_find_spot(x, y, x + w - 1, y + h - 1, &cc, TRUE))
-            (void) makemon(!rn2(3) ? mkclass(S_ZOMBIE, 0)
+            (void) makemon(!rn2(3) ? ow_mkclass(S_ZOMBIE)
                                    : (struct permonst *) 0,
                            cc.x, cc.y, NO_MM_FLAGS);
         if (!rn2(4) && ow_find_spot(x, y, x + w - 1, y + h - 1, &cc, TRUE))
@@ -2156,7 +2175,7 @@ ow_camp(int x0, int y0, int x1, int y1, int ring)
         if (!ow_find_spot(ctr.x - 3, ctr.y - 3, ctr.x + 3, ctr.y + 3, &cc,
                           FALSE))
             continue;
-        pm = mkclass(cls, 0);
+        pm = ow_mkclass(cls);
         if (pm)
             (void) makemon(pm, cc.x, cc.y, NO_MM_FLAGS);
     }
@@ -2210,10 +2229,13 @@ ow_graveyard(int x0, int y0, int x1, int y1, int ring)
             continue;
         levl[cc.x][cc.y].typ = GRAVE;
         make_grave(cc.x, cc.y, (char *) 0);
-        if (!rn2(3))
-            (void) makemon(mkclass(!rn2(3) ? S_MUMMY
-                                   : !rn2(2) ? S_ZOMBIE : S_WRAITH, 0),
-                           cc.x, cc.y, NO_MM_FLAGS);
+        if (!rn2(3)) {
+            struct permonst *pm = ow_mkclass(!rn2(3) ? S_MUMMY
+                                             : !rn2(2) ? S_ZOMBIE : S_WRAITH);
+
+            if (pm)
+                (void) makemon(pm, cc.x, cc.y, NO_MM_FLAGS);
+        }
     }
     svl.level.flags.graveyard = 1;
 }
@@ -2229,7 +2251,9 @@ ow_hell_lair(int x0, int y0, int x1, int y1, int ring)
     nhUse(ring);
     if (!ow_find_spot(x0 + 4, y0 + 4, x1 - 4, y1 - 4, &cc, FALSE))
         return;
-    mtmp = makemon(mkclass(S_DEMON, 0), cc.x, cc.y, NO_MM_FLAGS);
+    /* (a demon strong enough for the depth, or failing that whatever
+       else lairs here) */
+    mtmp = makemon(ow_mkclass(S_DEMON), cc.x, cc.y, NO_MM_FLAGS);
     if (mtmp)
         mtmp->msleeping = rn2(2);
     for (i = rn1(3, 2); i > 0; i--)
@@ -2389,7 +2413,7 @@ ow_populate(int cx, int cy, int x0, int y0, int x1, int y1)
         for (i = rn2(3); i > 0; i--) {
             x = rn1(x1 - x0 + 1, x0), y = rn1(y1 - y0 + 1, y0);
             if (is_pool(x, y) && !MON_AT(x, y)) {
-                struct permonst *pm = mkclass(S_EEL, 0);
+                struct permonst *pm = ow_mkclass(S_EEL);
 
                 if (pm)
                     (void) makemon(pm, x, y, NO_MM_FLAGS);
