@@ -423,6 +423,11 @@ leather, cloth, dragonhide, plastic, paper and others.  Names show it
 
 ## Also new
 
+* **Shopkeeper services, as in Hack'EM**: `#chat` to a shopkeeper you owe
+  nothing for identification, uncursing, weapon- and armor-works,
+  charging, rumors and, in the Gnomish Mines, tinkering (see the wiki's
+  differences page).  `#ch` completes to `#chat` again, and `#te` to
+  `#technique`.
 * **Weights, as in Hack'EM**: the inventory (`i`) starts with
   `Inventory: 342/1000 weight (17/52 slots)`: what you carry, what you can
   carry before you are Burdened, and the letters in use.  Picking an item

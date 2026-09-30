@@ -23,6 +23,8 @@
 #define CMD_INSANE   0x1000 /* suppress sanity check (for ^P and ^R) */
 #define AUTOCOMP_ADJ 0x2000 /* user changed command autocompletion */
 #define CMD_PARAM    0x4000 /* command requires a param from key bind */
+#define AUTOCOMP_PREFER 0x8000 /* wins an ambiguous autocompletion ("#ch"
+                                * is #chat rather than #chronicle) */
 
 /* flags for extcmds_match() */
 #define ECM_NOFLAGS       0

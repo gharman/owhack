@@ -3433,6 +3433,8 @@ extern void sysopt_seduce_set(int);
 
 /* ### tech.c ### */
 
+extern boolean tinker_upgradable(struct obj *) NONNULLARG1;
+extern boolean tinker_upgrade(struct obj *) NONNULLARG1;
 extern boolean tech_known(short);
 extern int tech_inuse(int);
 extern int tech_level(int);

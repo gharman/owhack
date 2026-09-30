@@ -44,7 +44,6 @@ staticfn int tinker_occ(void);
 staticfn int draw_energy_occ(void);
 staticfn int ma_break_occ(void);
 staticfn int tinker_newtyp(int);
-staticfn boolean tinker_upgrade(struct obj *);
 staticfn boolean can_practice(int);
 staticfn int practice_weapon(void);
 staticfn boolean monk_hands_free(void);
@@ -1683,11 +1682,20 @@ tinker_newtyp(int otyp)
     return 0; /* not upgradable */
 }
 
-/* upgrade the wielded object; TRUE if it changed */
-staticfn boolean
+/* can tinkering turn this object into something else? */
+boolean
+tinker_upgradable(struct obj *obj)
+{
+    return (boolean) (tinker_newtyp(obj->otyp) != 0 && !obj->oartifact);
+}
+
+/* upgrade a carried object (the wielded one for the tinker technique, any
+   for a shopkeeper's tinkering service); TRUE if it changed */
+boolean
 tinker_upgrade(struct obj *obj)
 {
     int newtyp = tinker_newtyp(obj->otyp);
+    boolean wielded = (obj == uwep);
 
     if (!newtyp || obj->oartifact)
         return FALSE;
@@ -1746,18 +1754,20 @@ tinker_upgrade(struct obj *obj)
     if (!objects[obj->otyp].oc_uses_known)
         obj->known = 1;
     obj->owt = weight(obj);
-    if (obj != uwep) {
-        setuwep(obj);
-    } else {
-        /* re-wield to update wielded-weapon state */
-        setuwep((struct obj *) 0);
-        setuwep(obj);
-    }
-    if (uwep && bimanual(uwep) && uarms) {
-        You("can't hold %s with your shield on.", yname(uwep));
-        setuwep((struct obj *) 0);
-    } else if (u.twoweap && !can_twoweapon()) {
-        untwoweapon();
+    if (wielded) {
+        if (obj != uwep) {
+            setuwep(obj);
+        } else {
+            /* re-wield to update wielded-weapon state */
+            setuwep((struct obj *) 0);
+            setuwep(obj);
+        }
+        if (uwep && bimanual(uwep) && uarms) {
+            You("can't hold %s with your shield on.", yname(uwep));
+            setuwep((struct obj *) 0);
+        } else if (u.twoweap && !can_twoweapon()) {
+            untwoweapon();
+        }
     }
     update_inventory();
     return TRUE;

@@ -133,6 +133,7 @@ staticfn boolean rob_shop(struct monst *);
 staticfn void deserted_shop(char *);
 staticfn boolean special_stock(struct obj *, struct monst *, boolean);
 staticfn const char *cad(boolean);
+staticfn int shk_other_services(struct monst *);
 
 /*
         invariants: obj->unpaid iff onbill(obj) [unless bp->useup]
@@ -2034,6 +2035,9 @@ dopay(void)
             You("do not owe %s anything.", shkname(shkp));
             if (!umoney)
                 pline(no_money, stashed_gold ? " seem to" : "");
+            /* but there may be services to pay for (Hack'EM) */
+            else if (shk_other_services(shkp))
+                return ECMD_TIME;
         } else if (ltmp) {
             pline("%s is after blood, not gold!", shkname(shkp));
             if (umoney < ltmp / 2L || (umoney < ltmp && stashed_gold)) {
@@ -5823,6 +5827,9 @@ shk_chat(struct monst *shkp)
         if (!Deaf && !muteshk(shkp))
             pline("%s talks about the problem of shoplifters.", Shknam(shkp));
     }
+    /* then what else the shopkeeper can do for you (Hack'EM) */
+    if (!eshk->following && !eshk->billct && !eshk->debit)
+        (void) shk_other_services(shkp);
 }
 
 RESTORE_WARNING_FORMAT_NONLITERAL
@@ -6337,6 +6344,746 @@ use_unpaid_trapobj(struct obj *otmp, coordxy x, coordxy y)
         bill_dummy_object(otmp);
     }
 }
+
+/*
+ * Shopkeepers' other services (Slash'EM, as in Hack'EM): once you owe
+ * nothing, #chat (or #pay) offers what this shopkeeper can do for a fee:
+ * identify an item of certain classes, uncurse, fix, rustproof, enchant
+ * or poison weapons, fix, rustproof or enchant armor, charge things, tell
+ * a rumor, and in the Gnomish Mines tinker.  Prices depend on Charisma
+ * and are tripled in the black market.
+ *
+ * Hack'EM keeps each shopkeeper's services in its shopkeeper data; here
+ * they are worked out from the shopkeeper itself (with a private random
+ * number generator seeded by its monster id and the game), with the
+ * same chances, so a shopkeeper always offers the same services and
+ * nothing extra goes into the save file.  Hack'EM's property grafting
+ * and firearms training aren't here (this game has no object properties,
+ * and Hack'EM's training is unfinished), and since this game's
+ * shopkeepers are all human, the racial services of Hack'EM's gnomish,
+ * dwarvish and other shopkeepers aren't either, except tinkering, which
+ * the Mines' shopkeepers offer in place of Hack'EM's gnomes.
+ */
+#define SHK_ID_WEAPON 0x00000001L
+#define SHK_ID_ARMOR  0x00000002L
+#define SHK_ID_SCROLL 0x00000004L
+#define SHK_ID_BOOK   0x00000008L
+#define SHK_ID_POTION 0x00000010L
+#define SHK_ID_RING   0x00000020L
+#define SHK_ID_AMULET 0x00000040L
+#define SHK_ID_WAND   0x00000080L
+#define SHK_ID_TOOL   0x00000100L
+#define SHK_ID_GEM    0x00000200L
+#define SHK_ID_FOOD   0x00000400L
+#define SHK_UNCURSE   0x00000800L
+#define SHK_WEP_FIX   0x00001000L
+#define SHK_WEP_ENC   0x00002000L
+#define SHK_WEP_POI   0x00004000L
+#define SHK_ARM_FIX   0x00008000L
+#define SHK_ARM_ENC   0x00010000L
+#define SHK_CHG_BAS   0x00020000L
+#define SHK_CHG_PRE   0x00040000L
+#define SHK_RUMOR     0x00080000L
+#define SHK_TINKER    0x00100000L
+
+/* the chance that a shopkeeper doesn't cheat a customer who can't tell */
+#define SVC_ANYCLASS 0 /* any class of object */
+#define no_cheat ((ACURR(A_CHA) - rnl(3)) > 7)
+
+static const struct shk_id_svc {
+    long svc;
+    char oclass;
+    char let;
+    const char *what;
+} shk_id_svcs[] = {
+    { SHK_ID_WEAPON, WEAPON_CLASS, ')', "Weapon" },
+    { SHK_ID_ARMOR, ARMOR_CLASS, '[', "Armor" },
+    { SHK_ID_SCROLL, SCROLL_CLASS, '?', "Scroll" },
+    { SHK_ID_BOOK, SPBOOK_CLASS, '+', "Spellbook" },
+    { SHK_ID_POTION, POTION_CLASS, '!', "Potion" },
+    { SHK_ID_RING, RING_CLASS, '=', "Ring" },
+    { SHK_ID_AMULET, AMULET_CLASS, '"', "Amulet" },
+    { SHK_ID_WAND, WAND_CLASS, '/', "Wand" },
+    { SHK_ID_TOOL, TOOL_CLASS, '(', "Tool" },
+    { SHK_ID_GEM, GEM_CLASS, '*', "Gem/Stone" },
+    { SHK_ID_FOOD, FOOD_CLASS, '%', "Food" },
+};
+
+static unsigned long shk_svc_seed;
+
+/* rn2() for working out a shopkeeper's services, which mustn't vary */
+staticfn int
+svc_rn2(int n)
+{
+    shk_svc_seed = shk_svc_seed * 1103515245UL + 12345UL;
+    return (int) ((shk_svc_seed >> 16) % (unsigned long) n);
+}
+
+/* the class of object a shop deals in; RANDOM_CLASS for a general store
+   or the black market */
+staticfn char
+shk_svc_class(struct monst *shkp)
+{
+    return shtypes[ESHK(shkp)->shoptype - SHOPBASE].symb;
+}
+
+/* what this shopkeeper offers (Hack'EM's init_shk_services()) */
+staticfn long
+shk_services(struct monst *shkp)
+{
+    long offers = 0L;
+    char cls = shk_svc_class(shkp);
+    const char *shopname = shtypes[ESHK(shkp)->shoptype - SHOPBASE].name;
+    boolean blkmar = Is_blackmarket(&u.uz);
+
+    /* test aid: in wizard mode OWHACK_ALLSVC offers every service */
+    if (wizard && getenv("OWHACK_ALLSVC"))
+        return (SHK_TINKER << 1) - 1L;
+    shk_svc_seed = ((unsigned long) shkp->m_id * 2654435761UL)
+                   ^ (unsigned long) ubirthday
+                   ^ ((unsigned long) ESHK(shkp)->shoptype << 20);
+    (void) svc_rn2(2);
+
+    /* general stores identify a random selection of classes */
+    if (cls == RANDOM_CLASS) {
+        while (!svc_rn2(6))
+            offers |= shk_id_svcs[svc_rn2(10)].svc;
+    }
+    /* each other shop identifies what it sells, and sometimes more */
+    switch (cls) {
+    case WEAPON_CLASS:
+        if (svc_rn2(100) + 1 < 75)
+            offers |= SHK_ID_WEAPON;
+        if (!svc_rn2(5))
+            offers |= SHK_ID_ARMOR;
+        break;
+    case ARMOR_CLASS:
+        if (svc_rn2(100) + 1 < 75)
+            offers |= SHK_ID_ARMOR;
+        if (!svc_rn2(5))
+            offers |= SHK_ID_WEAPON;
+        break;
+    case SCROLL_CLASS:
+        if (svc_rn2(100) + 1 < 75)
+            offers |= SHK_ID_SCROLL;
+        if (!svc_rn2(5))
+            offers |= SHK_ID_BOOK;
+        break;
+    case SPBOOK_CLASS:
+        if (svc_rn2(100) + 1 < 75)
+            offers |= SHK_ID_BOOK;
+        if (!svc_rn2(2))
+            offers |= SHK_ID_SCROLL;
+        break;
+    case POTION_CLASS:
+        if (svc_rn2(100) + 1 < 50)
+            offers |= SHK_ID_POTION;
+        break;
+    case RING_CLASS:
+        if (!svc_rn2(3))
+            offers |= SHK_ID_RING;
+        if (!svc_rn2(5))
+            offers |= SHK_ID_AMULET;
+        if (!svc_rn2(5))
+            offers |= SHK_ID_GEM;
+        break;
+    case TOOL_CLASS:
+        if (!svc_rn2(2))
+            offers |= SHK_ID_TOOL;
+        break;
+    case WAND_CLASS:
+        if (!svc_rn2(2))
+            offers |= SHK_ID_WAND;
+        if (!svc_rn2(5))
+            offers |= SHK_ID_ARMOR;
+        break;
+    case FOOD_CLASS:
+        offers |= SHK_ID_FOOD;
+        if (!svc_rn2(10))
+            offers |= SHK_ID_POTION;
+        break;
+    default:
+        break;
+    }
+    /* any shop */
+    if (!svc_rn2(3))
+        offers |= SHK_UNCURSE;
+    /* weapon-works and armor-works */
+    if (cls == WEAPON_CLASS || blkmar) {
+        if (!svc_rn2(4))
+            offers |= SHK_WEP_FIX;
+        if (!svc_rn2(4))
+            offers |= SHK_WEP_ENC;
+        if (!svc_rn2(4))
+            offers |= SHK_WEP_POI;
+    }
+    if (cls == ARMOR_CLASS || blkmar) {
+        if (!svc_rn2(4))
+            offers |= SHK_ARM_FIX;
+        if (!svc_rn2(4))
+            offers |= SHK_ARM_ENC;
+    }
+    /* charging: specialists charge their own wares, basic and premier;
+       general stores (only basic) anything */
+    if (cls == WAND_CLASS || cls == TOOL_CLASS || cls == RING_CLASS) {
+        if (!svc_rn2(4))
+            offers |= (SHK_CHG_BAS | SHK_CHG_PRE);
+    } else if (cls == RANDOM_CLASS && !svc_rn2(4)) {
+        offers |= SHK_CHG_BAS;
+    }
+    if (!strcmp(shopname, "lighting store") && !(offers & SHK_ID_POTION)
+        && !svc_rn2(10))
+        offers |= SHK_ID_POTION;
+    /* the Mines' shopkeepers, in place of Hack'EM's gnomish ones */
+    if (In_mines(&u.uz)) {
+        if (!(offers & SHK_ID_TOOL) && !svc_rn2(4))
+            offers |= SHK_ID_TOOL;
+        if (!svc_rn2(4))
+            offers |= SHK_TINKER;
+    }
+    if (!svc_rn2(20) || blkmar)
+        offers |= SHK_RUMOR;
+    return offers;
+}
+
+/* Charisma makes a service cheaper (Hack'EM's shk_smooth_charge()) */
+staticfn long
+shk_smooth_charge(long charge, long lower, long upper)
+{
+    static const int mult[] = { 21, 21, 21, 21, 21, 20, 19, 18, 17, 16, 16,
+                                15, 15, 14, 14, 12, 12, 11, 10, 9, 9, 8 };
+    int cha = ACURR(A_CHA);
+
+    charge = charge * ((cha > 21) ? 7 : mult[max(cha, 0)]) / 10;
+    if (Is_blackmarket(&u.uz))
+        charge *= 3;
+    if (upper > 0) {
+        /* charismatic customers get a lower ceiling, too */
+        upper -= (upper / 50) * max(cha - 10, 0);
+        upper = max(upper, lower);
+        if (charge > upper)
+            charge = upper;
+    }
+    return max(charge, lower);
+}
+
+/* quote a price and take the money if the customer agrees and can pay */
+staticfn boolean
+shk_offer_price(const char *slang, long charge, struct monst *shkp)
+{
+    char qbuf[QBUFSZ];
+    long credit = ESHK(shkp)->credit;
+
+    Sprintf(qbuf, "\"It'll cost you %ld %s.  Interested?\"", charge,
+            currency(charge));
+    if (y_n(qbuf) != 'y') {
+        SetVoice(shkp, 0, 80, 0);
+        verbalize("It's your call, %s.", slang);
+        return FALSE;
+    }
+    if (charge > money_cnt(gi.invent) + credit) {
+        SetVoice(shkp, 0, 80, 0);
+        verbalize("Cash on the spot, %s, and you ain't got the dough!",
+                  slang);
+        return FALSE;
+    }
+    charge = check_credit(charge, shkp); /* credit goes first */
+    if (charge > 0L)
+        money2mon(shkp, charge);
+    disp.botl = TRUE;
+    return TRUE;
+}
+
+/* which objects a service can be done on, for getobj() */
+static char shk_svc_oclass;    /* the class, or SVC_ANYCLASS */
+static long shk_svc_kind;      /* the service */
+
+staticfn int
+shk_svc_obj_ok(struct obj *obj)
+{
+    if (!obj || obj->oclass == COIN_CLASS)
+        return GETOBJ_EXCLUDE;
+    switch (shk_svc_kind) {
+    case SHK_WEP_FIX:
+    case SHK_WEP_ENC:
+        return (obj->oclass == WEAPON_CLASS || is_weptool(obj))
+                   ? GETOBJ_SUGGEST : GETOBJ_EXCLUDE;
+    case SHK_WEP_POI:
+        return (obj->oclass == WEAPON_CLASS && is_poisonable(obj))
+                   ? GETOBJ_SUGGEST : GETOBJ_EXCLUDE;
+    case SHK_CHG_BAS:
+    case SHK_CHG_PRE:
+        return charge_ok(obj);
+    case SHK_TINKER:
+        return tinker_upgradable(obj) ? GETOBJ_SUGGEST : GETOBJ_DOWNPLAY;
+    default:
+        break;
+    }
+    if (shk_svc_oclass != SVC_ANYCLASS && obj->oclass != shk_svc_oclass)
+        return GETOBJ_EXCLUDE;
+    return GETOBJ_SUGGEST;
+}
+
+/* choose the object for a service; Null if none, or if it's unpaid */
+staticfn struct obj *
+shk_svc_getobj(long kind, char oclass, const char *verb)
+{
+    struct obj *obj;
+
+    shk_svc_kind = kind, shk_svc_oclass = oclass;
+    if (!(obj = getobj(verb, shk_svc_obj_ok, GETOBJ_NOFLAGS)))
+        return (struct obj *) 0;
+    if (obj->unpaid) {
+        verbalize("You'll have to buy it first...");
+        return (struct obj *) 0;
+    }
+    return obj;
+}
+
+/* what identifying one thing costs, before Charisma */
+staticfn long
+shk_id_charge(struct obj *obj)
+{
+    switch (obj->oclass) {
+    case AMULET_CLASS: return 375L;
+    case WEAPON_CLASS: return 40L;
+    case ARMOR_CLASS: return 50L;
+    case FOOD_CLASS: return 25L;
+    case SCROLL_CLASS: return 150L;
+    case SPBOOK_CLASS: return 250L;
+    case POTION_CLASS: return 150L;
+    case RING_CLASS: return 300L;
+    case WAND_CLASS: return 200L;
+    case TOOL_CLASS: return 50L;
+    case GEM_CLASS: return 500L;
+    default: return 75L;
+    }
+}
+
+staticfn int
+shk_identify(const char *slang, struct monst *shkp, const struct shk_id_svc *idsvc)
+{
+    struct obj *obj;
+    long charge;
+
+    if (!(obj = shk_svc_getobj(idsvc->svc, idsvc->oclass,
+                               "have identified")))
+        return 0;
+    charge = shk_id_charge(obj);
+    /* weapons and armor get a little break */
+    if (obj->oclass != WEAPON_CLASS && obj->oclass != ARMOR_CLASS)
+        charge *= 2;
+    if (!not_fully_identified(obj)) {
+        if (no_cheat) {
+            verbalize("That item's already identified!");
+            return 0;
+        }
+        pline("%s chuckles greedily...", Shknam(shkp));
+    }
+    if (obj->oartifact)
+        charge = charge * 3 / 2;
+    charge = shk_smooth_charge(charge, 25L, 750L);
+    if (!shk_offer_price(slang, charge, shkp))
+        return 0;
+    if (Hallucination) {
+        verbalize("It's a pot of flowers.");
+    } else if (Confusion) {
+        pline("%s tells you, but you forget.", Shknam(shkp));
+    } else {
+        (void) identify(obj);
+    }
+    update_inventory();
+    return 1;
+}
+
+staticfn int
+shk_uncurse(const char *slang, struct monst *shkp)
+{
+    struct obj *obj;
+    long charge;
+
+    if (!(obj = shk_svc_getobj(SHK_UNCURSE, SVC_ANYCLASS, "uncurse")))
+        return 0;
+    if (obj->bknown && !obj->cursed && !Confusion && !Hallucination) {
+        pline("That item is not cursed!");
+        return 0;
+    }
+    charge = get_cost(obj, shkp);
+    if (obj->oartifact)
+        charge = charge * 3 / 2;
+    charge = shk_smooth_charge(charge, 50L, 250L);
+    if (!shk_offer_price(slang, charge, shkp))
+        return 0;
+    if (!obj->bknown && !Role_if(PM_CLERIC) && !Role_if(PM_NECROMANCER)
+        && !no_cheat) {
+        /* the customer can't tell, so why bother? */
+        pline("%s snickers and says, \"See, nice and uncursed!\"",
+              Shknam(shkp));
+    } else if (Confusion) {
+        You("accidentally ask for the item to be cursed.");
+        curse(obj);
+    } else if (Hallucination) {
+        if (!rn2(4)) {
+            pline("Distracted by your bloodshot %s, %s accidentally "
+                  "blesses it!", makeplural(body_part(EYE)),
+                  shkname(shkp));
+            bless(obj);
+        } else {
+            You_cant("see straight and point to the wrong item.");
+        }
+    } else {
+        SetVoice(shkp, 0, 80, 0);
+        verbalize("All done - safe to handle, now!");
+        uncurse(obj);
+    }
+    update_inventory();
+    return 1;
+}
+
+staticfn int
+shk_weapon_works(const char *slang, struct monst *shkp, long kind)
+{
+    struct obj *obj;
+    long charge;
+
+    if (!(obj = shk_svc_getobj(kind, WEAPON_CLASS,
+                               (kind == SHK_WEP_POI) ? "poison"
+                                                     : "improve")))
+        return 0;
+    SetVoice(shkp, 0, 80, 0);
+    switch (kind) {
+    case SHK_WEP_FIX:
+        verbalize("This'll leave your %s untouchable!", xname(obj));
+        /* the more eroded, the more it costs */
+        charge = 500L * (obj->oeroded + obj->oeroded2 + 1);
+        if (obj->oeroded + obj->oeroded2 > 2)
+            verbalize("This thing's in pretty sad condition, %s.", slang);
+        if (obj->oerodeproof || !is_damageable(obj))
+            pline("%s gives you a suspiciously happy smile...",
+                  Shknam(shkp));
+        if (obj->oartifact)
+            charge = charge * 3 / 2;
+        charge = shk_smooth_charge(charge, 200L, 1500L);
+        if (!shk_offer_price(slang, charge, shkp))
+            return 0;
+        if (Confusion)
+            You("fall over in appreciation.");
+        else if (Hallucination)
+            Your("tin roof, un-rusted!");
+        obj->oeroded = obj->oeroded2 = 0;
+        obj->rknown = TRUE;
+        obj->oerodeproof = TRUE;
+        break;
+    case SHK_WEP_ENC:
+        if (obj->spe + 1 > 5) {
+            verbalize("I can't enchant this any higher!");
+            return 0;
+        }
+        verbalize("Guaranteed not to harm your weapon, or your money "
+                  "back!");
+        /* the higher the enchantment, the costlier */
+        charge = (obj->spe < 0) ? 100L
+                                : (long) (obj->spe + 1) * (obj->spe + 1) * 625L;
+        if (obj->oartifact)
+            charge *= 2;
+        charge = shk_smooth_charge(charge, 50L, 0L);
+        if (!shk_offer_price(slang, charge, shkp))
+            return 0;
+        if (Confusion)
+            Your("%s unexpectedly!", aobjnam(obj, "vibrate"));
+        else if (Hallucination)
+            Your("%s to evaporate into thin air!", aobjnam(obj, "seem"));
+        if (obj->otyp == WORM_TOOTH) {
+            obj->otyp = CRYSKNIFE;
+            obj->material = objects[CRYSKNIFE].oc_material;
+            Your("weapon seems sharper now.");
+            obj->cursed = 0;
+            obj->owt = weight(obj);
+            break;
+        }
+        obj->spe++;
+        break;
+    case SHK_WEP_POI:
+        verbalize("Just imagine what poisoned %s can do!", xname(obj));
+        charge = shk_smooth_charge(10L * obj->quan, 10L, 0L);
+        if (!shk_offer_price(slang, charge, shkp))
+            return 0;
+        obj->opoisoned = TRUE;
+        break;
+    default:
+        impossible("shk_weapon_works: unknown service %ld", kind);
+        return 0;
+    }
+    update_inventory();
+    prinv((char *) 0, obj, 0L);
+    return 1;
+}
+
+staticfn int
+shk_armor_works(const char *slang, struct monst *shkp, long kind)
+{
+    struct obj *obj;
+    long charge;
+
+    if (!(obj = shk_svc_getobj(kind, ARMOR_CLASS, "improve")))
+        return 0;
+    SetVoice(shkp, 0, 80, 0);
+    switch (kind) {
+    case SHK_ARM_FIX:
+        if (!flags.female && Race_if(PM_HUMAN))
+            verbalize("They'll call you the man of stainless steel!");
+        charge = 300L * (obj->oeroded + obj->oeroded2 + 1);
+        if (obj->oeroded + obj->oeroded2 > 2)
+            verbalize("Yikes!  This thing's a mess!");
+        if (obj->oartifact)
+            charge = charge * 3 / 2;
+        charge = shk_smooth_charge(charge, 300L, 3000L);
+        if (!shk_offer_price(slang, charge, shkp))
+            return 0;
+        if (Confusion)
+            You("forget how to put your %s back on!", xname(obj));
+        else if (Hallucination)
+            You("mistake your %s for a pot and...", xname(obj));
+        obj->oeroded = obj->oeroded2 = 0;
+        obj->rknown = TRUE;
+        obj->oerodeproof = TRUE;
+        break;
+    case SHK_ARM_ENC:
+        if (obj->spe + 1 > 3) {
+            verbalize("I can't enchant this any higher!");
+            return 0;
+        }
+        verbalize("Nobody will ever hit on you again.");
+        charge = (obj->spe < 0) ? 100L
+                                : (long) (obj->spe + 1) * (obj->spe + 1) * 500L;
+        if (obj->oartifact)
+            charge *= 2;
+        charge = shk_smooth_charge(charge, 50L, 0L);
+        if (!shk_offer_price(slang, charge, shkp))
+            return 0;
+        if (Hallucination)
+            Your("%s looks dented.", xname(obj));
+        obj->spe++;
+        adj_abon(obj, 1);
+        break;
+    default:
+        impossible("shk_armor_works: unknown service %ld", kind);
+        return 0;
+    }
+    update_inventory();
+    prinv((char *) 0, obj, 0L);
+    return 1;
+}
+
+staticfn int
+shk_charge(const char *slang, struct monst *shkp, boolean premier)
+{
+    struct obj *obj, *otmp;
+    char cls = shk_svc_class(shkp);
+    unsigned o_id;
+    long charge;
+
+    if (!(obj = shk_svc_getobj(premier ? SHK_CHG_PRE : SHK_CHG_BAS,
+                               SVC_ANYCLASS, "charge")))
+        return 0;
+    SetVoice(shkp, 0, 80, 0);
+    if (premier && cls != RANDOM_CLASS && obj->oclass != cls) {
+        verbalize("I only offer premier charging on %s.",
+                  (cls == WAND_CLASS) ? "wands"
+                  : (cls == RING_CLASS) ? "rings" : "tools");
+        return 0;
+    }
+    if (charge_ok(obj) == GETOBJ_EXCLUDE) {
+        verbalize("I can't charge that!");
+        return 0;
+    }
+    charge = shk_smooth_charge(premier ? 1000L : 250L, 100L, 1000L);
+    if (!shk_offer_price(slang, charge, shkp))
+        return 0;
+    if ((Confusion || Hallucination) && !no_cheat) {
+        pline("%s says it's charged and pushes you toward the door.",
+              Shknam(shkp));
+        return 1;
+    }
+    o_id = obj->o_id;
+    recharge(obj, premier ? 1 : 0);
+    /* did it blow up? */
+    for (otmp = gi.invent; otmp; otmp = otmp->nobj)
+        if (otmp->o_id == o_id)
+            break;
+    if (!(obj = otmp)) {
+        verbalize("Oops!  Sorry about that...");
+        return 1;
+    }
+    if (obj->oclass == WAND_CLASS) {
+        if (obj->otyp == WAN_WISHING) {
+            if (premier)
+                obj->spe++; /* premier gives you ONE more */
+            verbalize("Since you'll have everything you always wanted,");
+            verbalize("...How about loaning me some money?");
+            makeknown(obj->otyp);
+        } else if (obj->spe < 16) {
+            /* a few more charges than recharging gives */
+            obj->spe += rn1(5, 5);
+        } else if (obj->spe < 20) {
+            obj->spe += 1;
+        }
+    }
+    update_inventory();
+    return 1;
+}
+
+staticfn int
+shk_rumor(const char *slang, struct monst *shkp)
+{
+    SetVoice(shkp, 0, 80, 0);
+    verbalize("I heard some juicy stuff the other day...");
+    if (!shk_offer_price(slang, 25L, shkp))
+        return 0;
+    if (Hallucination)
+        verbalize("You.  Are.  Here.");
+    else if (Confusion)
+        pline("%s tells you something... but you forget.", Shknam(shkp));
+    else
+        outrumor(0, BY_OTHER);
+    return 1;
+}
+
+staticfn int
+shk_tinker(const char *slang, struct monst *shkp)
+{
+    struct obj *obj;
+    long charge = 450L; /* the Mines' shopkeepers drive a hard bargain */
+
+    if (!(obj = shk_svc_getobj(SHK_TINKER, SVC_ANYCLASS, "have tinkered")))
+        return 0;
+    SetVoice(shkp, 0, 80, 0);
+    if (obj->oartifact) {
+        verbalize("That item is as good as it'll get!");
+        return 0;
+    }
+    if (obj->owornmask & (W_ARMOR | W_ACCESSORY)) {
+        verbalize("You'll have to take that off first.");
+        return 0;
+    }
+    if (Has_contents(obj)) {
+        verbalize("Empty it out first, %s.", slang);
+        return 0;
+    }
+    if (!tinker_upgradable(obj)) {
+        verbalize("I can't upgrade that object.");
+        return 0;
+    }
+    if (ACURR(A_INT) < 13)
+        charge += 750L;
+    if (ACURR(A_INT) < 18)
+        charge += 500L;
+    if (!Race_if(PM_GNOME))
+        charge *= 2;
+    charge = shk_smooth_charge(charge, 25L, 5000L);
+    if (!shk_offer_price(slang, charge, shkp))
+        return 0;
+    if (Hallucination) {
+        verbalize("It's Very Special now.");
+    } else if (Confusion) {
+        pline("%s dunks the thing in some water and hands it back to you.",
+              Shknam(shkp));
+        (void) water_damage(obj, (char *) 0, TRUE);
+    } else if (tinker_upgrade(obj)) {
+        verbalize("Hmm!");
+    } else {
+        verbalize("Huh.");
+    }
+    update_inventory();
+    return 1;
+}
+
+/* offer this shopkeeper's services; returns 1 if one was paid for */
+staticfn int
+shk_other_services(struct monst *shkp)
+{
+    const char *slang;
+    long offers;
+    winid tmpwin;
+    anything any;
+    menu_item *selected;
+    int n, i, pick, result = 0;
+    char buf[BUFSZ];
+
+    if (!shkp->isshk || !inhishop(shkp) || ANGRY(shkp)
+        || helpless(shkp) || !*u.ushops
+        || shop_keeper(*u.ushops) != shkp)
+        return 0;
+    slang = your_race(shkp->data) ? (flags.female ? "lady" : "buddy")
+                                  : "ugly";
+    if (ESHK(shkp)->pbanned) {
+        SetVoice(shkp, 0, 80, 0);
+        verbalize("I don't service your kind here.");
+        return 0;
+    }
+    if (!(offers = shk_services(shkp))) {
+        SetVoice(shkp, 0, 80, 0);
+        verbalize("Sorry %s, I have no services to offer you.", slang);
+        return 0;
+    }
+
+    tmpwin = create_nhwindow(NHW_MENU);
+    start_menu(tmpwin, MENU_BEHAVE_STANDARD);
+    any = cg.zeroany;
+    for (i = 0; i < SIZE(shk_id_svcs); i++)
+        if (offers & shk_id_svcs[i].svc) {
+            any.a_int = i + 1;
+            Sprintf(buf, "Identify %s", shk_id_svcs[i].what);
+            add_menu(tmpwin, &nul_glyphinfo, &any, shk_id_svcs[i].let, 0,
+                     ATR_NONE, NO_COLOR, buf, MENU_ITEMFLAGS_NONE);
+        }
+#define SVC_ITEM(bit, num, let, txt) \
+    if (offers & (bit)) {                                                  \
+        any.a_int = (num);                                              \
+        add_menu(tmpwin, &nul_glyphinfo, &any, (let), 0, ATR_NONE,      \
+                 NO_COLOR, (txt), MENU_ITEMFLAGS_NONE);                 \
+    }
+    SVC_ITEM(SHK_UNCURSE, 101, 'u', "Uncurse")
+    SVC_ITEM(SHK_WEP_FIX, 102, 'f', "Fix/Proof Weapon")
+    SVC_ITEM(SHK_WEP_ENC, 103, 'e', "Enchant Weapon")
+    SVC_ITEM(SHK_WEP_POI, 104, 'p', "Poison")
+    SVC_ITEM(SHK_ARM_FIX, 105, 'F', "Fix/Proof Armor")
+    SVC_ITEM(SHK_ARM_ENC, 106, 'E', "Enchant Armor")
+    SVC_ITEM(SHK_CHG_BAS, 107, 'c', "Basic Charging")
+    SVC_ITEM(SHK_CHG_PRE, 108, 'C', "Premier Charging")
+    SVC_ITEM(SHK_RUMOR, 109, 'r', "Rumors")
+    SVC_ITEM(SHK_TINKER, 110, 'T', "Tinker")
+#undef SVC_ITEM
+    end_menu(tmpwin, "Services Available:");
+    n = select_menu(tmpwin, PICK_ONE, &selected);
+    destroy_nhwindow(tmpwin);
+    if (n <= 0)
+        return 0;
+    pick = selected[0].item.a_int;
+    free((genericptr_t) selected);
+
+    if (pick >= 1 && pick <= SIZE(shk_id_svcs)) {
+        result = shk_identify(slang, shkp, &shk_id_svcs[pick - 1]);
+    } else {
+        switch (pick) {
+        case 101: result = shk_uncurse(slang, shkp); break;
+        case 102: result = shk_weapon_works(slang, shkp, SHK_WEP_FIX); break;
+        case 103: result = shk_weapon_works(slang, shkp, SHK_WEP_ENC); break;
+        case 104: result = shk_weapon_works(slang, shkp, SHK_WEP_POI); break;
+        case 105: result = shk_armor_works(slang, shkp, SHK_ARM_FIX); break;
+        case 106: result = shk_armor_works(slang, shkp, SHK_ARM_ENC); break;
+        case 107: result = shk_charge(slang, shkp, FALSE); break;
+        case 108: result = shk_charge(slang, shkp, TRUE); break;
+        case 109: result = shk_rumor(slang, shkp); break;
+        case 110: result = shk_tinker(slang, shkp); break;
+        default: break;
+        }
+    }
+    return result;
+}
+
+#undef no_cheat
+#undef SVC_ANYCLASS
 
 #undef PAY_BUY
 #undef PAY_CANT

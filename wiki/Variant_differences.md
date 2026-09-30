@@ -162,6 +162,37 @@ percentage, where every 100% is one level, or `MAX` when there is nothing
 left to train. (Hack'EM's cross-training multipliers aren't part of this
 game.)
 
+## Shopkeeper services
+
+As in Hack'EM (from Slash'EM), a shopkeeper you owe nothing offers
+services when you `#chat` (or `#pay`): identifying an item of certain
+classes, uncursing, fixing and rustproofing, enchanting or poisoning
+weapons, fixing, rustproofing or enchanting armor, charging, and rumors.
+Which ones depend on the shop: a weapon shop may offer weapon-works, a
+wand, tool or ring shop charging of its own wares (basic and premier), a
+general store a random handful of identifications and basic charging of
+anything, and any shopkeeper may uncurse; the black market offers weapon-
+and armor-works and rumors, at three times the price. Charisma lowers the
+prices, and a shopkeeper may cheat a customer who can't tell whether an
+item was really uncursed. Enchanting goes up to +5 for weapons and +3 for
+armor, and gets dearer with every plus.
+
+Differences from Hack'EM:
+
+* A shopkeeper always offers the same services, but they aren't stored in
+  the saved game: they are worked out from the shopkeeper, with Hack'EM's
+  chances.
+* This game's shopkeepers are all human, so Hack'EM's racial extras
+  (dwarves identifying gems, orcs poisoning, and so on) aren't here.
+  **Tinkering**, which Hack'EM's gnomish shopkeepers offer, is offered by
+  the shopkeepers of the Gnomish Mines instead, with Hack'EM's prices
+  (cheaper for gnomes and the intelligent). It works like the gnome's
+  [tinker](Techniques.md) technique, on any carried item that isn't worn.
+* Only missiles can be poisoned (darts, arrows and the like), as in
+  NetHack.
+* Hack'EM's property grafting and firearms training are left out: this
+  game has no object properties, and Hack'EM's training is unfinished.
+
 ## Inventory weight
 
 As in Hack'EM, the full inventory (`i`) starts with a line such as
@@ -172,6 +203,12 @@ in Hack'EM; it is in the `O` menu under General) adds each carried item's
 weight to its name, such as `a +0 katana (weapon in right hand) (40 aum)`.
 Beyond Hack'EM, picking an item from the inventory shows its weight at
 the top of the menu of things to do with it (`Weight: 40 aum`).
+
+## Extended commands
+
+NetHack 5.0 added `#chronicle`, which made `#ch` stop completing to
+`#chat`; here `#ch` is `#chat` again (and `#chr` `#chronicle`), and `#te`
+is `#technique` (`#ter` `#terrain`).
 
 ## Character selection
 

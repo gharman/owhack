@@ -1726,7 +1726,7 @@ struct ext_func_tab extcmdlist[] = {
     { 'Z',    "cast", "zap (cast) a spell",
               docast, IFBURIED, NULL },
     { M('c'), "chat", "talk to someone",
-              dotalk, IFBURIED | AUTOCOMPLETE, NULL },
+              dotalk, IFBURIED | AUTOCOMPLETE | AUTOCOMP_PREFER, NULL },
     { 'v',    "chronicle", "show journal of major events",
               do_gamelog, IFBURIED | AUTOCOMPLETE | GENERALCMD, NULL },
     { 'c',    "close", "close a door",
@@ -1925,7 +1925,7 @@ struct ext_func_tab extcmdlist[] = {
     { 'A',    "takeoffall", "remove all armor",
               doddoremarm, 0, NULL },
     { M('x'), "technique", "perform a technique (special ability)",
-              dotech, IFBURIED | AUTOCOMPLETE, NULL },
+              dotech, IFBURIED | AUTOCOMPLETE | AUTOCOMP_PREFER, NULL },
     { C('t'), "teleport", "teleport around the level",
               dotelecmd, IFBURIED | CMD_M_PREFIX, NULL },
     /* \177 == <del> aka <delete> aka <rubout>; some terminals have an

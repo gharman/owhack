@@ -180,6 +180,16 @@ hooked_tty_getlin(
 #ifndef NEWAUTOCOMP
                 bufp = eos(bufp);
 #else  /* NEWAUTOCOMP */
+                {
+                    /* erase the rest of a longer prior guess (a prefix can
+                       now switch between preferred completions) */
+                    char *e = eos(bufp), *k;
+
+                    for (k = e; k < i; ++k)
+                        putsyms(" ");
+                    for (; k > e; --k)
+                        putsyms("\b");
+                }
                 /* pointer and cursor left where they were */
                 for (i = bufp; *i; ++i)
                     putsyms("\b");
@@ -279,6 +289,24 @@ ext_cmd_getlin_hook(char *base)
 
         Strcpy(base, ec->ef_txt);
         return TRUE;
+    } else if (nmatches > 1) {
+        /* an ambiguous prefix completes to a preferred command if exactly
+           one of the matches is one ("#ch" is #chat, "#chr" #chronicle) */
+        struct ext_func_tab *ec, *pref = (struct ext_func_tab *) 0;
+        int i;
+
+        for (i = 0; i < nmatches; i++) {
+            ec = extcmds_getentry(ecmatches[i]);
+            if (ec->flags & AUTOCOMP_PREFER) {
+                if (pref)
+                    return FALSE;
+                pref = ec;
+            }
+        }
+        if (pref) {
+            Strcpy(base, pref->ef_txt);
+            return TRUE;
+        }
     }
 
     return FALSE; /* didn't match anything */
