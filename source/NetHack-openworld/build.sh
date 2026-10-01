@@ -22,6 +22,16 @@ if [ ! -f Makefile ] || [ -n "$(find sys/unix/Makefile.* sys/unix/hints \
     esac
     sh sys/unix/setup.sh "sys/unix/hints/$hints"
 fi
+# Lua isn't in git: fetch it on the first build. make fetch-lua exits 0
+# even when every download fails, so check for the result ourselves.
+if [ ! -f lib/lua-5.4.8/src/lua.h ]; then
+    make fetch-lua
+    if [ ! -f lib/lua-5.4.8/src/lua.h ]; then
+        echo "build.sh: couldn't download Lua 5.4.8 (needs curl or wget and" >&2
+        echo "access to lua.org); see 'make fetch-lua' above" >&2
+        exit 1
+    fi
+fi
 make CC="$CC" WANT_SOURCE_INSTALL=1 HACKDIR="$game" \
      INSTDIR="$here/playground" VARDIR="$here/playground" \
      POSTINSTALL= SYSCONFINSTALL= all
