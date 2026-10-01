@@ -11,6 +11,7 @@ be faithful, so nethackwiki's pages for
 [SpliceHack](https://nethackwiki.com/wiki/SpliceHack) and
 [xNetHack](https://nethackwiki.com/wiki/XNetHack) apply. This page lists
 where this build differs, mostly because of the open world.
+[Roles and races](Roles_and_races.md) describes the added roles and races.
 
 ## Roles
 
@@ -62,7 +63,7 @@ Other open-world notes for Infidels:
 | **ghost** | new: see [Ghost](Ghost_race.md) |
 
 * **Which roles each race can take** is a table of this build's own (see
-  the README's race table). Pairs with no alignment in common are never
+  [Roles and races](Roles_and_races.md#races)). Pairs with no alignment in common are never
   offered: Knight with centaur or draugr, Valkyrie with draugr, Caveman
   with werewolf, Flame Mage with elf, Jedi with elf, Necromancer with
   gnome.
@@ -97,8 +98,21 @@ Both are full resistances here, for monsters and heroes, as in Hack'EM:
 
 ## Materials
 
-Ported from xNetHack, with EvilHack's rules for material hatred and
-wishing:
+Every object is made of a material, and many can come in several: iron,
+steel, mithril, copper, silver, gold, platinum, wood, bone, glass,
+gemstone, leather, cloth, dragonhide, plastic, paper and others. Names
+show it ("silver long sword", "mithril chain mail"). The material changes
+weight, price, armor class (mithril is +1 over iron), weapon damage and
+to-hit (glass and gemstone edges cut deeper, gold and platinum hit
+harder, wood and plastic are weaker) and erosion (only iron rusts, copper
+and iron corrode, wood burns, glass cracks and shatters, and mithril,
+platinum and gems never erode). Elven gear tends to come in wood, copper,
+silver and mithril, dwarvish gear in iron, steel and mithril, and orcish
+gear in iron and bone. Silver harms demons, vampires, werewolves and
+shades as always.
+
+All that is xNetHack's system, ported with EvilHack's rules for material
+hatred and wishing. The differences:
 
 * **METAL is shown as "steel"**, a material in its own right beside iron.
 * **Mithril coats are gone.** Mithril is a material for body armor.
@@ -116,8 +130,9 @@ wishing:
 * **Cold iron harms elves and the fae** (nymphs, imps), undead ones
   excepted; **copper harms fungi and bringers of disease**. Heroes of those
   races take the same harm, including when wielding or wearing the
-  material (gloves protect the hands). **An elf's starting kit switches to
-  copper** where that is valid. **Worn copper armor wards off sickness.**
+  material (gloves protect the hands), so an elf does better with copper,
+  wood or mithril. **An elf's starting kit switches to copper** where that
+  is valid. **Worn copper armor wards off sickness.**
 * **Objects whose name states a material never change material** (leather
   armor, iron shoes, oilskin cloak, and so on), nor does anything that
   shares an unidentified description with one, so a material can't give
@@ -129,6 +144,11 @@ wishing:
 ## Special levels
 
 See [Portal rings](Portal_rings.md) for where they are.
+
+* The levels are faithful conversions of the originals to NetHack 5.0's
+  Lua level format. Features 5.0 lacks (Hack'EM's grass, sewage and dead
+  trees, EvilHack's forges, Slash'EM's "killer coins") become the nearest
+  thing 5.0 has.
 
 * Slash'EM's levels deeper than Medusa are squeezed into the rings before
   her, in order, because everything beyond Medusa + 2 is Gehennom here.

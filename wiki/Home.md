@@ -20,6 +20,8 @@ variants, plus a new role and a new race of its own.
 
 ## New in this build
 
+* **[Roles and races](Roles_and_races.md)**: the eight added roles and nine
+  added races, and which roles each race can take.
 * **[Cartographer](Cartographer.md)**: the new role, a mapmaker built for
   the open world.
   * [The Cartographer quest](Cartographer_quest.md): Anaximander, the

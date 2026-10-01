@@ -126,4 +126,5 @@ beyond Medusa's.
 | Scroll of earth outdoors | Boulders appear out of thin air instead of falling from a ceiling. |
 | Ceiling hiders | Piercers and friends only hide where there is a roof (buildings, caves). |
 | Elemental and Astral Planes | Omitted; you win at the centre instead. |
-| Interfaces | tty (terminal) only. |
+| Interfaces | tty (terminal) only: no tiles, X11, Qt or curses. |
+| `#wizmakemap` (wizard mode) | Regenerates the overworld around you. The Fort Ludios portal doesn't come back if it was already placed. |

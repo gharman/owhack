@@ -22,20 +22,20 @@ Gehennom.
 
 | Ring (depth) | Portals lead to | From |
 |---|---|---|
-| 2–4 | the Gnomish Mines: Minetown, Mines' End, and **the Gnome King's level** at the bottom | NetHack; Gnome King from Slash'EM/Hack'EM |
-| 2–3 | **Goblin Town** (2 levels; a trap door leads down to Gollum's cave) | EvilHack |
-| 5–6 | **the Mall** *(some games)* | Slash'EM |
+| 2–4 | the Gnomish Mines: Minetown, Mines' End, and **the Gnome King's level** at the bottom (2 versions) | NetHack; Gnome King from Slash'EM/Hack'EM |
+| 2–3 | **Goblin Town** (2 levels: the Goblin King's town under the mountains, with his prisoners; a trap door leads down to Gollum's cave) | EvilHack |
+| 5–6 | **the Mall**, a town of shops (2 versions) *(some games)* | Slash'EM |
 | 5–9 | the Oracle | NetHack |
 | Oracle + 1 | Sokoban (entered at the bottom, as usual) | NetHack |
 | 8 to M−1 | **Aphrodite's Garden**, the nymph level *(some games)* | Hack'EM |
-| 10–11 | **the Rat King's Lair** *(some games)* | Slash'EM / Hack'EM |
+| 10–11 | **the Rat King's Lair** (Slash'EM's, or Hack'EM's sewer) *(some games)* | Slash'EM / Hack'EM |
 | 10–12 | the Big Room *(some games)* | NetHack |
-| 11–12 | **the Kobold King's Lair** (Kroo) *(some games)* | Slash'EM |
-| 12–13 | **Grund's Stronghold** | Slash'EM |
+| 11–12 | **the Kobold King's Lair** (Kroo; 2 versions) *(some games)* | Slash'EM |
+| 12–13 | **Grund's Stronghold**, Grund the Orc King's fortress, full of orcs and ogres (3 versions) | Slash'EM |
 | Oracle + 6 or + 7 | your **Quest** | NetHack, and the new roles' quests |
 | 11 to M−1 | Fort Ludios: a portal inside one of the mountain vaults; 2 levels here, with Hack'EM's dungeon under the fort | NetHack / Hack'EM |
 | 15–19 | **the Nightmare's, the Beholder's and Vecna's lairs** (Slash'EM's alignment key quests) | Slash'EM |
-| 14 to M−1 | in about this order: **the Storerooms** *(some games)*, **the Wyrm Caves** (2 levels), **the Lost Tomb**, **One-eyed Sam's Market**, **the Spider Caves**, **the Adventurers' Guild** *(some games)*, **the Sunless Sea**, **the Temple of Moloch**, **the Giant Caverns** | Slash'EM / Hack'EM |
+| 14 to M−1 | in about this order: **the Storerooms** (3 versions) *(some games)*, **the Wyrm Caves** (2 levels: an orc-guarded entrance, then a dragon pit with a hoard), **the Lost Tomb**, **One-eyed Sam's Market**, **the Spider Caves** (Shelob and Girtab), **the Adventurers' Guild** *(some games)*, **the Sunless Sea** (sharks, crabs and a treasure island), **the Temple of Moloch**, **the Giant Caverns** (the Largest Giant) | Slash'EM / Hack'EM |
 | M (21–24) | Medusa's Island; the Castle is the level below it | NetHack |
 | M + 2 | **the Barrier**: impassable, undiggable mountains | this build |
 
@@ -57,7 +57,7 @@ their original order, into the rings between 14 and Medusa.
 | near the bottom | the two fake wizard towers (the Black Tower and the Hollow Tower) |
 | bottom − 1 | **the Gates of Moloch**: the vibrating square, then Moloch's Sanctum |
 | Valley + 1 to + 7 | **Yeenoghu's and Demogorgon's lairs** (Slash'EM) |
-| Valley + 2 to + 16 | **Frankenstein's Lab** (Slash'EM) |
+| Valley + 2 to + 16 | **Frankenstein's Lab**: Doctor Frankenstein and his Monster (Slash'EM) |
 | Valley + 11 to + 20 | **Geryon's and Dispater's lairs** (Slash'EM) |
 
 Gehennom's length (Valley to Sanctum) is 20–24 rings, so the Sanctum is at
@@ -70,11 +70,13 @@ For the levels themselves see nethackwiki's
 [Hack'EM](https://nethackwiki.com/wiki/Hack%27EM) and
 [EvilHack](https://nethackwiki.com/wiki/EvilHack) pages. Differences here:
 
-* **One-eyed Sam's Market** prices everything at 25 times the usual (50
-  times for anything magical). Sam carries Thiefbane, reflection, speed and
+* **One-eyed Sam's Market** is the biggest shop in the game, stocked with
+  every kind of object and laid out class by class. It prices everything
+  at 25 times the usual (50 times for anything magical). Sam carries Thiefbane, reflection, speed and
   life saving. Pets and steeds can't come in, taming and Conflict don't
-  work, and you can't level-teleport out. Shoplift, and his assistants turn
-  on you while soldiers gather at the way out. Customers polymorphed into
+  work, and you can't level-teleport out. Shoplift, and his assistants (the
+  market's named monsters) turn on you while soldiers gather at the way
+  out. Customers polymorphed into
   something inhuman are turned away; invisible ones are welcome.
 * **The Adventurers' Guild** (the Guild of Disgruntled Adventurers) is
   full of hostile player-monsters of every role, including the eight
@@ -85,3 +87,5 @@ For the levels themselves see nethackwiki's
   here.
 * The **Gnome King's level** is now the bottom of the Mines, below Mines'
   End.
+* Yeenoghu, Demogorgon, Geryon and Dispater get Slash'EM's lairs. Vanilla
+  NetHack gives these demon lords no lair of their own.
