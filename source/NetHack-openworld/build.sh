@@ -22,6 +22,20 @@ if [ ! -f Makefile ] || [ -n "$(find sys/unix/Makefile.* sys/unix/hints \
     esac
     sh sys/unix/setup.sh "sys/unix/hints/$hints"
 fi
+# The tty interface needs curses' headers, which Linux distributions ship
+# separately from the library. Without them make fails deep in the build,
+# so check first and say what to install.
+if ! printf '#include <curses.h>\n' | "$CC" -E -x c - >/dev/null 2>&1; then
+    echo "build.sh: curses.h not found; install the curses headers:" >&2
+    if [ "$os" = Linux ]; then
+        echo "  Debian/Ubuntu: sudo apt install libncurses-dev pkg-config" >&2
+        echo "  Fedora:        sudo dnf install ncurses-devel pkgconf" >&2
+        echo "  Arch:          sudo pacman -S ncurses pkgconf" >&2
+    else
+        echo "  macOS: xcode-select --install" >&2
+    fi
+    exit 1
+fi
 # Lua isn't in git: fetch it on the first build. make fetch-lua exits 0
 # even when every download fails, so check for the result ourselves.
 if [ ! -f lib/lua-5.4.8/src/lua.h ]; then

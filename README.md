@@ -38,11 +38,17 @@ The repository holds the source, not a built game. Build it first:
 
     source/NetHack-openworld/build.sh
 
-This needs a C compiler, make and curses, and the first build downloads
-Lua 5.4.8 from lua.org. The game goes into `game/`. The build has been
-used on macOS; on Linux it uses NetHack's Linux build settings, which
-haven't been tried with this variant yet. Then play with the `owhack`
-launcher:
+This needs a C compiler, make and the curses headers, and the first
+build downloads Lua 5.4.8 from lua.org with curl or wget. It builds on
+macOS and Linux. On macOS the Xcode command line tools have everything
+(`xcode-select --install`). On Linux, install the compiler and the
+ncurses development package:
+
+    sudo apt install build-essential libncurses-dev pkg-config   # Debian/Ubuntu
+    sudo dnf install gcc make ncurses-devel pkgconf              # Fedora
+    sudo pacman -S base-devel ncurses pkgconf                    # Arch
+
+The game goes into `game/`. Then play with the `owhack` launcher:
 
     ./owhack               start or resume a game
     ./owhack -u Name       play as Name
