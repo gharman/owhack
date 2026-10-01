@@ -14,6 +14,24 @@ levels from Slash'EM, SlashTHEM, SpliceHack, Hack'EM, EvilHack and
 xNetHack, plus a role and a race of its own. The [wiki](wiki/Home.md)
 covers everything new or different in detail.
 
+![The sacred plaza at the centre of the world](screenshots/plaza.png)
+
+*The start: you stand on your god's high altar at the centre of the world,
+between the high altars of the other two gods. You win by bringing the
+Amulet back here, with no Elemental Planes to cross.*
+
+![A magic portal in its circle of standing stones](screenshots/portal.png)
+
+*Each special level is behind a magic portal (`^`) in a circle of standing
+stones, with its destination engraved beside it. This one leads to the
+Mall.*
+
+![Crossing into a deeper ring](screenshots/rings.png)
+
+*Walking away from the centre takes you deeper. Crossing into the next
+ring is like going downstairs, and the status line counts the way home
+(`Home:E 64`).*
+
 ## Building and playing
 
 The repository holds the source, not a built game. Build it first:
@@ -120,6 +138,7 @@ every change.
     LICENSE           the NetHack General Public License
     owhack            launcher
     nethackrc         your options, if you make one (not in git)
+    screenshots/      the pictures on this page
     wiki/             what is new or different (start at wiki/Home.md);
                       build.sh also makes HTML pages of it in game/wiki/
     game/             the installed game (not in git): owhack, nhdat,
