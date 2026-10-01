@@ -1,5 +1,6 @@
 #------------------------------------------------------------------------------
 # NetHack 5.0  compiler.500 $NHDT-Date: 1668359835 2022/11/13 17:17:15 $  $NHDT-Branch: NetHack-5.0 $
+# Modified for NetHack: Open World in 2026; dates are in the git log.
 
 # compiler flags:  CCFLAGS is used to construct a value for CFLAGS with
 #	various -I, -D, and -W settings appended below;

@@ -1,4 +1,5 @@
 .\" $NHDT-Branch: NetHack-5.0 $:$NHDT-Revision: 1.652 $ $NHDT-Date: 1782274458 2026/06/23 23:14:18 $
+.\" Modified for NetHack: Open World in 2026; dates are in the git log.
 .\"
 .\" This is an excerpt from the 'roff' man page from the 'groff' package.
 .\"+--
@@ -1348,9 +1349,11 @@ Toggle the
 option on/off.
 Default key is \(oq@\(cq.
 .lp "#bugreport"
-Bring up a browser window to submit a report to the NetHack Development Team.
-Can be disabled at the time the program is built; when enabled,
-CRASHREPORTURL must be set in the system configuration file.
+Say where to report a bug: the NetHack: Open World issue tracker,
+\f(CRhttps://github.com/gharman/owhack/issues\fP.
+If CRASHREPORTURL is set in the system configuration file, bring up a
+browser window there instead.
+Can be disabled at the time the program is built.
 .lp "#call    "
 Call (name) a monster, or an object in inventory, on the floor,
 or in the discoveries list, or add an annotation for the
@@ -6582,9 +6585,12 @@ installations because over time the file could grow to be extremely
 large unless it is actively maintained.
 .
 .lp
-CRASHREPORTURL\ =\ If set to
-\f(CRhttps://www.nethack.org/links/cr-5.0.0.html\fP
-and support is compiled in, brings up a browser window pre-populated with
+CRASHREPORTURL\ =\ Leave unset for NetHack: Open World.
+NetHack's own setting,
+\f(CRhttps://www.nethack.org/links/cr-5.0.0.html\fP,
+files reports with the NetHack Development Team, who can't fix this
+variant's bugs.
+When set and support is compiled in, brings up a browser window pre-populated with
 the information needed to report a problem if the game panics or ends
 up in an internally inconsistent state, or if the #bugreport command is
 invoked.

@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2012. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #define NEED_VARARGS /* comment line for pre-compiled headers */
 
@@ -427,8 +428,8 @@ panic VA_DECL(const char *, str)
 #ifndef MICRO
 #ifdef NOTIFY_NETHACK_BUGS
     if (!wizard)
-        raw_printf("Report the following error to \"%s\" or at \"%s\".",
-                   DEVTEAM_EMAIL, DEVTEAM_URL);
+        raw_printf("Report the following error at \"%s\".",
+                   VARIANT_BUGS_URL);
     else if (program_state.something_worth_saving)
         raw_print("\nError save file being written.\n");
 #else /* !NOTIFY_NETHACK_BUGS */

@@ -1,5 +1,6 @@
 /* NetHack 5.0	optlist.h */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #ifndef OPTLIST_H
 #define OPTLIST_H

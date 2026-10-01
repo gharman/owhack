@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Michael Allison, 2007. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #ifndef DECL_H
 #define DECL_H

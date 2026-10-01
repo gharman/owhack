@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Michael Allison, 2012. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #ifndef PATCHLEVEL_H
 #define PATCHLEVEL_H
@@ -36,6 +37,11 @@
 #ifndef DEBUG  /* allow tool chains to define without causing warnings */
 #define DEBUG
 #endif
+
+/* this variant's name, for the version strings and the help text; the
+   version numbers above are still NetHack's, plus our own EDITLEVEL */
+#define VARIANT_NAME "NetHack: Open World"
+#define VERS_GAME_NAME "Open World" /* status line 'showvers' */
 
 #define COPYRIGHT_BANNER_A "NetHack, Copyright 1985-2026"
 #define COPYRIGHT_BANNER_B \

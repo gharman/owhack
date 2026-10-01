@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2018. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #include "hack.h"
 
@@ -620,7 +621,7 @@ impossible(const char *s, ...)
     if (program_state.something_worth_saving)
         Strcat(pbuf2, "  (Saving and reloading may fix this problem.)");
     pline("%s", pbuf2);
-    pline("Please report these messages to %s.", DEVTEAM_EMAIL);
+    pline("Please report these messages at %s.", VARIANT_BUGS_URL);
     if (sysopt.support) {
         pline("Alternatively, contact local support: %s", sysopt.support);
     }

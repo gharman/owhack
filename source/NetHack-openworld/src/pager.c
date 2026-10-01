@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Robert Patrick Rankin, 2018. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 /*
  * This file contains the command routines dowhatis() and dohelp() and
@@ -2756,14 +2757,13 @@ docontact(void)
         putstr(cwin, 0, buf);
         putstr(cwin, 0, "");
     }
-    putstr(cwin, 0, "To contact the NetHack development team directly,");
-    /*XXX overflow possibilities*/
-    Sprintf(buf, "see the 'Contact' form on our website or email <%s>.",
-            DEVTEAM_EMAIL);
+    putstr(cwin, 0, "To report a bug in " VARIANT_NAME ", open an issue at");
+    Sprintf(buf, "\"%s\".", VARIANT_BUGS_URL);
     putstr(cwin, 0, buf);
     putstr(cwin, 0, "");
-    putstr(cwin, 0, "For more information on NetHack, or to report a bug,");
-    Sprintf(buf, "visit our website \"%s\".", DEVTEAM_URL);
+    putstr(cwin, 0, VARIANT_NAME " is a variant of NetHack.  Please don't");
+    putstr(cwin, 0, "send its bugs to the NetHack development team.  For more");
+    Sprintf(buf, "information on NetHack itself, visit \"%s\".", DEVTEAM_URL);
     putstr(cwin, 0, buf);
     display_nhwindow(cwin, FALSE);
     destroy_nhwindow(cwin);

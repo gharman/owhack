@@ -1,6 +1,7 @@
 /* NetHack 5.0	utf8map.c	*/
 /* Copyright (c) Michael Allison, 2021. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #include "hack.h"
 

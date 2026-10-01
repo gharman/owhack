@@ -1,3 +1,11 @@
+This copy of NetHack's README is part of NetHack: Open World, a variant
+of NetHack 5.0.0 that is not made or supported by the NetHack DevTeam.
+Please report problems with it at https://github.com/gharman/owhack/issues,
+not to the DevTeam addresses below.  See ../../README.md for the variant.
+The rest of this file is NetHack's, unchanged.
+
+                        - - - - - - - - - - -
+
          NetHack 5.0.0 -- General information
 
 NetHack 5.0 is an enhancement to the dungeon exploration game NetHack,

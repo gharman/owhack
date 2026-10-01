@@ -1,6 +1,7 @@
 /* NetHack 5.0	vision.c	$NHDT-Date: 1781973072 2026/06/20 16:31:12 $  $NHDT-Branch: NetHack-5.0 $:$NHDT-Revision: 1.78 $ */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #include "hack.h"
 

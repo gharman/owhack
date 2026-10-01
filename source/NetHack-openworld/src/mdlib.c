@@ -4,6 +4,7 @@
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 /*
  * This can be linked into a binary to provide the functionality
@@ -338,7 +339,9 @@ version_id_string(char *outbuf, size_t bufsz, const char *build_date)
     Strcpy(&subbuf[1], PORT_SUB_ID);
 #endif
 
-    Snprintf(outbuf, bufsz, "%s NetHack%s Version %s%s - last %s %s.",
+    Snprintf(outbuf, bufsz,
+             "%s " VARIANT_NAME "%s, a variant of NetHack Version %s%s"
+             " - last %s %s.",
              PORT_ID, subbuf, mdlib_version_string(versbuf, "."), statusbuf,
              date_via_env ? "revision" : "build", build_date);
     return outbuf;
@@ -356,17 +359,9 @@ bannerc_string(char *outbuf, size_t bufsz, const char *build_date)
     subbuf[0] = ' ';
     Strcpy(&subbuf[1], PORT_SUB_ID);
 #endif
-
-#if (NH_DEVEL_STATUS != NH_STATUS_RELEASED)
-#if (NH_DEVEL_STATUS == NH_STATUS_BETA)
-    Strcpy(subbuf, " Beta");
-#elif (NH_DEVEL_STATUS == NH_STATUS_WIP)
-    Strcpy(subbuf, " Work-in-progress");
-#elif (NH_DEVEL_STATUS == NH_STATUS_POSTRELEASE)
-    Strcpy(subbuf, " post-release");
-#endif
-#endif  /* !NH_STATUS_RELEASED */
-    Snprintf(outbuf, bufsz, "         Version %s %s%s, %s %s.",
+    /* the variant's name takes the place of NetHack's development status
+       ("post-release"), keeping this line inside 80 columns */
+    Snprintf(outbuf, bufsz, "         Open World version %s %s%s, %s %s.",
             mdlib_version_string(versbuf, "."), PORT_ID, subbuf,
             date_via_env ? "revised" : "built", build_date);
     return outbuf;

@@ -1,4 +1,5 @@
 &# cmdhelp - became obsolete when 'BINDINGS=key:command' got added
+&# Modified for NetHack: Open World in 2026; dates are in the git log.
 &	Tell what command a keystroke invokes
 ^	Show the type of an adjacent trap
 ^[	Cancel command (same as ESCape key)

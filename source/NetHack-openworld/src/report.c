@@ -1,6 +1,7 @@
 /* NetHack 5.0	report.c	$NHDT-Date: 1777240823 2026/04/26 22:00:23 $  $NHDT-Branch: to500 $:$NHDT-Revision: 1.19 $ */
 /* Copyright (c) Kenneth Lorber, Kensington, Maryland, 2024 */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #include "hack.h"
 
@@ -464,7 +465,7 @@ dobugreport(void)
         pline("Unable to send bug report.  Please visit %s instead.",
               (sysopt.crashreporturl && *sysopt.crashreporturl)
               ? sysopt.crashreporturl
-              : DEVTEAM_URL
+              : VARIANT_BUGS_URL
         );
     }
     return ECMD_OK;

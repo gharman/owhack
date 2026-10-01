@@ -1368,10 +1368,11 @@
           Toggle the autopickup option on/off.  Default key is `@'.
 
      #bugreport
-          Bring up a browser window to  submit  a  report  to  the  NetHack
-          Development  Team.   Can  be  disabled at the time the program is
-          built; when enabled, CRASHREPORTURL must be  set  in  the  system
-          configuration file.
+          Say where to report a bug: the  NetHack:  Open  World  issue
+          tracker, https://github.com/gharman/owhack/issues.  If
+          CRASHREPORTURL is set in the system configuration file, bring up
+          a browser window there instead.  Can be disabled at the time the
+          program is built.
 
      #call
           Call  (name)  a monster, or an object in inventory, on the floor,
@@ -7122,9 +7123,11 @@
        player  installations  because  over  time the file could grow to be
        extremely large unless it is actively maintained.
 
-       CRASHREPORTURL = If                      set                      to
-       https://www.nethack.org/links/cr-5.0.0.html  and support is compiled
-       in, brings up a browser window pre-populated  with  the  information
+       CRASHREPORTURL = Leave unset for NetHack: Open World.  NetHack's own
+       setting, https://www.nethack.org/links/cr-5.0.0.html, files reports
+       with the NetHack Development Team, who can't fix this variant's
+       bugs.  When set and support is compiled in, brings up a browser
+       window pre-populated with the information
        needed  to  report  a  problem  if  the game panics or ends up in an
 
 

@@ -9,16 +9,29 @@ cd "$here"
 # Compile with the system's C compiler (or $CC): whatever is called "cc"
 # first on PATH may be something else entirely.
 : "${CC:=/usr/bin/cc}"
+os=$(uname -s)
 if [ ! -f Makefile ]; then
-    sh sys/unix/setup.sh sys/unix/hints/macOS.500
+    case $os in
+    Darwin) hints=macOS.500 ;;
+    Linux)  hints=linux.500 ;;
+    *)  echo "build.sh knows macOS and Linux; see sys/unix/NewInstall.unx" >&2
+        exit 1 ;;
+    esac
+    sh sys/unix/setup.sh "sys/unix/hints/$hints"
 fi
 make CC="$CC" WANT_SOURCE_INSTALL=1 HACKDIR="$game" \
      INSTDIR="$here/playground" VARDIR="$here/playground" \
      POSTINSTALL= SYSCONFINSTALL= all
 mkdir -p "$game/save"
 if [ ! -f "$game/sysconf" ]; then
-    sh sys/unix/hints/macosx.sh editsysconf sys/unix/sysconf "$game/sysconf"
-    sed -i '' "s/^WIZARDS=.*/WIZARDS=$(id -un)/" "$game/sysconf"
+    if [ "$os" = Darwin ]; then
+        sh sys/unix/hints/macosx.sh editsysconf sys/unix/sysconf \
+            "$game/sysconf.new"
+    else
+        cp sys/unix/sysconf "$game/sysconf.new"
+    fi
+    sed "s/^WIZARDS=.*/WIZARDS=$(id -un)/" "$game/sysconf.new" > "$game/sysconf"
+    rm -f "$game/sysconf.new"
 fi
 for f in perm record logfile xlogfile livelog; do
     [ -f "$game/$f" ] || : > "$game/$f"

@@ -35,10 +35,20 @@ and Dispater, with the monsters and artifacts that belong to them (see
 
 ## Playing
 
+The repository holds the source, not a built game, so build it first:
+
+    source/NetHack-openworld/build.sh
+
+That needs a C compiler, make and curses, and the first build downloads
+Lua 5.4.8 from lua.org.  It installs into `game/` next to `play.sh`.  It
+has been used on macOS; on Linux it picks NetHack's Linux build hints,
+which haven't been tried with this variant yet.  Then:
+
     ./play.sh              start (or resume) a game
     ./play.sh -u Name      play as Name
     ./play.sh -s           high scores
-    ./play.sh -D           wizard (debug) mode (sysconf allows user "gharman")
+    ./play.sh -D           wizard (debug) mode (the sysconf that build.sh
+                           makes allows whoever ran it)
 
 Terminal (tty) only.  Colour is on.  **Number-pad movement is on by default**
 (set `number_pad:0` in your options if you ever want vi-keys).  A bigger
@@ -53,6 +63,12 @@ In the game, `?` then "About the open world (read this first)" explains
 everything below.  The [wiki](wiki/Home.md) goes into more detail on what
 is unique to this build: the open world, the Cartographer and its quest,
 the ghost race, techniques, and how the imported features were adapted.
+
+**Bugs**: please report them at
+[github.com/gharman/owhack/issues](https://github.com/gharman/owhack/issues),
+not to the NetHack DevTeam.  This is a variant, and they can't fix it.
+The game says the same when something goes wrong, in `#bugreport` and
+under `?` "Support information".
 
 ### The world
 
@@ -554,12 +570,15 @@ NetHack):
 The open world, the Cartographer and the ghost race are original to this
 build.  Lua 5.4.8 (MIT license), which runs the level scripts, is downloaded
 by the build.  Like NetHack and all six variants, this build is distributed
-under the NetHack General Public License
-(`source/NetHack-openworld/dat/license`).  Details, with full commit ids:
+under the NetHack General Public License ([LICENSE](LICENSE), also
+`source/NetHack-openworld/dat/license`).  Each NetHack file changed for
+this variant says so in its header, and the git history has the date of
+every change.  Details, with full commit ids:
 [wiki/Lineage.md](wiki/Lineage.md).
 
 ## Files
 
+    LICENSE                 the NetHack General Public License
     play.sh                 launcher
     nethackrc               your options for play.sh, if you make one
                             (not tracked by git)

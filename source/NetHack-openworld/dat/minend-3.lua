@@ -2,6 +2,7 @@
 --	Copyright (c) 1989-95 by Jean-Christophe Collet
 --	Copyright (c) 1991-95 by M. Stephenson
 -- NetHack may be freely redistributed.  See license for details.
+-- Modified for NetHack: Open World in 2026; dates are in the git log.
 --
 -- "Catacombs" by Kelly Bailey
 -- Relies on some very specific behavior of MAZEWALK.

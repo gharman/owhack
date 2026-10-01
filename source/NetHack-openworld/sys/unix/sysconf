@@ -1,6 +1,7 @@
 # NetHack 5.0 sysconf $NHDT-Date: 1777240863 2026/04/26 22:01:03 $ $NHDT-Branch: to500 $:$NHDT-Revision: 1.47 $
 # Copyright (c) 2015 by Kenneth Lorber, Kensington, Maryland
 # NetHack may be freely redistributed.  See license for details.
+# Modified for NetHack: Open World in 2026; dates are in the git log.
 #
 # Sample sysconf file.
 # The sysconf file is only used if NetHack is compiled with SYSCF defined.
@@ -167,7 +168,9 @@ GREPPATH=/bin/grep
 PANICTRACE_GDB=1
 PANICTRACE_LIBC=2
 
-# URL loaded for creating reports to the NetHack DevTeam
+# URL loaded for creating reports to the NetHack DevTeam.  Leave this unset
+# for NetHack: Open World: the DevTeam can't fix this variant's bugs, and
+# without it #bugreport names https://github.com/gharman/owhack/issues.
 #CRASHREPORTURL=https://nethack.org/links/cr-5.0.0.html
 
 # 'portable_device_paths' is only supported for Windows.  Starting with

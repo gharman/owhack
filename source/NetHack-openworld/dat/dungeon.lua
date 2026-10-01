@@ -1,6 +1,7 @@
 -- NetHack 5.0	dungeon dungeon.lua	(open world variant)
 -- Copyright (c) 1990-95 by M. Stephenson
 -- NetHack may be freely redistributed.  See license for details.
+-- Modified for NetHack: Open World in 2026; dates are in the git log.
 --
 -- The dungeon description file.
 --

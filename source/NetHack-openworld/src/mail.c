@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Pasi Kallinen, 2018. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #include "hack.h"
 
@@ -490,7 +491,7 @@ readmail(struct obj *otmp UNUSED)
     enum delivery_types delivery = normal_delivery;
     const char *recipient = 0;
     static const char *const junk_templates[] = {
-        "%sReport bugs to <%s>.%s", /*** must be first entry ***/
+        "%sReport bugs at <%s>.%s", /*** must be first entry ***/
         "Please disregard previous letter.",
         "Welcome to NetHack.",
 #ifdef AMIGA
@@ -520,7 +521,7 @@ readmail(struct obj *otmp UNUSED)
     i = rn2(SIZE(junk_templates));
     if (strchr(junk_templates[i], '%')) {
         if (i == 0) {
-            recipient = DEVTEAM_EMAIL;
+            recipient = VARIANT_BUGS_URL;
             delivery = subst_delivery;
         } else if (strstri(junk_templates[i], "web site")) {
             recipient = DEVTEAM_URL;

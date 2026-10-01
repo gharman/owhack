@@ -2,6 +2,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /*-Copyright (c) Pasi Kallinen, 2017. */
 /* NetHack may be freely redistributed.  See license for details. */
+/* Modified for NetHack: Open World in 2026; dates are in the git log. */
 
 #ifndef HACK_H
 #define HACK_H
@@ -1588,6 +1589,9 @@ typedef uint32_t mmflags_nht;     /* makemon MM_ flags */
 
 #define DEVTEAM_EMAIL "devteam@nethack.org"
 #define DEVTEAM_URL "https://www.nethack.org/"
+/* bugs in this variant go to its own issue tracker, not to the DevTeam;
+   VARIANT_NAME is in patchlevel.h */
+#define VARIANT_BUGS_URL "https://github.com/gharman/owhack/issues"
 
 #ifndef __cplusplus
 #if !defined(CROSSCOMPILE) || defined(CROSSCOMPILE_TARGET)

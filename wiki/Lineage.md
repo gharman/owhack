@@ -59,7 +59,21 @@ followed and where this build departs from it.
 ## License
 
 NetHack is distributed under the **NetHack General Public License**
-(`source/NetHack-openworld/dat/license`, shown in the game by `?`). So are
-Slash'EM, SlashTHEM, SpliceHack, Hack'EM, EvilHack and xNetHack, and so is
-this build. Thanks to the NetHack DevTeam and to the authors of all six
+(`LICENSE` at the top of the repository, also
+`source/NetHack-openworld/dat/license` and shown in the game by `?`). So
+are Slash'EM, SlashTHEM, SpliceHack, Hack'EM, EvilHack and xNetHack, and
+so is this build.
+
+As the license asks, each NetHack file changed for this build carries a
+notice saying so in its header, and the git history records each change
+and its date (`git diff nethack-5.0-baseline HEAD:source/NetHack-openworld`
+shows them all). Three files have no comment syntax, so they can't carry
+a notice: the help screens `dat/hh` and `dat/wizhelp`, and the formatted
+`doc/Guidebook.txt` (whose sources, `doc/Guidebook.mn` and
+`doc/Guidebook.tex`, do carry one). NetHack's own `README` starts with a
+paragraph saying it is part of this build.
+
+Bugs in this build go to
+[github.com/gharman/owhack/issues](https://github.com/gharman/owhack/issues),
+not to the NetHack DevTeam. Thanks to the NetHack DevTeam and to the authors of all six
 variants, whose work much of this game is.

@@ -1,4 +1,5 @@
 % NetHack 5.0  Guidebook.tex $NHDT-Date: 1782274458 2026/06/23 23:14:18 $  $NHDT-Branch: NetHack-5.0 $:$NHDT-Revision: 1.630 $ */
+% Modified for NetHack: Open World in 2026; dates are in the git log.
 \documentclass[titlepage]{article}
 \usepackage[hidelinks]{hyperref}
 \usepackage{longtable}
@@ -1415,10 +1416,11 @@ Show your attributes. Default key is `\texttt{\textasciicircum X}'.
 Toggle the \textit{autopickup} option. Default key is `\texttt{@}'.
 %.lp
 \item[\#bugreport]
-Bring up a browser window to submit a report to the \textit{NetHack Development
-Team}.
-Can be disabled at the time the program is built; when enabled,
-CRASHREPORTURL must be set in the system configuration file.
+Say where to report a bug: the \textit{NetHack: Open World} issue tracker,
+\url{https://github.com/gharman/owhack/issues}.
+If CRASHREPORTURL is set in the system configuration file, bring up a
+browser window there instead.
+Can be disabled at the time the program is built.
 %.lp
 \item[\#call]
 Call (name) a monster, or an object in inventory, on the floor,
@@ -7248,9 +7250,12 @@ installations because over time the file could grow to be extremely
 large unless it is actively maintained.
 %.lp
 \item[CRASHREPORTURL]
-If set to
-\url{https://www.nethack.org/links/cr-5.0.0.html}
-and support is compiled in, brings up a browser window populated with
+Leave unset for \textit{NetHack: Open World}.
+NetHack's own setting,
+\url{https://www.nethack.org/links/cr-5.0.0.html},
+files reports with the \textit{NetHack Development Team}, who can't fix this
+variant's bugs.
+When set and support is compiled in, brings up a browser window populated with
 the information needed to report a problem if the game panics or ends
 up in an internally inconsistent state, or if the \#bugreport command is
 invoked.

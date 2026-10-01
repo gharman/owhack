@@ -1,3 +1,4 @@
+// Modified for NetHack: Open World in 2026; dates are in the git log.
 = NetHack lua
 :toc: right
 
