@@ -591,7 +591,7 @@ every change.  Details, with full commit ids:
     wiki/                   supplemental wiki: what is new or different in
                             this build (start at wiki/Home.md); build.sh
                             also makes HTML pages of it in game/wiki/
-    game/                   the installed game (not tracked by git): nethack,
+    game/                   the installed game (not tracked by git): owhack,
                             nhdat, sysconf, high scores, save/ directory
     source/NetHack-openworld/
                             full source

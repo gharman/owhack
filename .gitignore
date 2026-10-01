@@ -3,3 +3,6 @@
 /game/
 # Your own options for ./owhack (see owhack).
 /nethackrc
+# The freshly linked game binary.  NetHack's own src/.gitignore covers it
+# only under its old name, "nethack".
+/source/NetHack-openworld/src/owhack

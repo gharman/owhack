@@ -10,7 +10,10 @@ cd "$here"
 # first on PATH may be something else entirely.
 : "${CC:=/usr/bin/cc}"
 os=$(uname -s)
-if [ ! -f Makefile ]; then
+# (re)generate the Makefiles if they are missing or older than the
+# templates and hints they are made from
+if [ ! -f Makefile ] || [ -n "$(find sys/unix/Makefile.* sys/unix/hints \
+        -newer Makefile -type f | head -n 1)" ]; then
     case $os in
     Darwin) hints=macOS.500 ;;
     Linux)  hints=linux.500 ;;
@@ -38,7 +41,7 @@ for f in perm record logfile xlogfile livelog; do
 done
 # replace each file by renaming a fresh copy over it, so that a game that
 # is running keeps the files it started with
-for f in nethack nhdat recover symbols license; do
+for f in owhack nhdat recover symbols license; do
     cp -p "playground/$f" "$game/$f.new"
     mv -f "$game/$f.new" "$game/$f"
 done

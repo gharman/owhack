@@ -2,7 +2,7 @@
 # Launch NetHack: Open World.
 #
 # The game's data, sysconf, high scores and save files live in ./game.
-# Any arguments are passed on to nethack, e.g.
+# Any arguments are passed on to the game (game/owhack), e.g.
 #     owhack -u Name          play as "Name"
 #     owhack -s               show the high score list
 #     owhack -D               wizard (debug) mode, if sysconf's WIZARDS allows
@@ -28,7 +28,7 @@ done
 here=$(cd "$(dirname "$self")" && pwd)
 NETHACKDIR="$here/game"
 export NETHACKDIR
-if [ ! -x "$NETHACKDIR/nethack" ]; then
+if [ ! -x "$NETHACKDIR/owhack" ]; then
     echo "owhack: no game in $NETHACKDIR yet;" \
          "run source/NetHack-openworld/build.sh first" >&2
     exit 1
@@ -47,4 +47,4 @@ if [ -f "$here/nethackrc" ]; then
         done ;;
     esac
 fi
-exec ./nethack ${rc:+"$rc"} "$@"
+exec ./owhack ${rc:+"$rc"} "$@"
