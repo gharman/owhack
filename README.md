@@ -40,21 +40,27 @@ The repository holds the source, not a built game, so build it first:
     source/NetHack-openworld/build.sh
 
 That needs a C compiler, make and curses, and the first build downloads
-Lua 5.4.8 from lua.org.  It installs into `game/` next to `play.sh`.  It
-has been used on macOS; on Linux it picks NetHack's Linux build hints,
-which haven't been tried with this variant yet.  Then:
+Lua 5.4.8 from lua.org.  It installs into `game/` next to the `owhack`
+launcher.  It has been used on macOS; on Linux it picks NetHack's Linux
+build hints, which haven't been tried with this variant yet.  Then:
 
-    ./play.sh              start (or resume) a game
-    ./play.sh -u Name      play as Name
-    ./play.sh -s           high scores
-    ./play.sh -D           wizard (debug) mode (the sysconf that build.sh
+    ./owhack               start (or resume) a game
+    ./owhack -u Name       play as Name
+    ./owhack -s            high scores
+    ./owhack -D            wizard (debug) mode (the sysconf that build.sh
                            makes allows whoever ran it)
+
+To type just `owhack` from anywhere, symlink it into a directory on your
+PATH, the way a package manager installs `nethack`.  From the top of the
+repository, for example:
+
+    ln -s "$PWD/owhack" /usr/local/bin/owhack
 
 Terminal (tty) only.  Colour is on.  **Number-pad movement is on by default**
 (set `number_pad:0` in your options if you ever want vi-keys).  A bigger
 terminal window shows more of the world; the map uses the whole window.
 
-**Options**: if there is a file called `nethackrc` next to `play.sh`, the
+**Options**: if there is a file called `nethackrc` next to `owhack`, the
 game reads it instead of `~/.nethackrc`.  It is ignored by git, so it is
 yours to keep; `--nethackrc=FILE`, or `NETHACKOPTIONS` naming a file,
 overrides it.
@@ -579,8 +585,8 @@ every change.  Details, with full commit ids:
 ## Files
 
     LICENSE                 the NetHack General Public License
-    play.sh                 launcher
-    nethackrc               your options for play.sh, if you make one
+    owhack                  launcher
+    nethackrc               your options for owhack, if you make one
                             (not tracked by git)
     wiki/                   supplemental wiki: what is new or different in
                             this build (start at wiki/Home.md); build.sh

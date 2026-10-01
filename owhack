@@ -3,17 +3,36 @@
 #
 # The game's data, sysconf, high scores and save files live in ./game.
 # Any arguments are passed on to nethack, e.g.
-#     ./play.sh -u Name          play as "Name"
-#     ./play.sh -s               show the high score list
-#     ./play.sh -D               wizard (debug) mode, if sysconf's WIZARDS allows
+#     owhack -u Name          play as "Name"
+#     owhack -s               show the high score list
+#     owhack -D               wizard (debug) mode, if sysconf's WIZARDS allows
+#
+# To run it as "owhack" from anywhere, symlink it into a directory on your
+# PATH, e.g.  ln -s "$PWD/owhack" ~/.local/bin/owhack
 #
 # Options: if there is a file called "nethackrc" next to this script (it
 # is not part of the repository; see .gitignore), it is used instead of
 # ~/.nethackrc.  A --nethackrc=FILE argument, or NETHACKOPTIONS naming a
 # file, still takes precedence.
-here=$(cd "$(dirname "$0")" && pwd)
+
+# follow symlinks back to the real script, so a link on PATH still finds
+# ./game next to it
+self=$0
+while [ -h "$self" ]; do
+    link=$(readlink "$self")
+    case $link in
+    /*) self=$link ;;
+    *)  self=$(dirname "$self")/$link ;;
+    esac
+done
+here=$(cd "$(dirname "$self")" && pwd)
 NETHACKDIR="$here/game"
 export NETHACKDIR
+if [ ! -x "$NETHACKDIR/nethack" ]; then
+    echo "owhack: no game in $NETHACKDIR yet;" \
+         "run source/NetHack-openworld/build.sh first" >&2
+    exit 1
+fi
 cd "$NETHACKDIR" || exit 1
 rc=
 if [ -f "$here/nethackrc" ]; then
